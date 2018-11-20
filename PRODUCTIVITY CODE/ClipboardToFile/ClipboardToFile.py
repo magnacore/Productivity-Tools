@@ -40,7 +40,7 @@ an invalid filename.
 #Copy the contents of the clipboard
 clipboardText = pyperclip.paste()
 
-# Extract first 20 characters
+# Extract first few characters
 rawFileName = clipboardText[:filenameLength]
 
 # Show the filename for editing
@@ -50,7 +50,7 @@ if fileName == None:
     sys.exit(fileName)
 
 # Ask for the directory to store into
-storageDirectoryOnHDD = easygui.choicebox("Which Directory to Store Into?",
+storageDirectoryOnHDD = easygui.choicebox("Directory?",
                                           choices = ['relaxActive',
                                                      'relaxPassiveAssorted',
                                                      'relaxPassiveAudioBooks',
@@ -63,9 +63,9 @@ storageDirectoryOnHDD = easygui.choicebox("Which Directory to Store Into?",
                                                      'StudyPassiveGameDev',
                                                      'StudyPassiveMobile'] )
 
-# Ask for the priority
-priority = easygui.choicebox("Priority: ", choices = ['Important_Urgent',
-                                                      'Important_Not Urgent',
+# Ask for the priority. Note Important_Not Urgent is more common so its moved up
+priority = easygui.choicebox("Priority: ", choices = ['Important_Not Urgent',
+                                                      'Important_Urgent',
                                                       'Not Important_Urgent',
                                                       'Not Important_Not Urgent'] )
 
@@ -76,5 +76,5 @@ validFilename = format_filename(fileName)
 fullFileName = validFilename + " #" + storageDirectoryOnHDD + " #" + priority + ".txt"
 finalFullPath = os.path.join(directoryToSave, fullFileName)
 
-with open(finalFullPath, 'a') as file:
+with open(finalFullPath, 'a', encoding="utf8") as file:
     file.write(clipboardText)
