@@ -36,3 +36,10 @@ A collection of scripts I use for my productivity system
 * Language : Batch
 * Description : This is a windows tool that need [MKVToolNix](https://www.videohelp.com/software/MKVToolNix) to be installed on the system beforehand. I use this tool to split long videos, such as Keynotes into 5 minute chunks and load them into smartphone to be reviewed while travelling.
 * Usage : Execute the script in the same folder as the video or audio file and it will split it into 5 or 10 minutes chuncks. Note: after splitting audio files, they need to be renamed using the Rename MP3 to MKA script else they wont play properly. Videos dont need any futher processing.
+
+
+## Split PDF
+* Platform : Anywhere Python can run
+* Language : Python
+* Description : This is a Python script to split a PDF into batches of 10 pages each. The idea is to split a PDF converted using Calibre from ePUBs and split them for reading on phone in sprints of 10 pages each. It can split multiple files in the same directory.
+* Usage : Execute this script in the same directory as the PDF file that needs to be split.
