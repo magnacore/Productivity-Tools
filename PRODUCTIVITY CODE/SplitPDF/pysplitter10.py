@@ -44,7 +44,7 @@ def pdf_splitter(paths):
 					pdf_writer.write(out)
 					
 				pdf_writer = PdfFileWriter()
-			printProgressBar(page, pdf.getNumPages(), prefix = 'Progress:', suffix = 'Complete', length = 50)			
+			printProgressBar(page+1, pdf.getNumPages(), prefix = 'Progress:', suffix = 'Complete', length = 50)			
 
 if __name__ == '__main__':
     paths = glob.glob('*.pdf')
