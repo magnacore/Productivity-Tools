@@ -1,7 +1,0 @@
-#!/bin/bash
-
-for i in *.mp4
-do
-    i="${i%.mp4}"
-    mkvmerge -o "$i.mkv" "$i.mp4" --split duration:600s
-done

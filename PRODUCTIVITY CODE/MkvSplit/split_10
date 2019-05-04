@@ -1,0 +1,12 @@
+#!/bin/bash
+
+for i in *.mp*
+do
+	i="${i%.mp4}"
+	mkvmerge -o "SPLIT/$i" "$i.mp4" --split duration:600s
+done
+
+for filename in SPLIT/*
+do 
+    	mv "$filename" "${filename}_SPLIT_10.mkv"
+done
