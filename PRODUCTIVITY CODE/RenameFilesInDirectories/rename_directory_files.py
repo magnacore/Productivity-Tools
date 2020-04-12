@@ -31,7 +31,7 @@ i = 0
 
 for root, subdirs, files in os.walk(walk_dir):
     #print('--\nroot = ' + root)
-
+	subdirs.sort()
 	for filename in files:		
 		source = os.path.join(root, filename)	
 
