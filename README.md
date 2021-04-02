@@ -29,7 +29,7 @@ A collection of scripts I use for my productivity system
 * Platform : Windows
 * Language : C#
 * Description : This is a C# script that splits a text file into 5KB or 10KB files. Useful for consuming large articles or text in chuncks and then use a text to speech reader. It does not destory the original file.
-* Usage : Execute this program in the same directory as the large text file that needs to be split. 
+* Usage : Execute this program in the same directory as the large text file that needs to be split.
 
 ## Split Video and Audio
 * Platform : Windows
@@ -43,3 +43,45 @@ A collection of scripts I use for my productivity system
 * Language : Python
 * Description : This is a Python script to split a PDF into batches of 10 pages each. The idea is to split a PDF converted using Calibre from ePUBs and split them for reading on phone in sprints of 10 pages each. It can split multiple files in the same directory.
 * Usage : Execute this script in the same directory as the PDF file that needs to be split.
+
+## Image To PDF
+* Platform : Anywhere Python can run
+* Language : Python
+* Description : This is a Python script to convert jpg files to a PDF document.
+* Usage : Execute this script in the same directory as the jpg file that needs to be combined into a PDF document.
+
+## Merge PDF
+* Platform : Anywhere Python can run. Requires PyPDF2
+* Language : Python
+* Description : This is a Python script to combine multiple pdf documents into a single PDF document.
+* Usage : Execute this script in the same directory as the PDF file that needs to be combined into a single PDF document.
+
+## Rename Files In Directories
+* Platform : Anywhere Python can run
+* Language : Python
+* Description : This is a Python script to append integer counts in files and folders.
+* Usage : python rename_directory_files.py <name of directory>
+
+## Autokey Linux
+* Platform : Linux
+* Description : These are AutoKey shortcuts used for increasing productivity.
+    * 7z Encrypt File : Compress a file using 7zip and add a password
+    * 7z Unrar : Unrar a *.rar file
+    * Backup Laptop B : rsync command to backup my laptop
+    * Combine PDFS : Combine multiple PDFS into a single PDF
+    * Combine png to pdf : Combine multiple png images into a PDF document
+    * Combine Videos : Combine multiple similarly encoded videos into a single video
+    * Eject Drive : Eject a drive safely
+    * Extract Audio from Video : Extract audio from videos
+    * Hibernate : If supported, hibernate PopOS
+    * Hugo Server Start : Start hugo server
+    * Split Text 10 Kb : Split a text file into 10kb chunks
+    * Split Video 5m : Split a video or audio file into 5 minutes chunks and tags them
+    * Split Video 10m : Split a video or audio file into 10 minutes chunks and tags them
+    * Total Video Length : Prints the total video duration of all videos in a folder
+    * Total Video Length Fast : Prints the total video duration of all videos in a folder if watched at 1.5x speed
+    * Update System : Update the PopOS system software
+    * Video Length : Print the length of individual videos in a folder
+    * VLC Kill : kill VLC
+    * Youtube Clean : Clean Youtube URLs
+    * Youtube Download : Download Youtube videos from links within a text file

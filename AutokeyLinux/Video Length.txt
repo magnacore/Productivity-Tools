@@ -1,0 +1,1 @@
+for i in *.m*; do ffmpeg -i "$i" 2>&1 | grep -oP "(?<=Duration: ).*(?=, start.*)"; done
