@@ -1,0 +1,1 @@
+for i in *.m*; do i="${i%}" mkvmerge -o "SPLIT/$i" "$i" --split duration:600s; done; for filename in SPLIT/*; do mv "$filename" "${filename}_SPLIT_10.mkv"; done

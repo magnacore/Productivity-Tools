@@ -1,1 +1,0 @@
-for %%a in ("*.mp3") do ren "%%~a" *.mka

@@ -1,0 +1,1 @@
+for i in *.m*; do ffmpeg -i "$i" -vn -acodec copy "${i%.*}.mka"; done

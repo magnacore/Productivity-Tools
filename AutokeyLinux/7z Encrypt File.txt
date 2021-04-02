@@ -1,0 +1,1 @@
+7z a -p -mx=9 -mhe -t7z encrypted.7z fileOrFolderToEncrypt
