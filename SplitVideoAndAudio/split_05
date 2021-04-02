@@ -1,9 +1,9 @@
 #!/bin/bash
 
-for i in *.mp*
+for i in *.m*
 do
-	i="${i%.mp4}"
-	mkvmerge -o "SPLIT/$i" "$i.mp4" --split duration:300s
+	i="${i%}"
+	mkvmerge -o "SPLIT/$i" "$i" --split duration:300s
 done
 
 for filename in SPLIT/*

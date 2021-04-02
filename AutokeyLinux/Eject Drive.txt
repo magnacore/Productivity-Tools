@@ -1,0 +1,1 @@
+udisksctl power-off -b /dev/sdb
