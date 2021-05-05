@@ -1,1 +1,0 @@
-sudo apt update -y;sudo apt upgrade -y;sudo apt autoremove -y;flatpak update -y;flatpak uninstall --unused -y

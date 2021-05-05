@@ -1,1 +1,0 @@
-convert *.png output.pdf

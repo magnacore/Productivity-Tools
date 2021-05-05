@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+for i in *.m*
+	do ffmpeg -i "$i" 2>&1 | grep -oP "(?<=Duration: ).*(?=, start.*)"
+done | sort -r | head -n 10
