@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+source ~/anaconda3/etc/profile.d/conda.sh
+
+conda activate util
+
+youtube-dl -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --write-auto-sub -a ~/Backups/youtube.txt
