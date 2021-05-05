@@ -1,1 +1,0 @@
-df -h /home | grep /dev/ | awk '{print $4 "/" 100-$5"%"}'

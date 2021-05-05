@@ -1,1 +1,0 @@
-youtube-dl -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --write-auto-sub -a /home/manuj/Backups/youtube.txt

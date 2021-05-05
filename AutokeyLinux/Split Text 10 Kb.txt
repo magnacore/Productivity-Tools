@@ -1,1 +1,0 @@
-split --elide-empty-files --suffix-length=3 --numeric-suffixes=1 --line-bytes=10K 

@@ -1,1 +1,0 @@
-gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Slides.pdf  *.pdf
