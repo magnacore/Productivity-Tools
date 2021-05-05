@@ -10,6 +10,8 @@ LARGEST_SECONDS=$(echo $LARGEST | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 
 
 if [ ${LARGEST_SECONDS%.*} -gt 330 ]
 then
-	echo -e "${GREEN}Long video found splitting...${NC}"
+	echo -e "${GREEN}Long video found. Splitting...${NC}"
 	split-video5
+else
+	echo "Nothing to split...exiting."
 fi
