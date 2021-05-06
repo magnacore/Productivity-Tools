@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}Used Disk Space:${NC}"
+df -h /home | grep /dev | awk '{print $3 "/" $5}'
+
+echo -e "${GREEN}Free Disk Space:${NC}"
+df -h /home | grep /dev/ | awk '{print $4 "/" 100-$5"%"}'
