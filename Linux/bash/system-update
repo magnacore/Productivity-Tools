@@ -9,12 +9,20 @@ echo -e "${GREEN}Upgrade Software...${NC}"
 sudo apt upgrade -y
 flatpak update -y
 
-echo -e "${GREEN}Clean Cache...${NC}"
-sudo apt autoremove -y
-sudo apt clean -y
-flatpak uninstall --unused -y
+DAY_OF_WEEK=$(date +%u)
 
-find ~ -type f -iname ".DS_Store" -delete
-find ~ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf {} \;
+# 1 is Monday
+if [ $DAY_OF_WEEK -eq 1 ]
+then
+    echo -e "${GREEN}Clean Cache...${NC}"
+
+    sudo apt autoremove -y
+    sudo apt clean -y
+    
+    flatpak uninstall --unused -y
+
+    find ~ -type f -iname ".DS_Store" -delete
+    find ~ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf {} \;
+fi
 
 hdd-size
