@@ -1,5 +1,11 @@
 # Productivity-Tools
-A collection of scripts I use for my productivity system
+A collection of scripts I use for my productivity system. The commands follow the following naming convention:
+
+> who-what-how
+
+* Who: On what entity do we want to perform the operation
+* What : What do we want to do to the entity
+* How : command arguments 
 
 ## Add Markdown To Right Click Menu
 * Platform : Windows
@@ -65,23 +71,6 @@ A collection of scripts I use for my productivity system
 ## Autokey Linux
 * Platform : Linux
 * Description : These are AutoKey shortcuts used for increasing productivity.
-    * 7z Encrypt File : Compress a file using 7zip and add a password
-    * 7z Unrar : Unrar a *.rar file
-    * Backup Laptop B : rsync command to backup my laptop
-    * Combine PDFS : Combine multiple PDFS into a single PDF
-    * Combine png to pdf : Combine multiple png images into a PDF document
-    * Combine Videos : Combine multiple similarly encoded videos into a single video
-    * Eject Drive : Eject a drive safely
-    * Extract Audio from Video : Extract audio from videos
-    * Hibernate : If supported, hibernate PopOS
-    * Hugo Server Start : Start hugo server
-    * Split Text 10 Kb : Split a text file into 10kb chunks
-    * Split Video 5m : Split a video or audio file into 5 minutes chunks and tags them
-    * Split Video 10m : Split a video or audio file into 10 minutes chunks and tags them
-    * Total Video Length : Prints the total video duration of all videos in a folder
-    * Total Video Length Fast : Prints the total video duration of all videos in a folder if watched at 1.5x speed
-    * Update System : Update the PopOS system software
-    * Video Length : Print the length of individual videos in a folder
-    * VLC Kill : kill VLC
-    * Youtube Clean : Clean Youtube URLs
-    * Youtube Download : Download Youtube videos from links within a text file
+* 7z Encrypt File : Compress a file using 7zip and add a password
+* 7z Unrar : Unrar a *.rar file
+* Hibernate : If supported, hibernate PopOS
