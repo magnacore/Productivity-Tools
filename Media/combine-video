@@ -1,3 +1,0 @@
-#!/usr/bin/bash
-
-ffmpeg -safe 0 -f concat -i <(find . -type f -name '*.m*' -printf "file '$PWD/%p'\n" | sort) -c copy output.mkv
