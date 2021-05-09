@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+rsync --delete --progress -vahi /home/manuj/ /media/veracrypt1/DATA_BACKUP/
+
+date | xargs echo > ~/Bin/logs/laptop-backup-full.txt

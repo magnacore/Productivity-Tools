@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+rsync --delete --progress -vahi /media/manuj/LEARNING/ /media/manuj/TutsBackup/BACKUP/
+
+date | xargs echo > ~/Bin/logs/tutorials-backup.txt
