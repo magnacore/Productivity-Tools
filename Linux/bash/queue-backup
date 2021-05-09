@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+rsync --delete --progress -vahi /media/manuj/QUEUE/QUEUE/ /media/manuj/Q_BACKUP/QUEUE_BACKUP/
+
+date | xargs echo > ~/Bin/logs/queue-backup.txt
