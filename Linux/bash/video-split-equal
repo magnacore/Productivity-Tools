@@ -1,0 +1,44 @@
+#!/usr/bin/bash
+
+split_duration_seconds=300
+
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+LARGEST=$(for i in *.m*
+	do ffmpeg -i "$i" 2>&1 | grep -oP "(?<=Duration: ).*(?=, start.*)"
+done | sort -r | head -n 1)
+
+LARGEST_SECONDS=$(echo $LARGEST | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }')
+
+if [ ${LARGEST_SECONDS%.*} -gt 600 ]
+then
+	echo -e "${GREEN}Long video found: $LARGEST Splitting...${NC}"
+
+	for i in *.m*	
+	do 
+		duration_seconds=$(ffmpeg -i "$i" 2>&1 | grep -oP "(?<=Duration: ).*(?=, start.*)" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }' | awk '{print int($1)}')
+		parts=$(($duration_seconds/$split_duration_seconds))
+		remaining=$(($duration_seconds%$split_duration_seconds))
+
+		if [ $parts != 0 ]
+		then
+			excess=$(($remaining/$parts))
+			split_duration=$(($split_duration_seconds+$excess))
+			echo -e "${GREEN}Splitting for ${split_duration} seconds...${NC}"
+			i="${i%}" mkvmerge -o "SPLIT/$i" "$i" --split duration:"${split_duration}s"
+
+		else
+			i="${i%}" mkvmerge -o "SPLIT/$i" "$i" --split duration:"${split_duration_seconds}s"
+		fi
+		
+	done
+
+	for filename in SPLIT/*
+		do mv "$filename" "${filename}_SPLIT_EQUAL.mkv"
+	done
+
+	echo -e "${GREEN}Long video found: $LARGEST. Finished Splitting.${NC}"
+else
+	echo "Nothing to split...exiting."
+fi
