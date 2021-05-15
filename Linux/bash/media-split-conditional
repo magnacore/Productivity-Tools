@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 split_duration=${1:-300}
+threashold_seconds=${2:-600}
 
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -11,11 +12,11 @@ done | sort -r | head -n 1)
 
 LARGEST_SECONDS=$(echo $LARGEST | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }')
 
-if [ ${LARGEST_SECONDS%.*} -gt 600 ]
+if [ ${LARGEST_SECONDS%.*} -gt $threashold_seconds ]
 then
-	echo -e "${GREEN}Long video found: $LARGEST Splitting...${NC}"
-	video-split $split_duration
-	echo -e "${GREEN}Long video found: $LARGEST. Finished Splitting.${NC}"
+	echo -e "${GREEN}Long media found: $LARGEST Splitting...${NC}"
+	media-split $split_duration
+	echo -e "${GREEN}Long media found: $LARGEST. Finished Splitting.${NC}"
 else
 	echo "Nothing to split...exiting."
 fi
