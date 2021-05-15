@@ -7,3 +7,6 @@ df -h /home | grep /dev | awk '{print $3 "/" $5}'
 
 echo -e "${GREEN}Free Disk Space:${NC}"
 df -h /home | grep /dev/ | awk '{print $4 "/" 100-$5"%"}'
+
+echo -e "${GREEN}Used RAM Space:${NC}"
+free -h
