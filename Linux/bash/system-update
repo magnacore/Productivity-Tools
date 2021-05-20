@@ -26,3 +26,5 @@ then
 fi
 
 hdd-size
+
+date | xargs echo > /home/manuj/Bin/logs/system-update.txt

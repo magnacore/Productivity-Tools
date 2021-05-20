@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+
+# Do not use apt in cron scripts. It gives an error that apt CLI interface is not stable.
+
+date | xargs echo
+
+echo "Update Repositories..."
+apt-get update -y
+
+echo "Upgrade Software..."
+apt-get upgrade -y
+flatpak update -y
+
+DAY_OF_WEEK=$(date +%u)
+
+# 1 is Monday
+if [ $DAY_OF_WEEK -eq 1 ]
+then
+    echo "Clean Cache..."
+
+    apt-get autoremove -y
+    apt-get clean -y
+    
+    flatpak uninstall --unused -y
+
+    find /home/manuj/ -type f -iname ".DS_Store" -delete
+    find /home/manuj/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf {} \;
+fi
+
+date | xargs echo > /home/manuj/Bin/logs/system-update.txt

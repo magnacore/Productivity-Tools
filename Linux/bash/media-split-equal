@@ -19,7 +19,7 @@ then
 	for i in *.m*	
 	do 
 		duration_seconds=$(ffmpeg -i "$i" 2>&1 | grep -oP "(?<=Duration: ).*(?=, start.*)" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }' | awk '{print int($1)}')
-		parts=$(($duration_seconds/$split_duration_seconds))		
+		parts=$(($duration_seconds/$split_duration_seconds))
 
 		if [ $parts != 0 ]
 		then
@@ -44,5 +44,5 @@ then
 
 	echo -e "${GREEN}Long media found: $LARGEST. Finished Splitting.${NC}"
 else
-	echo "Nothing to split...exiting."
+	echo "${GREEN}Nothing to split...exiting.${NC}"
 fi
