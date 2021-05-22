@@ -1,0 +1,17 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+import glob
+import sys
+from tqdm import tqdm
+
+if len(sys.argv) == 2:
+	split_duration = sys.argv[1]
+else:
+	split_duration = '300'
+
+allMediaFiles = glob.glob("*.m*")
+
+for media in tqdm(allMediaFiles):
+	new_filename = os.path.splitext(media)[0] + f'_SPLIT_{int(split_duration)//60}' + '.mkv'
+	mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(split_duration+'s')

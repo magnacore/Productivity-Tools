@@ -1,0 +1,15 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+from tqdm import tqdm
+
+allVideoFiles = glob.glob("*.m*")
+allVideoFiles.sort()
+
+print(f"{cyan}Extracting audio form video...{no_color}")
+
+for video in tqdm(allVideoFiles):
+	ffmpeg -i @(video) -n -hide_banner -loglevel error -acodec copy @(os.path.splitext(video)[0]+'.mka')

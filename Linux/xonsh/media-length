@@ -1,0 +1,22 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import glob
+import datetime
+from tqdm import tqdm
+
+allMediaFiles = glob.glob("*.m*")
+allMediaFiles.sort()
+
+total_duration = 0.0
+
+for media in tqdm(allMediaFiles):
+    duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
+    total_duration += float(duration)
+
+print(f"{cyan}Total media duration:{no_color}")
+print(datetime.timedelta(seconds = round(total_duration,0)))
+
+print(f"{cyan}Total media duration @1.5x speed:{no_color}")
+print(datetime.timedelta(seconds = round(total_duration/1.5,0)))

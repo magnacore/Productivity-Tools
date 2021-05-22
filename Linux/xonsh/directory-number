@@ -5,15 +5,17 @@ import sys
 
 walk_dir = sys.argv[1]
 
-#print('Walk Directory = ' + walk_dir)
+def walklevel(some_dir, level=1):
+    some_dir = some_dir.rstrip(os.path.sep)
+    assert os.path.isdir(some_dir)
+    num_sep = some_dir.count(os.path.sep)
+    for root, dirs, files in os.walk(some_dir):
+        yield root, dirs, files
+        num_sep_this = root.count(os.path.sep)
+        if num_sep + level <= num_sep_this:
+            del dirs[:]
 
-# If your current working directory may change during script execution, it's recommended to
-# immediately convert program arguments to an absolute path. Then the variable root below will
-# be an absolute path as well. Example:
-# walk_dir = os.path.abspath(walk_dir)
-#print('Walk Directory (absolute) = ' + os.path.abspath(walk_dir))
-
-for root, subdirs, files in os.walk(walk_dir):
+for root, subdirs, files in walklevel(walk_dir):
 
 	for subdir in subdirs:
 		if(subdir[0].isdigit() and not subdir[1].isdigit()):
@@ -31,9 +33,10 @@ for root, subdirs, files in os.walk(walk_dir):
 
 i = 0
 
-for root, subdirs, files in os.walk(walk_dir):
-    #print('--\nroot = ' + root)
+for root, subdirs, files in walklevel(walk_dir):
+	
 	subdirs.sort()
+	
 	for filename in files:
 		source = os.path.join(root, filename)
 
