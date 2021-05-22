@@ -1,0 +1,22 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+
+allMediaFiles = glob.glob("*.m*")
+allMediaFiles.sort()
+
+print(f"{cyan}Combining media...{no_color}")
+
+temp_filename = 'video_list_temp.txt'
+
+echo @([f"file \'{filename}\'\n" for filename in allMediaFiles]) > @(temp_filename)
+
+ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy output.mkv
+
+os.remove(temp_filename)
+
+# https://github.com/xonsh/xonsh/issues/1307
+# ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv

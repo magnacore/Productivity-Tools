@@ -1,0 +1,35 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import datetime
+
+print(f"{cyan}Update repositories...{no_color}")
+sudo apt update -y
+
+print(f"{cyan}Upgrade software...{no_color}")
+sudo apt upgrade -y
+flatpak update -y
+
+# Monday is 0
+day_of_week = datetime.datetime.today().weekday()
+
+if(day_of_week == 0):
+    print(f"{cyan}Clean software cache...{no_color}")
+
+    sudo apt autoremove -y
+    sudo apt clean -y
+    
+    flatpak uninstall --unused -y
+
+    print(f"{cyan}Deleting .DS_Store files...{no_color}")
+    find $HOME/ -type f -iname ".DS_Store" -delete
+
+    print(f"{cyan}Deleting .ipynb_checkpoints directories...{no_color}")
+    find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
+else:
+    print(f"{cyan}Skipping cleanup.{no_color}")
+
+hdd-size
+
+date > /home/manuj/Bin/logs/system-update.txt

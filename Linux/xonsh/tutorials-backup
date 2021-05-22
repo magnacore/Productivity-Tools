@@ -1,0 +1,5 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+rsync --delete --progress -vahi /media/manuj/LEARNING/ /media/manuj/TutsBackup/BACKUP/
+
+date > ~/Bin/logs/tutorials-backup.txt

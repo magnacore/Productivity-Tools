@@ -1,0 +1,5 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+rsync --delete --progress -vahi $HOME/ /media/veracrypt1/DATA_BACKUP/
+
+date > ~/Bin/logs/laptop-backup-full.txt

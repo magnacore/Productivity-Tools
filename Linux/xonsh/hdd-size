@@ -1,0 +1,19 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+print(f"{cyan}Used Disk Space: {no_color}")
+subprocess_output = $(df -h /home | grep /dev)
+
+total_space = subprocess_output.split()[1]
+
+used_space = subprocess_output.split()[2]
+used_percentage = int(subprocess_output.split()[4][:-1])
+print(f"{used_space} of {total_space} or {used_percentage}% of disk is used.\n")
+
+print(f"{cyan}Free Disk Space: {no_color}")
+free_space = subprocess_output.split()[3]
+print(f"{free_space} of {total_space} or {100-used_percentage}% of disk is free.\n")
+
+print(f"{cyan}Used RAM Space: {no_color}")
+free -h
