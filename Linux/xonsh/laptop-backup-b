@@ -1,5 +1,15 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
 
-rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /media/manuj/SYSTEM_B/SYSTEM_BACKUP
+print(f"{cyan}Deleting previous snapshot...{no_color}")
+sudo btrfs subvolume delete /media/manuj/LAPTOP_BACKUP_B/@previous
+
+print(f"{cyan}Creating a new snapshot...{no_color}")
+btrfs subvolume snapshot -r /media/manuj/LAPTOP_BACKUP_B/@current/ /media/manuj/LAPTOP_BACKUP_B/@previous
+
+print(f"{cyan}Synchronizing...{no_color}")
+rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /media/manuj/LAPTOP_BACKUP_B/@current/
 
 date > ~/Bin/logs/laptop-backup-b.txt
+print(f"{cyan}Done.{no_color}")
