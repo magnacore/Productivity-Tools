@@ -1,5 +1,34 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
 
-rsync --delete --progress -vahi $HOME/ /media/veracrypt1/DATA_BACKUP/
+print(f"{cyan}Open the container...{no_color}")
+sudo cryptsetup luksOpen /dev/sdb luks-laptop-backup-full
 
-date > ~/Bin/logs/laptop-backup-full.txt
+print(f"{cyan}Mount the container...{no_color}")
+sudo mkdir /media/$USER/laptop_backup_full
+
+# Change the owner
+sudo chown $USER:$USER /media/$USER/laptop_backup_full
+
+import time
+# Give some time to /dev/vg-laptop-backup-full/raid1-1 to become available
+print(f"{cyan}Waiting for 5 seconds before mounting...{no_color}")
+time.sleep( 5 )
+
+# mount the directory 
+if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_backup_full"):
+    print(f"{cyan}Deleting previous snapshot...{no_color}")
+    sudo btrfs subvolume delete /media/$USER/laptop_backup_full/@previous
+
+    print(f"{cyan}Creating a new snapshot...{no_color}")
+    sudo btrfs subvolume snapshot -r /media/$USER/laptop_backup_full/@current /media/$USER/laptop_backup_full/@previous
+
+    print(f"{cyan}Synchronizing...{no_color}")
+    rsync --delete --progress -vahi $HOME/ /media/$USER/laptop_backup_full/@current    
+
+    date > ~/Bin/logs/laptop-backup-full.txt
+    print(f"{cyan}Done.{no_color}")
+    sudo btrfs filesystem show
+else:
+    print(f"{cyan}Something went wrong. Could not mount.{no_color}")

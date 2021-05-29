@@ -6,7 +6,7 @@ print(f"{cyan}Deleting previous snapshot...{no_color}")
 sudo btrfs subvolume delete /media/manuj/LAPTOP_BACKUP_B/@previous
 
 print(f"{cyan}Creating a new snapshot...{no_color}")
-btrfs subvolume snapshot -r /media/manuj/LAPTOP_BACKUP_B/@current/ /media/manuj/LAPTOP_BACKUP_B/@previous
+sudo btrfs subvolume snapshot -r /media/manuj/LAPTOP_BACKUP_B/@current/ /media/manuj/LAPTOP_BACKUP_B/@previous
 
 print(f"{cyan}Synchronizing...{no_color}")
 rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /media/manuj/LAPTOP_BACKUP_B/@current/
