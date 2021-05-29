@@ -10,4 +10,4 @@ allVideoFiles = glob.glob("*.m*")
 for video in tqdm(allVideoFiles):
 	new_filename = os.path.splitext(video)[0] + '.YouTube'
 	touch @(new_filename)
-	echo @(new_filename) > @(new_filename)
+	# echo @(new_filename) > @(new_filename)

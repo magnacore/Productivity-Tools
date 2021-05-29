@@ -1,0 +1,17 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+print(f"{cyan}Ejecting...{no_color}")
+sudo umount /media/$USER/laptop_backup_full
+sudo rm -r /media/$USER/laptop_backup_full
+
+sudo lvchange -an vg-laptop-backup-full
+
+sudo cryptsetup luksClose luks-laptop-backup-full
+
+udisksctl power-off -b /dev/sdb
+
+lsblk
+
+print(f"{cyan}Done.{no_color}")
