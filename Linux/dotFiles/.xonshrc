@@ -28,7 +28,6 @@ aliases ["png-convert-pdf"] = "convert *.png output.pdf"
 aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
 aliases ["text-split"] = "split --elide-empty-files --suffix-length=3 --numeric-suffixes=1 --line-bytes=10K"
-aliases ["vlc-kill"] = "killall -s 9 vlc.bin"
 
 # =================================== paths =================================
 # We can also source paths from bash : source-bash .profile if we want to use the same paths between xonsh and bash

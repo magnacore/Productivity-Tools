@@ -2,14 +2,22 @@
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
-print(f"{cyan}Ejecting...{no_color}")
+print(f"{cyan}Unmounting...{no_color}")
 sudo umount /media/$USER/laptop_backup_full
+
+print(f"{cyan}Deleting Mountpoint...{no_color}")
 sudo rm -r /media/$USER/laptop_backup_full
 
+print(f"{cyan}Unmounting logical volumes...{no_color}")
 sudo lvchange -an vg-laptop-backup-full
 
+print(f"{cyan}Closing encrypted LUKS container...{no_color}")
 sudo cryptsetup luksClose luks-laptop-backup-full
 
+#print(f"{cyan}Waiting for 5 seconds before turning off...{no_color}")
+#import time
+#time.sleep(5)
+print(f"{cyan}Powering off...{no_color}")
 udisksctl power-off -b /dev/sdb
 
 lsblk
