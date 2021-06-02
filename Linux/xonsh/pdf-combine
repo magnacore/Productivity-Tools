@@ -1,0 +1,3 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Slides.pdf *.pdf
