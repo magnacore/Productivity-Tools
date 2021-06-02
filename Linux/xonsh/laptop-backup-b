@@ -3,13 +3,16 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 print(f"{cyan}Deleting previous snapshot...{no_color}")
-sudo btrfs subvolume delete /media/manuj/LAPTOP_BACKUP_B/@previous
+sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_B/@previous
 
-print(f"{cyan}Creating a new snapshot...{no_color}")
-sudo btrfs subvolume snapshot -r /media/manuj/LAPTOP_BACKUP_B/@current/ /media/manuj/LAPTOP_BACKUP_B/@previous
+print(f"{cyan}Creating a new read only snapshot...{no_color}")
+sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_B/@current/ /media/$USER/LAPTOP_BACKUP_B/@previous
 
 print(f"{cyan}Synchronizing...{no_color}")
-rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /media/manuj/LAPTOP_BACKUP_B/@current/
+rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /media/$USER/LAPTOP_BACKUP_B/@current/
 
 date > ~/Bin/logs/laptop-backup-b.txt
+
+sudo btrfs filesystem show
+
 print(f"{cyan}Done.{no_color}")
