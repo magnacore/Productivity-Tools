@@ -9,6 +9,9 @@ date
 
 import datetime
 
+print(f"{cyan}Update locate database...{no_color}")
+sudo updatedb
+
 print(f"{cyan}Update repositories...{no_color}")
 apt-get update -y
 

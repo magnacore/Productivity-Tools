@@ -4,6 +4,9 @@ no_color = '\x1b[0m'
 
 import datetime
 
+print(f"{cyan}Update locate database...{no_color}")
+sudo updatedb
+
 print(f"{cyan}Update repositories...{no_color}")
 sudo apt update -y
 

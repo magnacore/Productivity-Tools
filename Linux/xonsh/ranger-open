@@ -1,0 +1,4 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+source ~/.xonshrc
+ranger
