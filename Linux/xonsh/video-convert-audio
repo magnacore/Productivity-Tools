@@ -11,5 +11,8 @@ allVideoFiles.sort()
 
 print(f"{cyan}Extracting audio form video...{no_color}")
 
+mkdir audio
+
 for video in tqdm(allVideoFiles):
-	ffmpeg -i @(video) -n -hide_banner -loglevel error -acodec copy @(os.path.splitext(video)[0]+'.mka')
+	filename = os.path.splitext(video)[0]+'.mka'
+	ffmpeg -i @(video) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
