@@ -1,0 +1,20 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+print(f"{cyan}Open the container...{no_color}")
+sudo cryptsetup luksOpen /dev/sdb luks-laptop-backup-full
+
+print(f"{cyan}Mount the container...{no_color}")
+sudo mkdir /media/$USER/laptop_backup_full
+
+# Change the owner
+sudo chown $USER:$USER /media/$USER/laptop_backup_full
+
+import time
+# Give some time to /dev/vg-laptop-backup-full/raid1-1 to become available
+print(f"{cyan}Waiting for 5 seconds before mounting...{no_color}")
+time.sleep( 5 )
+
+# mount the directory 
+sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_backup_full"

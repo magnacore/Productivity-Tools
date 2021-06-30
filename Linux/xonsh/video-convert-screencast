@@ -1,0 +1,25 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+from tqdm import tqdm
+
+allVideoFiles = glob.glob("*.m*")
+allVideoFiles.sort()
+
+print(f"{cyan}Converting video...{no_color}")
+
+mkdir converted
+
+for video in tqdm(allVideoFiles):
+	filename = os.path.splitext(video)[0]+' #converted.mkv'
+
+	# ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 1 -r 15 -vsync vfr -an -f null /dev/null and \
+	# ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 2 -r 15 -vsync vfr -n -c:a libopus -b:a 32k -ac 1 output.mkv
+
+	ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 1 -n -an -f null /dev/null and \
+	ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 2 -r 15 -vsync vfr -n -c:a libopus -b:a 32k -ac 1 f"./converted/{filename}"
+
+rm ffmpeg2pass-0.log
