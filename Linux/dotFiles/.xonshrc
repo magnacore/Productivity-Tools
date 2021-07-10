@@ -35,6 +35,8 @@ aliases ["text-split"] = "split --elide-empty-files --suffix-length=3 --numeric-
 
 for p in reversed([
         $HOME + "/Bin",
+        $HOME + "/anaconda3/envs/xonsh/bin/",
+        $HOME + "/anaconda3/envs/util/bin/",
 ]):
     if p not in $PATH:
         $PATH.insert(0, p)

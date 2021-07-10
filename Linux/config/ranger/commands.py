@@ -14,6 +14,7 @@ import os
 
 # You always need to import ranger.api.commands here to get the Command class:
 from ranger.api.commands import Command
+from ranger_udisk_menu.mounter import mount
 
 
 # Any class that is a subclass of "Command" will be integrated into ranger as a
@@ -235,3 +236,45 @@ class fd_prev(Command):
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
         elif len(fd_search.SEARCH_RESULTS) == 1:
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
+
+
+class mkdircp(Command):                                   
+    """
+    :mkdircp                                           
+
+    Create a directory and moves the selected files to the directory                      
+    """                                                 
+
+    def execute(self):                                               
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":mkdircp somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            target_foldername = self.rest(1)
+        else:
+            # self.fm is a ranger.core.filemanager.FileManager object and gives
+            # you access to internals of ranger.
+            # self.fm.thisfile is a ranger.container.file.File object and is a
+            # reference to the currently selected file.
+            target_foldername = "Demo"
+
+        self.fm.execute_console(f"shell mkdir ./{target_foldername}")
+        self.fm.execute_console(f"shell mv %s ./{target_foldername}")
+
+
+class toggle_flat(Command):
+    """
+    :toggle_flat
+
+    Flattens or unflattens the directory view.
+    """
+
+    def execute(self):
+        if self.fm.thisdir.flat == 0:
+            self.fm.thisdir.unload()
+            self.fm.thisdir.flat = -1
+            self.fm.thisdir.load_content()
+        else:
+            self.fm.thisdir.unload()
+            self.fm.thisdir.flat = 0
+            self.fm.thisdir.load_content()
