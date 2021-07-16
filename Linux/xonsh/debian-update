@@ -33,6 +33,13 @@ if(day_of_week == 0):
 
     print(f"{cyan}Deleting .ipynb_checkpoints directories...{no_color}")
     find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
+
+    print(f"{cyan}Deleting __pycache__ directories...{no_color}")
+    find $HOME/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
+
+    print(f"{cyan}Deleting __MACOSX directories...{no_color}")
+    find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
+    
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
 
