@@ -8,6 +8,7 @@
 # -----------------------------------------------------------------------------
 
 from __future__ import (absolute_import, division, print_function)
+from collections import deque
 
 # You can import any python module as needed.
 import os
@@ -62,6 +63,7 @@ class my_edit(Command):
         # content of the current directory.
         return self._tab_directory_content()
 
+
 class fzf_select(Command):
     """
     :fzf_select
@@ -93,7 +95,8 @@ class fzf_select(Command):
                 fd, hidden, exclude, only_directories
             )
         else:
-            hidden = ('-false' if self.fm.settings.show_hidden else r"-path '*/\.*' -prune")
+            hidden = (
+                '-false' if self.fm.settings.show_hidden else r"-path '*/\.*' -prune")
             exclude = r"\( -name '\.git' -o -iname '\.*py[co]' -o -fstype 'dev' -o -fstype 'proc' \) -prune"
             only_directories = ('-type d' if self.quantifier else '')
             fzf_default_command = 'find -L . -mindepth 1 {} -o {} -o {} -print | cut -b3-'.format(
@@ -122,7 +125,6 @@ class fzf_select(Command):
                 self.fm.select_file(selected)
 
 
-
 # fzf_locate
 class fzf_locate(Command):
     """
@@ -134,12 +136,13 @@ class fzf_locate(Command):
 
     See: https://github.com/junegunn/fzf
     """
+
     def execute(self):
         import subprocess
         if self.quantifier:
-            command="locate home media | fzf -e -i"
+            command = "locate home media | fzf -e -i"
         else:
-            command="locate home media | fzf -e -i"
+            command = "locate home media | fzf -e -i"
         fzf = self.fm.execute_command(command, stdout=subprocess.PIPE)
         stdout, stderr = fzf.communicate()
         if fzf.returncode == 0:
@@ -149,7 +152,6 @@ class fzf_locate(Command):
             else:
                 self.fm.select_file(fzf_file)
 
-from collections import deque
 
 class fd_search(Command):
     """
@@ -194,15 +196,18 @@ class fd_search(Command):
         command = '{} --follow {} {} {} --print0 {}'.format(
             fd, depth, hidden, exclude, target
         )
-        fd = self.fm.execute_command(command, universal_newlines=True, stdout=subprocess.PIPE)
+        fd = self.fm.execute_command(
+            command, universal_newlines=True, stdout=subprocess.PIPE)
         stdout, _ = fd.communicate()
 
         if fd.returncode == 0:
             results = filter(None, stdout.split('\0'))
             if not self.fm.settings.show_hidden and self.fm.settings.hidden_filter:
                 hidden_filter = re.compile(self.fm.settings.hidden_filter)
-                results = filter(lambda res: not hidden_filter.search(os.path.basename(res)), results)
-            results = map(lambda res: os.path.abspath(os.path.join(self.fm.thisdir.path, res)), results)
+                results = filter(lambda res: not hidden_filter.search(
+                    os.path.basename(res)), results)
+            results = map(lambda res: os.path.abspath(
+                os.path.join(self.fm.thisdir.path, res)), results)
             self.SEARCH_RESULTS.extend(sorted(results, key=str.lower))
             if len(self.SEARCH_RESULTS) > 0:
                 self.fm.notify('Found {} result{}.'.format(len(self.SEARCH_RESULTS),
@@ -210,6 +215,7 @@ class fd_search(Command):
                 self.fm.select_file(self.SEARCH_RESULTS[0])
             else:
                 self.fm.notify('No results found.')
+
 
 class fd_next(Command):
     """
@@ -223,6 +229,7 @@ class fd_next(Command):
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
         elif len(fd_search.SEARCH_RESULTS) == 1:
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
+
 
 class fd_prev(Command):
     """
@@ -238,14 +245,14 @@ class fd_prev(Command):
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
 
 
-class mkdircp(Command):                                   
+class mkdircp(Command):
     """
     :mkdircp                                           
 
     Create a directory and moves the selected files to the directory                      
-    """                                                 
+    """
 
-    def execute(self):                                               
+    def execute(self):
         # self.arg(1) is the first (space-separated) argument to the function.
         # This way you can write ":mkdircp somefilename<ENTER>".
         if self.arg(1):
@@ -260,6 +267,35 @@ class mkdircp(Command):
 
         self.fm.execute_console(f"shell mkdir ./{target_foldername}")
         self.fm.execute_console(f"shell mv %s ./{target_foldername}")
+
+# class moveh(Command):
+#     """
+#     :moveh
+
+#     Moves selected files to the highlighted directory
+#     """
+
+#     def execute(self):
+#         target_foldername = "%f"
+#         if target_foldername:
+#             self.fm.execute_console(f"shell -f mv -u %s %f")
+#         else:
+#             self.fm.notify("No folder highlighted", bad=True)
+
+
+# class copyh(Command):
+#     """
+#     :copyh
+
+#     Copy selected files to the highlighted directory
+#     """
+
+#     def execute(self):
+#         target_foldername = "%f"
+#         if target_foldername:
+#             self.fm.execute_console(f"shell -f rsync -ru %s %f")
+#         else:
+#             self.fm.notify("No folder highlighted", bad=True)
 
 
 class toggle_flat(Command):
