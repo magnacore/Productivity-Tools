@@ -245,16 +245,16 @@ class fd_prev(Command):
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
 
 
-class mkdircp(Command):
+class mkdirmv(Command):
     """
-    :mkdircp                                           
+    :mkdirmv                                           
 
     Create a directory and moves the selected files to the directory                      
     """
 
     def execute(self):
         # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":mkdircp somefilename<ENTER>".
+        # This way you can write ":mkdirmv somefilename<ENTER>".
         if self.arg(1):
             # self.rest(1) contains self.arg(1) and everything that follows
             target_foldername = self.rest(1)
@@ -267,6 +267,18 @@ class mkdircp(Command):
 
         self.fm.execute_console(f"shell mkdir ./{target_foldername}")
         self.fm.execute_console(f"shell mv %s ./{target_foldername}")
+
+
+class ranger_pycopy(Command):
+    """
+    :ranger_pycopy
+
+    Copy selected files to the current directory
+    """
+
+    def execute(self):
+        self.fm.execute_console(
+            f"shell ~/anaconda3/envs/util/bin/pycp -gi %c %d")
 
 # class moveh(Command):
 #     """
