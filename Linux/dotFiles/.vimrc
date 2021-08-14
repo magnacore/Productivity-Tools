@@ -26,4 +26,8 @@ set history=1000
 
 set scrolloff=10
 
+set tabstop=4
+
 let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
+
+let @r ='ggG4lxg' 
