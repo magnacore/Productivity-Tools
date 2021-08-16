@@ -28,8 +28,17 @@ set scrolloff=10
 
 set tabstop=4
 
+" add incrementing numbers
 let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
 
+" remove NA - from lines
 let @r ='ggG4lxg' 
 
+" enable clipboard
 set clipboard+=unnamedplus
+
+" spell languages
+set spelllang=en,cjk
+set spell
+nnoremap <silent> <F11> :set spell!<cr>
+inoremap <silent> <F11> <C-O>:set spell!<cr>
