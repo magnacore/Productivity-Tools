@@ -371,4 +371,5 @@ class copy_selected_to_highlight(Command):
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
 
         self.fm.execute_console("copy")
+        self.fm.do_cut = False
         self.fm.paste(dest=target_dir)
