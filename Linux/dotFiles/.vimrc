@@ -37,8 +37,9 @@ let @r ='ggG4lxg'
 " enable clipboard
 set clipboard+=unnamedplus
 
-" spell languages
+" spelling languages
 set spelllang=en,cjk
-set spell
+" Enable the line below to turn on spell checking by default
+" set spell
 nnoremap <silent> <F11> :set spell!<cr>
 inoremap <silent> <F11> <C-O>:set spell!<cr>
