@@ -32,7 +32,7 @@ set tabstop=4
 let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
 
 " remove NA - from lines
-let @r ='ggG4lxg' 
+let @r ='ggG4lx' 
 
 " enable clipboard
 set clipboard+=unnamedplus
