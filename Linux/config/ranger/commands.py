@@ -390,3 +390,4 @@ class directories_number_highlight(Command):
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
 
         self.fm.execute_console(f"shell -f directory-number {target_dir}")
+        self.fm.notify("Done numbering directories.")
