@@ -63,6 +63,8 @@ class my_edit(Command):
         # content of the current directory.
         return self._tab_directory_content()
 
+###############################################################################
+
 
 class fzf_select(Command):
     """
@@ -152,6 +154,8 @@ class fzf_locate(Command):
             else:
                 self.fm.select_file(fzf_file)
 
+
+###############################################################################
 
 class fd_search(Command):
     """
@@ -244,92 +248,35 @@ class fd_prev(Command):
         elif len(fd_search.SEARCH_RESULTS) == 1:
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
 
+###############################################################################
+
+
+# class mkdirmv(Command):
+#     """
+#     :mkdirmv
+
+#     Create a directory and moves the selected files to the directory
+#     """
+
+#     def execute(self):
+#         # self.arg(1) is the first (space-separated) argument to the function.
+#         # This way you can write ":mkdirmv somefilename<ENTER>".
+#         if self.arg(1):
+#             # self.rest(1) contains self.arg(1) and everything that follows
+#             target_foldername = self.rest(1)
+#         else:
+#             # self.fm is a ranger.core.filemanager.FileManager object and gives
+#             # you access to internals of ranger.
+#             # self.fm.thisfile is a ranger.container.file.File object and is a
+#             # reference to the currently selected file.
+#             target_foldername = "Demo"
+
+#         self.fm.execute_console(f"shell mkdir ./{target_foldername}")
+#         self.fm.execute_console(f"shell mv %s ./{target_foldername}")
+#         self.fm.notify("Done moving.")
 
 class mkdirmv(Command):
-    """
-    :mkdirmv                                           
-
-    Create a directory and moves the selected files to the directory                      
-    """
-
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":mkdirmv somefilename<ENTER>".
-        if self.arg(1):
-            # self.rest(1) contains self.arg(1) and everything that follows
-            target_foldername = self.rest(1)
-        else:
-            # self.fm is a ranger.core.filemanager.FileManager object and gives
-            # you access to internals of ranger.
-            # self.fm.thisfile is a ranger.container.file.File object and is a
-            # reference to the currently selected file.
-            target_foldername = "Demo"
-
-        self.fm.execute_console(f"shell mkdir ./{target_foldername}")
-        self.fm.execute_console(f"shell mv %s ./{target_foldername}")
-
-
-class ranger_pycopy(Command):
-    """
-    :ranger_pycopy
-
-    Copy selected files to the current directory
-    """
-
-    def execute(self):
-        self.fm.execute_console(
-            f"shell ~/anaconda3/envs/util/bin/pycp -gi %c %d")
-
-# class moveh(Command):
-#     """
-#     :moveh
-
-#     Moves selected files to the highlighted directory
-#     """
-
-#     def execute(self):
-#         target_foldername = "%f"
-#         if target_foldername:
-#             self.fm.execute_console(f"shell -f mv -u %s %f")
-#         else:
-#             self.fm.notify("No folder highlighted", bad=True)
-
-
-# class copyh(Command):
-#     """
-#     :copyh
-
-#     Copy selected files to the highlighted directory
-#     """
-
-#     def execute(self):
-#         target_foldername = "%f"
-#         if target_foldername:
-#             self.fm.execute_console(f"shell -f rsync -ru %s %f")
-#         else:
-#             self.fm.notify("No folder highlighted", bad=True)
-
-
-class toggle_flat(Command):
-    """
-    :toggle_flat
-
-    Flattens or unflattens the directory view.
-    """
-
-    def execute(self):
-        if self.fm.thisdir.flat == 0:
-            self.fm.thisdir.unload()
-            self.fm.thisdir.flat = -1
-            self.fm.thisdir.load_content()
-        else:
-            self.fm.thisdir.unload()
-            self.fm.thisdir.flat = 0
-            self.fm.thisdir.load_content()
-
-
-class moveselected(Command):
-    """:moveselected <target_directory>"""
+    """:mkdirmv <target_directory>"""
 
     def execute(self):
         cwd = self.fm.thisdir
@@ -351,9 +298,80 @@ class moveselected(Command):
             makedirs(target_dir)
         for f in files:
             self.fm.rename(f, join(target_dir, f.relative_path))
+        self.fm.notify("Done moving.")
 
     def tab(self):
         return self._tab_directory_content()
+
+###############################################################################
+
+
+class ranger_pycopy(Command):
+    """
+    :ranger_pycopy
+
+    Copy selected files to the current directory
+    """
+
+    def execute(self):
+        self.fm.execute_console(
+            f"shell ~/anaconda3/envs/util/bin/pycp -gi %c %d")
+
+###############################################################################
+
+# class moveh(Command):
+#     """
+#     :moveh
+
+#     Moves selected files to the highlighted directory
+#     """
+
+#     def execute(self):
+#         target_foldername = "%f"
+#         if target_foldername:
+#             self.fm.execute_console(f"shell -f mv -u %s %f")
+#         else:
+#             self.fm.notify("No folder highlighted", bad=True)
+
+###############################################################################
+
+# class copyh(Command):
+#     """
+#     :copyh
+
+#     Copy selected files to the highlighted directory
+#     """
+
+#     def execute(self):
+#         target_foldername = "%f"
+#         if target_foldername:
+#             self.fm.execute_console(f"shell -f rsync -ru %s %f")
+#         else:
+#             self.fm.notify("No folder highlighted", bad=True)
+
+###############################################################################
+
+
+class toggle_flat(Command):
+    """
+    :toggle_flat
+
+    Flattens or unflattens the directory view.
+    """
+
+    def execute(self):
+        if self.fm.thisdir.flat == 0:
+            self.fm.thisdir.unload()
+            self.fm.thisdir.flat = -1
+            self.fm.thisdir.load_content()
+            self.fm.notify("Un-flattened.")
+        else:
+            self.fm.thisdir.unload()
+            self.fm.thisdir.flat = 0
+            self.fm.thisdir.load_content()
+            self.fm.notify("Flattened.")
+
+###############################################################################
 
 
 class copy_selected_to_highlight(Command):
@@ -373,6 +391,9 @@ class copy_selected_to_highlight(Command):
         self.fm.execute_console("copy")
         self.fm.do_cut = False
         self.fm.paste(dest=target_dir)
+        self.fm.notify("Done copying.")
+
+###############################################################################
 
 
 class directories_number_highlight(Command):
@@ -391,3 +412,5 @@ class directories_number_highlight(Command):
 
         self.fm.execute_console(f"shell -f directory-number {target_dir}")
         self.fm.notify("Done numbering directories.")
+
+###############################################################################
