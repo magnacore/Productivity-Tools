@@ -373,3 +373,20 @@ class copy_selected_to_highlight(Command):
         self.fm.execute_console("copy")
         self.fm.do_cut = False
         self.fm.paste(dest=target_dir)
+
+
+class directories_number_highlight(Command):
+    """:directories_number_highlight"""
+
+    def execute(self):
+        # Get highlighted directory
+        target_dir = self.fm.thisfile.relative_path
+
+        if not target_dir:
+            self.fm.notify("Error: target directory not highlighted", bad=True)
+            return
+
+        from os.path import join, expanduser
+        target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
+
+        self.fm.execute_console(f"shell -f directory-number {target_dir}")
