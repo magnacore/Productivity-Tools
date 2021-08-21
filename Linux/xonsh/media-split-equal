@@ -44,6 +44,8 @@ if to_split == True:
 		split_duration = float(split_duration)
 		
 		parts=int(duration//split_duration)
+
+		root_ext = os.path.splitext(media)
 		
 		if (parts != 0):
 			remaining = duration%split_duration
@@ -52,10 +54,10 @@ if to_split == True:
 
 			#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
 
-			new_filename = os.path.splitext(media)[0] + f'_SPLIT_EQUAL' + '.mkv'
+			new_filename = root_ext[0] + f'_SPLIT_EQUAL' + root_ext[1]
 			mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration_individual)+'s')
 		else:
-			new_filename = os.path.splitext(media)[0] + f'_SPLIT_EQUAL' + '.mkv'
+			new_filename = root_ext[0] + f'_SPLIT_EQUAL' + root_ext[1]
 			mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration)+'s')
 
 else:
