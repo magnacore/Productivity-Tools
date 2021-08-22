@@ -21,6 +21,14 @@ else:
 	split_duration = sys.argv[1]
 	threshold_seconds = sys.argv[2]
 
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
 
 allMediaFiles = glob.glob("*.*")
 allMediaFiles.sort()
@@ -31,11 +39,10 @@ print(f"{cyan}Looking for media longer than threshold of {int(threshold_seconds)
 
 for media in allMediaFiles:
 
-	mimestart = mimetypes.guess_type(media)[0]
+	mimestart = get_mime(media)
 
 	if mimestart != None:
-		mimestart = mimestart.split('/')[0]
-
+		
 		if mimestart in ['audio', 'video']:
 
 			duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
@@ -50,11 +57,10 @@ if to_split == True:
 	
 	for media in tqdm(allMediaFiles):
 
-		mimestart = mimetypes.guess_type(media)[0]
+		mimestart = get_mime(media)
 
 		if mimestart != None:
-			mimestart = mimestart.split('/')[0]
-
+			
 			if mimestart in ['audio', 'video']:
 
 				duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
