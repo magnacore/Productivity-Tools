@@ -7,6 +7,9 @@ import glob
 import sys
 import datetime
 from tqdm import tqdm
+import mimetypes
+
+mimetypes.init()
 
 if len(sys.argv) == 1:
 	split_duration = '300'
@@ -19,7 +22,7 @@ else:
 	threshold_seconds = sys.argv[2]
 
 
-allMediaFiles = glob.glob("*.m*")
+allMediaFiles = glob.glob("*.*")
 allMediaFiles.sort()
 
 to_split = False
@@ -27,38 +30,60 @@ to_split = False
 print(f"{cyan}Looking for media longer than threshold of {int(threshold_seconds)//60} minutes...{no_color}")
 
 for media in allMediaFiles:
-	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
-	duration = float(duration)
-	
-	if duration > float(threshold_seconds):
-		print(f"{cyan}Media longer than threshold of {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
-		to_split = True
-		break
+
+	mimestart = mimetypes.guess_type(media)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+
+		if mimestart in ['audio', 'video']:
+
+			duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
+			duration = float(duration)
+			
+			if duration > float(threshold_seconds):
+				print(f"{cyan}Media longer than threshold of {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
+				to_split = True
+				break
 
 if to_split == True:
 	
 	for media in tqdm(allMediaFiles):
-		duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
-		
-		duration = float(duration)
-		split_duration = float(split_duration)
-		
-		parts=int(duration//split_duration)
 
-		root_ext = os.path.splitext(media)
-		
-		if (parts != 0):
-			remaining = duration%split_duration
-			excess = round(remaining/parts,0)
-			split_duration_individual = int(split_duration + excess)
+		mimestart = mimetypes.guess_type(media)[0]
 
-			#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
+		if mimestart != None:
+			mimestart = mimestart.split('/')[0]
 
-			new_filename = root_ext[0] + f'_SPLIT_EQUAL' + root_ext[1]
-			mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration_individual)+'s')
-		else:
-			new_filename = root_ext[0] + f'_SPLIT_EQUAL' + root_ext[1]
-			mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration)+'s')
+			if mimestart in ['audio', 'video']:
+
+				duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
+				
+				duration = float(duration)
+				split_duration = float(split_duration)
+				
+				parts=int(duration//split_duration)
+
+				root_ext = os.path.splitext(media)
+				extension = root_ext[1]
+
+				if mimestart == 'audio':
+					extension = ".mka"
+				elif mimestart == 'video':
+					extension = ".mkv"
+				
+				if (parts != 0):
+					remaining = duration%split_duration
+					excess = round(remaining/parts,0)
+					split_duration_individual = int(split_duration + excess)
+
+					#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
+
+					new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
+					mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration_individual)+'s')
+				else:
+					new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
+					mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration)+'s')
 
 else:
 	print(f"{cyan}Nothing to split...exiting.{no_color}")
