@@ -298,7 +298,7 @@ class mkdirmv(Command):
             makedirs(target_dir)
         for f in files:
             self.fm.rename(f, join(target_dir, f.relative_path))
-        self.fm.notify("Done moving.")
+        self.fm.notify(f"Done moving to {target_dir}")
 
     def tab(self):
         return self._tab_directory_content()
@@ -391,7 +391,7 @@ class copy_selected_to_highlight(Command):
         self.fm.execute_console("copy")
         self.fm.do_cut = False
         self.fm.paste(dest=target_dir)
-        self.fm.notify("Done copying.")
+        self.fm.notify(f"Done copying to {target_dir}")
 
 ###############################################################################
 
