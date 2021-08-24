@@ -40,6 +40,8 @@ set clipboard+=unnamedplus
 " spelling languages
 set spelllang=en,cjk
 " Enable the line below to turn on spell checking by default
-" set spell
+set spell
 nnoremap <silent> <F11> :set spell!<cr>
 inoremap <silent> <F11> <C-O>:set spell!<cr>
+
+" set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
