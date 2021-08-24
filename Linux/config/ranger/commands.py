@@ -107,14 +107,7 @@ class fzf_select(Command):
 
         env = os.environ.copy()
         env['FZF_DEFAULT_COMMAND'] = fzf_default_command
-        env['FZF_DEFAULT_OPTS'] = '--height=40% --layout=reverse --ansi --preview="{}"'.format('''
-            (
-                batcat --color=always {} ||
-                bat --color=always {} ||
-                cat {} ||
-                tree -ahpCL 3 -I '.git' -I '*.py[co]' -I '__pycache__' {}
-            ) 2>/dev/null | head -n 100
-        ''')
+        env['FZF_DEFAULT_OPTS'] = "--height=100% --layout=reverse --ansi --preview='less {}'" # TODO Replace with Pistol
 
         fzf = self.fm.execute_command('fzf --no-multi', env=env,
                                       universal_newlines=True, stdout=subprocess.PIPE)
