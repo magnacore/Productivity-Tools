@@ -24,7 +24,7 @@ set wrap
 
 set history=1000
 
-set scrolloff=10
+set scrolloff=5
 
 set tabstop=4
 
@@ -44,4 +44,8 @@ set spell
 nnoremap <silent> <F11> :set spell!<cr>
 inoremap <silent> <F11> <C-O>:set spell!<cr>
 
-" set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
+" Neovide
+set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
+let g:neovide_transparency=0.9
+let g:neovide_cursor_antialiasing=v:true
+" let g:neovide_cursor_vfx_mode = "pixiedust"
