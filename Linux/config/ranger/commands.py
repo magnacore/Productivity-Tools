@@ -388,7 +388,6 @@ class copy_selected_to_highlight(Command):
 
 ###############################################################################
 
-
 class directories_number_highlight(Command):
     """:directories_number_highlight"""
 
@@ -403,7 +402,7 @@ class directories_number_highlight(Command):
         from os.path import join, expanduser
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
 
-        self.fm.execute_console(f"shell -f directory-number {target_dir}")
+        self.fm.execute_console(f"shell -f directory-number '{target_dir}'")
         self.fm.notify("Done numbering directories.")
 
 ###############################################################################
