@@ -406,3 +406,37 @@ class directories_number_highlight(Command):
         self.fm.notify("Done numbering directories.")
 
 ###############################################################################
+
+class mark_tag(Command):
+    """:mark_tag [<tags>]
+
+    Mark all tags that are tagged with either of the given tags.
+    When leaving out the tag argument, all tagged files are marked.
+    """
+    do_mark = True
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        tags = self.rest(1).replace(" ", "")
+        if not self.fm.tags or not cwd.files:
+            return
+        for fileobj in cwd.files:
+            try:
+                tag = self.fm.tags.tags[fileobj.realpath]
+            except KeyError:
+                continue
+            if not tags or tag in tags:
+                cwd.mark_item(fileobj, val=self.do_mark)
+        self.fm.ui.status.need_redraw = True
+        self.fm.ui.need_redraw = True
+
+
+class unmark_tag(mark_tag):
+    """:unmark_tag [<tags>]
+
+    Unmark all tags that are tagged with either of the given tags.
+    When leaving out the tag argument, all tagged files are unmarked.
+    """
+    do_mark = False
+
+###############################################################################
