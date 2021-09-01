@@ -1,0 +1,50 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+import sys
+from tqdm import tqdm
+import mimetypes
+
+mimetypes.init()
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	print("Resizing highlighted file...") # If no file is selected, the highlighted file is sent as the %s
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
+
+if selection:
+	resize_dimension = 1080
+	
+	allMediaFiles = sys.argv[1:]
+	allMediaFiles.sort()
+
+	print(f"{cyan}Changing image dimension to {resize_dimension}p...{no_color}")
+
+	for media in tqdm(allMediaFiles):
+
+		mimestart = get_mime(media)
+
+		if mimestart != None:
+			
+			if mimestart in ['image']:
+				root_ext = os.path.splitext(media)
+				file_name = root_ext[0]
+				extension = root_ext[1]
+
+				new_filename = file_name + f'_{resize_dimension}' + extension
+				convert @(media) -resize x@(resize_dimension) @(new_filename)

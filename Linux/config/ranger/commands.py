@@ -107,7 +107,8 @@ class fzf_select(Command):
 
         env = os.environ.copy()
         env['FZF_DEFAULT_COMMAND'] = fzf_default_command
-        env['FZF_DEFAULT_OPTS'] = "--height=100% --layout=reverse --ansi --preview='less {}'" # TODO Replace with Pistol
+        # TODO Replace with Pistol
+        env['FZF_DEFAULT_OPTS'] = "--height=100% --layout=reverse --ansi --preview='less {}'"
 
         fzf = self.fm.execute_command('fzf --no-multi', env=env,
                                       universal_newlines=True, stdout=subprocess.PIPE)
@@ -388,6 +389,7 @@ class copy_selected_to_highlight(Command):
 
 ###############################################################################
 
+
 class directories_number_highlight(Command):
     """:directories_number_highlight"""
 
@@ -406,6 +408,7 @@ class directories_number_highlight(Command):
         self.fm.notify("Done numbering directories.")
 
 ###############################################################################
+
 
 class mark_tag(Command):
     """:mark_tag [<tags>]
@@ -438,5 +441,16 @@ class unmark_tag(mark_tag):
     When leaving out the tag argument, all tagged files are unmarked.
     """
     do_mark = False
+
+###############################################################################
+
+
+class convert_image_1080(Command):
+    """:convert_image_1080"""
+
+    def execute(self):
+        # Each file is passed as an argument
+        self.fm.execute_console(f"shell image-resize-ranger %s")
+
 
 ###############################################################################
