@@ -52,12 +52,19 @@ set recolor-lightcolor "#000000" #00
 set recolor-darkcolor "#E0E0E0" #06
 set recolor-reverse-video "true"
 set recolor-keephue "true"
-
+map c recolor-keephue
 
 set render-loading "false"
 set scroll-step 50
-unmap f
-map f toggle_fullscreen
+# unmap f
+map f11 toggle_fullscreen
 map [fullscreen] f toggle_fullscreen
 
 map <C-i> recolor
+
+map D toggle_page_mode
+map r reload
+map R rotate
+map p print
+
+# f to follow links on the page
