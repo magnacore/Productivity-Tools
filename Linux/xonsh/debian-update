@@ -17,6 +17,7 @@ flatpak update -y
 print(f"{cyan}Moving Files...{no_color}")
 mv --backup=numbered @(p"~/MEGAsync/Mobile Uploads")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Productivity_System/01 TASK CAPTURE BIN/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
 # Monday is 0
 day_of_week = datetime.datetime.today().weekday()
