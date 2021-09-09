@@ -15,6 +15,10 @@ set scroll-step 100
 
 #zoom settings
 set zoom-min 10
+
+# Shows  or  hides GUI elements.  
+# When it contains 'c', the command line is showed. (:)
+# When it contains 's', the statusbar is showed. (C-n)
 set guioptions ""
 
 # zathurarc-dark
