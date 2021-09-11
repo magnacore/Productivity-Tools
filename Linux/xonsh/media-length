@@ -5,15 +5,31 @@ no_color = '\x1b[0m'
 import glob
 import datetime
 from tqdm import tqdm
+import mimetypes
 
-allMediaFiles = glob.glob("*.m*")
-allMediaFiles.sort()
+mimetypes.init()
+
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
+
+allMediaFiles = glob.glob("*.*")
+# allMediaFiles.sort()
 
 total_duration = 0.0
 
 for media in tqdm(allMediaFiles):
-    duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
-    total_duration += float(duration)
+    mimestart = get_mime(media)
+
+    if mimestart != None:		
+        if mimestart in ['audio', 'video']:    
+            duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
+            total_duration += float(duration)
 
 print(f"{cyan}Total media duration:{no_color}")
 print(datetime.timedelta(seconds = round(total_duration,0)))
