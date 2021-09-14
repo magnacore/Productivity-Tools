@@ -4,10 +4,26 @@ import os
 import glob
 import sys
 from tqdm import tqdm
+import mimetypes
 
-allVideoFiles = glob.glob("*.m*")
+mimetypes.init()
+
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
+
+allVideoFiles = glob.glob("*.*")
 
 for video in tqdm(allVideoFiles):
-	new_filename = os.path.splitext(video)[0] + '.YouTube'
-	touch @(new_filename)
-	# echo @(new_filename) > @(new_filename)
+	mimestart = get_mime(video)
+
+	if mimestart != None:		
+		if mimestart in ['video']: 
+			new_filename = os.path.splitext(video)[0] + '.YouTube'
+			touch @(new_filename)
+			# echo @(new_filename) > @(new_filename)

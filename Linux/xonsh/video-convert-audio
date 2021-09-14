@@ -5,14 +5,30 @@ no_color = '\x1b[0m'
 import os
 import glob
 from tqdm import tqdm
+import mimetypes
 
-allVideoFiles = glob.glob("*.m*")
-allVideoFiles.sort()
+mimetypes.init()
+
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
+
+allFiles = glob.glob("*.*")
+# allFiles.sort()
 
 print(f"{cyan}Extracting audio form video...{no_color}")
 
 mkdir audio
 
-for video in tqdm(allVideoFiles):
-	filename = os.path.splitext(video)[0]+'.mka'
-	ffmpeg -i @(video) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
+for file in tqdm(allFiles):
+	mimestart = get_mime(file)
+	
+	if mimestart != None:		
+		if mimestart in ['video']: 
+			filename = os.path.splitext(file)[0]+'.mka'
+			ffmpeg -i @(file) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
