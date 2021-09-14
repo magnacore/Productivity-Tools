@@ -28,7 +28,7 @@ print(f"{cyan}Syncing zathurarc...{no_color}")
 rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
 
 print(f"{cyan}Syncing Xonsh scripts...{no_color}")
-rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh
+rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
 
 print(f"{cyan}Syncing Ranger scripts...{no_color}")
 rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/Linux/config/ranger/
