@@ -27,7 +27,7 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     print(f"{cyan}Synchronizing...{no_color}")
     rsync --delete --progress -vahi $HOME/ /media/$USER/laptop_backup_full/@current    
 
-    date > ~/Bin/logs/laptop-backup-full.txt
+    date > ~/Software/logs/laptop-backup-full.txt
     print(f"{cyan}Done.{no_color}")
     sudo btrfs filesystem show
 else:

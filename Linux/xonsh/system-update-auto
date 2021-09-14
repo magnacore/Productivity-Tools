@@ -48,4 +48,4 @@ if(day_of_week == 0):
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
 
-date > /home/manuj/Bin/logs/system-update.txt
+date > /home/manuj/Software/logs/system-update.txt

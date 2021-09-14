@@ -1,0 +1,36 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+dotfiles_path = p"~/Projects/Productivity-Tools/Linux/dotFiles/"
+config_path = p"~/Projects/Productivity-Tools/Linux/config/"
+
+print(f"{cyan}Syncing .bashrc...{no_color}")
+rsync --delete --progress -vahi ~/.bashrc @(dotfiles_path)
+
+print(f"{cyan}Syncing .bashrc_aliases...{no_color}")
+rsync --delete --progress -vahi ~/.bash_aliases @(dotfiles_path)
+
+print(f"{cyan}Syncing .xonshrc...{no_color}")
+rsync --delete --progress -vahi ~/.xonshrc @(dotfiles_path)
+
+print(f"{cyan}Syncing .alacritty.yml...{no_color}")
+rsync --delete --progress -vahi ~/.alacritty.yml @(dotfiles_path)
+
+print(f"{cyan}Syncing .vimrc...{no_color}")
+rsync --delete --progress -vahi ~/.vimrc @(dotfiles_path)
+
+print(f"{cyan}Syncing mpv.conf...{no_color}")
+rsync --delete --progress -vahi ~/.config/mpv/mpv.conf @(config_path)
+
+print(f"{cyan}Syncing zathurarc...{no_color}")
+rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
+
+print(f"{cyan}Syncing Xonsh scripts...{no_color}")
+rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh
+
+print(f"{cyan}Syncing Ranger scripts...{no_color}")
+rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/Linux/config/ranger/
+
+print(f"{cyan}Done.{no_color}")

@@ -46,6 +46,6 @@ inoremap <silent> <F11> <C-O>:set spell!<cr>
 
 " Neovide
 set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
-let g:neovide_transparency=0.9
+let g:neovide_transparency=0.95
 let g:neovide_cursor_antialiasing=v:true
 " let g:neovide_cursor_vfx_mode = "pixiedust"

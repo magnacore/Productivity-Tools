@@ -2,4 +2,4 @@
 
 rsync --delete --progress -vahi /media/manuj/LEARNING/ /media/manuj/TutsBackup/BACKUP/
 
-date > ~/Bin/logs/tutorials-backup.txt
+date > ~/Software/logs/tutorials-backup.txt

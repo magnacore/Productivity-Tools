@@ -50,4 +50,4 @@ else:
 
 hdd-size
 
-date > /home/manuj/Bin/logs/system-update.txt
+date > /home/manuj/Software/logs/system-update.txt
