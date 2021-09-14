@@ -17,9 +17,9 @@ def get_mime(file):
 	else:
 		return None
 
-allVideoFiles = glob.glob("*.*")
+allFiles = glob.glob("*.*")
 
-for video in tqdm(allVideoFiles):
+for video in tqdm(allFiles):
 	mimestart = get_mime(video)
 
 	if mimestart != None:		
