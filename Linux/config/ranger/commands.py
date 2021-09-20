@@ -272,6 +272,24 @@ class fd_prev(Command):
 class mkdirmv(Command):
     """:mkdirmv <target_directory>"""
 
+    def make_safe_path(self, dst):
+        if not os.path.exists(dst):
+            return dst
+
+        dst_name, dst_ext = os.path.splitext(dst)
+
+        if not dst_name.endswith("_"):
+            dst_name += "_"
+            if not os.path.exists(dst_name + dst_ext):
+                return dst_name + dst_ext
+        n = 0
+        test_dst = dst_name + str(n)
+        while os.path.exists(test_dst + dst_ext):
+            n += 1
+            test_dst = dst_name + str(n)
+
+        return test_dst + dst_ext
+
     def execute(self):
         cwd = self.fm.thisdir
         cf = self.fm.thisfile
@@ -287,11 +305,17 @@ class mkdirmv(Command):
 
         from os.path import join, expanduser, lexists
         from os import makedirs
+
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
+
         if not lexists(target_dir):
             makedirs(target_dir)
+
         for f in files:
-            self.fm.rename(f, join(target_dir, f.relative_path))
+            destination = self.make_safe_path(
+                join(target_dir, f.relative_path))
+            self.fm.rename(f, destination)
+
         self.fm.notify(f"Done moving to {target_dir}")
 
     def tab(self):
