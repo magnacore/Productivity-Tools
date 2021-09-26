@@ -316,6 +316,9 @@ class mkdirmv(Command):
                 join(target_dir, f.relative_path))
             self.fm.rename(f, destination)
 
+        # Change mode to normal in case visual selection mode was on
+        self.fm.change_mode('normal')
+
         self.fm.notify(f"Done moving to {target_dir}")
 
     def tab(self):
