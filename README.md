@@ -75,4 +75,4 @@ A collection of scripts I use for my productivity system. The commands follow th
 * 7z Unrar : Unrar a *.rar file
 * Hibernate : If supported, hibernate PopOS
 
-And manu manu more...! :D
+And many many more...! :D
