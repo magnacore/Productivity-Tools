@@ -114,6 +114,9 @@ if to_split == True:
 				else:
 					new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
 					mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration)+'s')
+			
+			else:
+				print(f"Skipping {media}")
 
 else:
 	print(f"{cyan}Nothing to split...exiting.{no_color}")

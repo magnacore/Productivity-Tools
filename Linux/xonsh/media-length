@@ -47,6 +47,8 @@ for file in tqdm(allFiles):
 		if mimestart in ['audio', 'video']:
 			duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
 			total_duration += float(duration)
+		else:
+			print(f"Skipping {file}")
 
 print(f"{cyan}Total media duration:{no_color}")
 print(datetime.timedelta(seconds = round(total_duration,0)))
