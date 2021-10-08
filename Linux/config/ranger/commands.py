@@ -336,7 +336,7 @@ class ranger_pycopy(Command):
 
     def execute(self):
         self.fm.execute_console(
-            f"shell ~/anaconda3/envs/util/bin/pycp -gi %c %d")
+            f"shell file-copy-ranger %c %d")
 
 ###############################################################################
 

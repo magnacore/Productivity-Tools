@@ -1,0 +1,23 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+import sys
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	print("No file copied...") # If no file is selected, the highlighted file is sent as the %s
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	
+	allFiles = sys.argv[1:-1]
+
+	target_dir = sys.argv[-1]
+
+	~/anaconda3/envs/util/bin/pycp -gisp @(allFiles) @(target_dir)
