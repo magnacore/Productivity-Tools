@@ -15,7 +15,9 @@ elif len(sys.argv) > 1:
 	selection = True
 
 if selection:
-	
+	# The first element in the list is the current file name 
+	# The send onwards are the %c sent from Ranger
+	# We also sent a %d so that is the last item in the list
 	allFiles = sys.argv[1:-1]
 
 	target_dir = sys.argv[-1]

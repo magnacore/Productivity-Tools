@@ -335,6 +335,8 @@ class ranger_pycopy(Command):
     """
 
     def execute(self):
+        # We are passing current directory as the second parameter
+        # In the Xonsh script it will be the last item in the list
         self.fm.execute_console(
             f"shell file-copy-ranger %c %d")
 
