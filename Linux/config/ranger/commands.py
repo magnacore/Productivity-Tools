@@ -513,9 +513,9 @@ class open_in_tabs(Command):
 
 class gpg_detached_sign(Command):
     """
-    :open_in_tabs
-    Open one highlighted or several selected folders in new tab
-    If only one folder is highlighted, it will be treated as a single selection
+    :gpg_detached_sign
+    Creates detached signatures for a file using gpg
+    If only one file is highlighted, it will be treated as a single selection
     """
 
     def execute(self):
@@ -533,6 +533,65 @@ class gpg_detached_sign(Command):
         for f in files:
             self.fm.execute_console(
                 f"shell -f gpg --detach-sign {f.relative_path}")
+
+    def tab(self):
+        return self._tab_directory_content()
+
+###############################################################################
+
+
+class gpg_encrypt_file(Command):
+    """
+    :gpg_encrypt_file
+    Encrypts a file using gpg
+    If only one file is highlighted, it will be treated as a single selection
+    """
+
+    def execute(self):
+        from os.path import join, expanduser, lexists
+        from os import makedirs
+
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+
+        files = [f for f in self.fm.thistab.get_selection()]
+
+        for f in files:
+            self.fm.execute_console(
+                f"shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' {f.relative_path}")
+
+    def tab(self):
+        return self._tab_directory_content()
+
+###############################################################################
+
+
+class gpg_decrypt_file(Command):
+    """
+    :gpg_decrypt_file
+    Decrypts a file using gpg
+    If only one file is highlighted, it will be treated as a single selection
+    """
+
+    def execute(self):
+        from os.path import join, expanduser, lexists
+        from os import makedirs
+
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+
+        files = [f for f in self.fm.thistab.get_selection()]
+
+        for f in files:
+            root_ext = os.path.splitext(f.relative_path)
+            self.fm.execute_console(
+                f"shell -f gpg -o {root_ext[0]} -d {f.relative_path}")
 
     def tab(self):
         return self._tab_directory_content()
