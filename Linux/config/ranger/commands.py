@@ -507,9 +507,6 @@ class open_in_tabs(Command):
             # narg=f.relative_path sets the name of the tab
             self.fm.tab_new(narg=f.relative_path, path=f"{f}")
 
-    def tab(self):
-        return self._tab_directory_content()
-
 ###############################################################################
 
 
@@ -536,8 +533,7 @@ class gpg_detached_sign(Command):
             self.fm.execute_console(
                 f"shell -f gpg --detach-sign {f.relative_path}")
 
-    def tab(self):
-        return self._tab_directory_content()
+        self.fm.notify("Done signing.")
 
 ###############################################################################
 
@@ -565,8 +561,7 @@ class gpg_encrypt_file(Command):
             self.fm.execute_console(
                 f"shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' {f.relative_path}")
 
-    def tab(self):
-        return self._tab_directory_content()
+        self.fm.notify("Done encrypting.")
 
 ###############################################################################
 
@@ -595,7 +590,6 @@ class gpg_decrypt_file(Command):
             self.fm.execute_console(
                 f"shell -f gpg -o {root_ext[0]} -d {f.relative_path}")
 
-    def tab(self):
-        return self._tab_directory_content()
+        self.fm.notify("Done decrypting.")
 
 ###############################################################################
