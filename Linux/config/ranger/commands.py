@@ -492,9 +492,6 @@ class open_in_tabs(Command):
     """
 
     def execute(self):
-        from os.path import join, expanduser, lexists
-        from os import makedirs
-
         cwd = self.fm.thisdir
         cf = self.fm.thisfile
         if not cwd or not cf:
@@ -518,9 +515,6 @@ class gpg_detached_sign(Command):
     """
 
     def execute(self):
-        from os.path import join, expanduser, lexists
-        from os import makedirs
-
         cwd = self.fm.thisdir
         cf = self.fm.thisfile
         if not cwd or not cf:
@@ -531,7 +525,7 @@ class gpg_detached_sign(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"shell -f gpg --detach-sign {f.relative_path}")
+                f"shell -f gpg --detach-sign '{f.relative_path}'")
 
         self.fm.notify("Done signing.")
 
@@ -546,9 +540,6 @@ class gpg_encrypt_file(Command):
     """
 
     def execute(self):
-        from os.path import join, expanduser, lexists
-        from os import makedirs
-
         cwd = self.fm.thisdir
         cf = self.fm.thisfile
         if not cwd or not cf:
@@ -559,9 +550,7 @@ class gpg_encrypt_file(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' {f.relative_path}")
-
-        self.fm.notify("Done encrypting.")
+                f"shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' '{f.relative_path}'")
 
 ###############################################################################
 
@@ -574,9 +563,6 @@ class gpg_decrypt_file(Command):
     """
 
     def execute(self):
-        from os.path import join, expanduser, lexists
-        from os import makedirs
-
         cwd = self.fm.thisdir
         cf = self.fm.thisfile
         if not cwd or not cf:
@@ -588,8 +574,6 @@ class gpg_decrypt_file(Command):
         for f in files:
             root_ext = os.path.splitext(f.relative_path)
             self.fm.execute_console(
-                f"shell -f gpg -o {root_ext[0]} -d {f.relative_path}")
-
-        self.fm.notify("Done decrypting.")
+                f"shell -f gpg -o '{root_ext[0]}' -d '{f.relative_path}'")
 
 ###############################################################################
