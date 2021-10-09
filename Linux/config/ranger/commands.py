@@ -532,6 +532,31 @@ class gpg_detached_sign(Command):
 ###############################################################################
 
 
+class gpg_signature_verify(Command):
+    """
+    :gpg_signature_verify
+    Verifies selected signatures
+    If only one file is highlighted, it will be treated as a single selection
+    """
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+
+        files = [f for f in self.fm.thistab.get_selection()]
+
+        for f in files:
+            root_ext = os.path.splitext(f.relative_path)
+            if root_ext[1] == ".sig":
+                self.fm.execute_console(
+                    f"""shell -w gpg --verify "{f.relative_path}" """)
+
+###############################################################################
+
+
 class gpg_encrypt_file(Command):
     """
     :gpg_encrypt_file
