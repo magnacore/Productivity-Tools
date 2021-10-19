@@ -18,40 +18,35 @@ font:
     style: Bold Italic
 
   size: 13
-
-
-# VSCode's integrated terminal default colors
-# Primary and dimmed colors needed
-
 colors:
-  # Default colors
-  primary:
-    background: '#1e1e1e' #Background from Dark Theme
-    foreground: '#cccccc'
+  cursor:
+    text: '#fefff2'
+    cursor: '#f0cc09'
 
-  # Selection colors
   selection:
-    text: CellForeground
-    background: '#565656'
+    text: '#b5b5b5'
+    background: '#18354f'
 
-  # Normal colors
+  primary:
+    background: '#132738'
+    foreground: '#ffffff'
+
   normal:
-    black:   '#000000'
-    red:     '#cd3131'
-    green:   '#0dbc79'
-    yellow:  '#e5e510'
-    blue:    '#2472c8'
-    magenta: '#bc3fbc'
-    cyan:    '#11a8cd'
-    white:   '#e5e5e5'
+    black: '#000000'
+    red: '#ff0000'
+    green: '#38de21'
+    yellow: '#ffe50a'
+    blue: '#1460d2'
+    magenta: '#ff005d'
+    cyan: '#00bbbb'
+    white: '#bbbbbb'
 
-  # Bright colors
   bright:
-    black:   '#666666'
-    red:     '#f14c4c'
-    green:   '#23d18b'
-    yellow:  '#f5f543'
-    blue:    '#3b8eea'
-    magenta: '#d670d6'
-    cyan:    '#29b8db'
-    white:   '#e5e5e5'
+    black: '#555555'
+    red: '#f40e17'
+    green: '#3bd01d'
+    yellow: '#edc809'
+    blue: '#5555ff'
+    magenta: '#ff55ff'
+    cyan: '#6ae3fa'
+    white: '#ffffff'
