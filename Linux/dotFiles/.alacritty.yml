@@ -19,34 +19,29 @@ font:
 
   size: 13
 colors:
-  cursor:
-    text: '#fefff2'
-    cursor: '#f0cc09'
-
-  selection:
-    text: '#b5b5b5'
-    background: '#18354f'
-
+  name: Monokai (dark)
+  author: Chris Kempson
   primary:
-    background: '#132738'
-    foreground: '#ffffff'
-
+    background: "#272822"
+    foreground: "#f8f8f2"
+  cursor:
+    text: "#272822"
+    cursor: "#f8f8f2"
   normal:
-    black: '#000000'
-    red: '#ff0000'
-    green: '#38de21'
-    yellow: '#ffe50a'
-    blue: '#1460d2'
-    magenta: '#ff005d'
-    cyan: '#00bbbb'
-    white: '#bbbbbb'
-
+    black: "#272822"
+    red: "#f92672"
+    green: "#a6e22e"
+    yellow: "#f4bf75"
+    blue: "#66d9ef"
+    magenta: "#ae81ff"
+    cyan: "#a1efe4"
+    white: "#f8f8f2"
   bright:
-    black: '#555555'
-    red: '#f40e17'
-    green: '#3bd01d'
-    yellow: '#edc809'
-    blue: '#5555ff'
-    magenta: '#ff55ff'
-    cyan: '#6ae3fa'
-    white: '#ffffff'
+    black: "#75715e"
+    red: "#f92672"
+    green: "#a6e22e"
+    yellow: "#f4bf75"
+    blue: "#66d9ef"
+    magenta: "#ae81ff"
+    cyan: "#a1efe4"
+    white: "#f9f8f5"
