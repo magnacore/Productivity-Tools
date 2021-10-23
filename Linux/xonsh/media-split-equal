@@ -44,6 +44,15 @@ def get_mime(file):
 	else:
 		return None
 
+def get_duration(file):
+	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
+
+	if duration == '':
+		print(f"{file} is not returning a valid duration.")
+		duration = '0'
+
+	return float(duration)
+
 allFiles = glob.glob("*.*")
 allFiles.sort()
 
@@ -58,8 +67,7 @@ for file in allFiles:
 	if mimestart != None:		
 		if mimestart in ['audio', 'video']:
 
-			duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
-			duration = float(duration)
+			duration = get_duration(file)
 			
 			if duration > float(threshold_seconds):
 				print(f"{cyan}Media longer than threshold of {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
@@ -87,9 +95,7 @@ if to_split == True:
 			
 			if mimestart in ['audio', 'video']:
 
-				duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
-				
-				duration = float(duration)
+				duration = get_duration(file)
 				split_duration = float(split_duration)
 				
 				parts=int(duration//split_duration)

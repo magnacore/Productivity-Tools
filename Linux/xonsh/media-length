@@ -29,6 +29,15 @@ def get_mime(file):
 	else:
 		return None
 
+def get_duration(file):
+	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
+
+	if duration == '':
+		print(f"{file} is not returning a valid duration.")
+		duration = '0'
+
+	return float(duration)
+
 allFiles = glob.glob("*.*")
 allFiles.sort()
 
@@ -45,8 +54,8 @@ for file in tqdm(allFiles):
 	mimestart = get_mime(file)
 	if mimestart != None:
 		if mimestart in ['audio', 'video']:
-			duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
-			total_duration += float(duration)
+			duration = get_duration(file)
+			total_duration += duration
 		else:
 			print(f"Skipping {file}")
 
