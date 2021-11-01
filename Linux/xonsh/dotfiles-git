@@ -33,4 +33,7 @@ rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh
 print(f"{cyan}Syncing Ranger scripts...{no_color}")
 rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/Linux/config/ranger/
 
+print(f"{cyan}Syncing Rofi...{no_color}")
+rsync --delete --progress -vahi ~/.config/rofi/ ~/Projects/Productivity-Tools/Linux/config/rofi/
+
 print(f"{cyan}Done.{no_color}")
