@@ -23,10 +23,8 @@ execx($(zoxide init xonsh), 'exec', __xonsh__.ctx, filename='zoxide')
 
 aliases ["vvv"] = "bash /home/manuj/Software/VVV-1.4.0-x86_64/vvv-start.sh"
 aliases ["cmap"] = "bash /home/manuj/Software/CMapTools/bin/CmapTools"
-aliases ["png-convert-pdf"] = "convert *.png output.pdf"
 aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
-aliases ["text-split"] = "split --elide-empty-files --suffix-length=3 --numeric-suffixes=1 --line-bytes=10K"
 
 # =================================== paths =================================
 # We can also source paths from bash : source-bash .profile if we want to use the same paths between xonsh and bash
