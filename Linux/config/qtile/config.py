@@ -94,9 +94,9 @@ keys = [
 	Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='toggle floating'),
 	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='toggle fullscreen'),
 	
-	Key([], "XF86AudioMute", lazy.spawn("amixer -D pulse sset Master toggle")),
-    Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pulse sset Master 5%-")),
-    Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pulse sset Master 5%+")),
+	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
+    Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
+    Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
 
     Key([mod2, mod3], "a", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
     Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch TODO List"),
@@ -210,7 +210,15 @@ screens = [
 
                 # Volume
 				widget.TextBox( text = " 🔊", foreground = colors[5], background = colors[1],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 0, fontsize = 12),
-                widget.Volume( fontsize = 14, fmt = '{} ', foreground = colors[5], background = colors[1], padding = 5),
+                widget.Volume(fontsize = 14, 
+                fmt = '{} ', 
+                foreground = colors[5], 
+                background = colors[1], 
+                padding = 5,
+                # mute_command = 'amixer -D pipewire sset Master toggle'.split(),
+                # volume_up_command = 'amixer -D pipewire sset Master 1%+'.split(),
+                # volume_down_command = 'amixer -D pipewire sset Master 1%-'.split(),
+                get_volume_command = 'amixer -D pipewire get Master'.split()),
 
                 # Battery
                 widget.TextBox(text = " 🌡", foreground = colors[2],background = colors[4],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 0, fontsize = 12),
