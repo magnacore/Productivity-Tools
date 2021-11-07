@@ -224,6 +224,10 @@ screens = [
                 widget.TextBox(text = " 🌡", foreground = colors[2],background = colors[4],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 0, fontsize = 12),
                 widget.Battery(fontsize = 14, foreground = colors[2],background = colors[4], padding = 5, charge_char='C', discharge_char='D', full_char='F', notify_below=5),
                 widget.BatteryIcon(foreground = colors[2],background = colors[4], padding = 5),
+
+                # Wallpaper
+                # widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['xwallpaper', '--zoom']),
+                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🖬 '),
                 
                 # System Tray
                 widget.Systray(),
