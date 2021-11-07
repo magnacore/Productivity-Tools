@@ -1,4 +1,7 @@
 #!/home/manuj/anaconda3/envs/util/bin/python3
+# Since we are importing python3 from util environment, PyPDF2, tqdm should be installed in util environment too
+# conda install -c conda-forge pypdf2
+# conda install -c conda-forge tqdm
 
 import os
 import glob
