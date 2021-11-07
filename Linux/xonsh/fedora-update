@@ -1,0 +1,56 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import datetime
+
+print(f"{cyan}Update locate database...{no_color}")
+sudo updatedb
+
+print(f"{cyan}Delete old files in trash...{no_color}")
+trash-empty 3
+
+print(f"{cyan}Moving Files...{no_color}")
+mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+mv --backup=numbered @(p"~/Productivity_System/01 TASK CAPTURE BIN/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+
+print(f"{cyan}Update repositories...{no_color}")
+sudo dnf check-update -y
+
+print(f"{cyan}Upgrade software...{no_color}")
+sudo dnf upgrade -y
+flatpak update -y
+
+# Monday is 0
+day_of_week = datetime.datetime.today().weekday()
+
+if(day_of_week == 0):
+    print(f"{cyan}Clean software cache...{no_color}")
+
+    sudo dnf autoremove -y
+    sudo dnf clean all -y
+    
+    flatpak uninstall --unused -y
+
+    print(f"{cyan}Deleting .DS_Store files...{no_color}")
+    find $HOME/ -type f -iname ".DS_Store" -delete
+
+    print(f"{cyan}Deleting desktop.ini files...{no_color}")
+    find $HOME/ -type f -iname "desktop.ini" -delete
+
+    print(f"{cyan}Deleting .ipynb_checkpoints directories...{no_color}")
+    find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
+
+    print(f"{cyan}Deleting __pycache__ directories...{no_color}")
+    find $HOME/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
+
+    print(f"{cyan}Deleting __MACOSX directories...{no_color}")
+    find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
+    
+else:
+    print(f"{cyan}Skipping cleanup.{no_color}")
+
+hdd-size
+
+date > /home/manuj/Software/logs/system-update.txt
