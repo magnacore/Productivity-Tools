@@ -38,7 +38,6 @@ for p in reversed([
         $HOME + "/Bin",
         $HOME + "/anaconda3/envs/xonsh/bin/",
         $HOME + "/anaconda3/envs/util/bin/",
-        $HOME + "/usr/libexec/w3m/",
 ]):
     if p not in $PATH:
         $PATH.insert(0, p)
