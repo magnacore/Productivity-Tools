@@ -36,4 +36,7 @@ rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/
 print(f"{cyan}Syncing Rofi...{no_color}")
 rsync --delete --progress -vahi ~/.config/rofi/ ~/Projects/Productivity-Tools/Linux/config/rofi/
 
+print(f"{cyan}Syncing Qtile scripts...{no_color}")
+rsync --delete --progress -vahi ~/.config/qtile/ ~/Projects/Productivity-Tools/Linux/config/qtile/
+
 print(f"{cyan}Done.{no_color}")
