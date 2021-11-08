@@ -38,7 +38,7 @@ from libqtile.utils import guess_terminal
 
 
 mod = "mod4"
-mod1 = "alt"
+alt = "mod1"
 mod2 = "control"
 mod3 = "shift"
 
@@ -81,18 +81,21 @@ keys = [
 
     Key([mod, "control"], "r", lazy.restart(), desc="Restart Qtile"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
-	Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
+	Key([mod], "c", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
 	
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+" -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
-    Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch terminal"),
-    # Key([mod], "Return", lazy.spawn(myTerm), desc="Launch terminal"),
-	# TODO Key([mod, "shift"], "Return", lazy.spawn("rofi -p 'Run: '"), desc='Run Launcher'),
+    Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch terminal"),	
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
+
+    ## Rofi
+    Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
+    Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
+    Key([mod], "e", lazy.spawn("/home/manuj/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
 	
-	Key([mod], "m", lazy.layout.maximize(), desc='toggle window between minimum and maximum sizes'),
-	Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='toggle floating'),
-	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='toggle fullscreen'),
+	Key([mod], "m", lazy.layout.maximize(), desc='Toggle window between minimum and maximum sizes'),
+	Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='Toggle floating'),
+	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
 	
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
