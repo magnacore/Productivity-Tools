@@ -85,7 +85,8 @@ keys = [
 	
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+" -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
-    Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch terminal"),	
+    # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),	
+    Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open-beta"), desc="Launch Ranger"),	
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
 
     ## Rofi
