@@ -24,6 +24,9 @@ rsync --delete --progress -vahi ~/.vimrc @(dotfiles_path)
 print(f"{cyan}Syncing mpv.conf...{no_color}")
 rsync --delete --progress -vahi ~/.config/mpv/mpv.conf @(config_path)
 
+print(f"{cyan}Syncing .Xresources...{no_color}")
+rsync --delete --progress -vahi ~/.Xresources @(config_path)
+
 print(f"{cyan}Syncing zathurarc...{no_color}")
 rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
 
