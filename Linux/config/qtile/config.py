@@ -121,10 +121,10 @@ for i in groups:
         #     desc="move focused window to group {}".format(i.name)),
     ])
 
-layout_theme = {"border_width": 2,
-                "margin": 1,
-                "border_focus": "e1acff",
-                "border_normal": "1D2330"
+layout_theme = {"border_width": 2, # Window lighlight width
+                "margin": 1, # Gap wetween windows
+                "border_focus": "#4f76c7",
+                "border_normal": "#1D2330"
                 }
 
 layouts = [
@@ -168,28 +168,29 @@ screens = [
         top=bar.Bar(
             [
                 # Logo
-				widget.Sep(linewidth = 0, padding = 5, foreground = colors[0], background = colors[0]),
-				widget.Image(filename = "~/.config/qtile/icons/python-white.png", scale = "False", mouse_callbacks = {'Button1': open_terminal}),
+				# widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+				# widget.Image(filename = "~/.config/qtile/icons/python-white.png", scale = "False", foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_terminal}),
 				
                 # Layout Icon
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[0], background = colors[0]),
-				widget.CurrentLayoutIcon(custom_icon_paths = [os.path.expanduser("~/.config/qtile/icons")], foreground = colors[2], background = colors[0], padding = 0, scale = 0.9),
-                widget.CurrentLayout(),
+                # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+				widget.CurrentLayoutIcon(padding = 5, scale = 0.9, background = colors[0]),
+                widget.CurrentLayout(foreground = colors[2], background = colors[0]),
                 
                 # Groupbox
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[0], background = colors[0]),
-                widget.GroupBox(),
+                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                widget.GroupBox(active = colors[2], background = colors[0], inactive = colors[1], disable_drag = True),
                 
                 # # Prompt
                 # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
                 # widget.Prompt(),
                 
                 # Window Name
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[0], background = colors[0]),
-                widget.WindowName(),
+                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                widget.WindowName(foreground = colors[2], background = colors[0]),
                 
                 # Unknown
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[0], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                
                 widget.Chord(
                     chords_colors={
                         'launch': ("#ff0000", "#ffffff"),
@@ -238,27 +239,23 @@ screens = [
                 widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🎨 ', fontsize = 15, foreground = colors[2], background = colors[6]),
                 
                 # System Tray
-                widget.Systray(),
+                widget.Systray(foreground = colors[2], background = colors[0]),
 
                 # Clock
-                # widget.Clock(format='%Y-%m-%d %a %I:%M %p'),
-                widget.Clock(format='%d-%m-%Y %a %I:%M %p'),
+                widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0]),
                 
                 # Logout
                 # widget.QuickExit(),
-                # widget.Image(filename = "~/.config/qtile/icons/python.png", scale = "False", mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn(myTerm)}),
             ],
-            24,
+            24, # Top Bar Height
         ),
     ),
 ]
 
 # Drag floating layouts.
 mouse = [
-    Drag([mod], "Button1", lazy.window.set_position_floating(),
-         start=lazy.window.get_position()),
-    Drag([mod], "Button3", lazy.window.set_size_floating(),
-         start=lazy.window.get_size()),
+    Drag([mod], "Button1", lazy.window.set_position_floating(), start=lazy.window.get_position()),
+    Drag([mod], "Button3", lazy.window.set_size_floating(), start=lazy.window.get_size()),
     Click([mod], "Button2", lazy.window.bring_to_front())
 ]
 
@@ -267,6 +264,7 @@ dgroups_app_rules = []  # type: List
 follow_mouse_focus = True
 bring_front_click = False
 cursor_warp = False
+
 floating_layout = layout.Floating(float_rules=[
     # Run the utility of `xprop` to see the wm class and name of an X client.
     *layout.Floating.default_float_rules,
@@ -277,6 +275,7 @@ floating_layout = layout.Floating(float_rules=[
     Match(title='branchdialog'),  # gitk
     Match(title='pinentry'),  # GPG key password entry
 ])
+
 auto_fullscreen = True
 focus_on_window_activation = "smart"
 reconfigure_screens = True
