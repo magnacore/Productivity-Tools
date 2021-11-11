@@ -143,10 +143,10 @@ layouts = [
     # layout.Zoomy(**layout_theme),
 ]
 
-colors = [["#282c34", "#282c34"], # panel background
+colors = [["#272822", "#272822"], # panel background
           ["#3d3f4b", "#434758"], # background for current screen tab
-          ["#ffffff", "#ffffff"], # font color for group names
-          ["#ff5555", "#ff5555"], # border line color for current tab
+          ["#f8f8f2", "#f8f8f2"], # font color for group names
+          ["#f92672", "#f92672"], # border line color for current tab
           ["#74438f", "#74438f"], # border line color for 'other tabs' and color for 'odd widgets'
           ["#4f76c7", "#4f76c7"], # color for the 'even widgets'
           ["#e1acff", "#e1acff"], # window name
@@ -163,6 +163,10 @@ extension_defaults = widget_defaults.copy()
 def open_terminal():
 	qtile.cmd_spawn('alacritty')
 
+padding = 5
+icon_font_size = 15
+bar_size = 24
+
 screens = [
     Screen(
         top=bar.Bar(
@@ -173,11 +177,11 @@ screens = [
 				
                 # Layout Icon
                 # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
-				widget.CurrentLayoutIcon(padding = 5, scale = 0.9, background = colors[0]),
+				widget.CurrentLayoutIcon(padding = padding, scale = 0.9, background = colors[0]),
                 widget.CurrentLayout(foreground = colors[2], background = colors[0]),
                 
                 # Groupbox
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = padding, background = colors[0]),
                 widget.GroupBox(active = colors[2], background = colors[0], inactive = colors[1], disable_drag = True),
                 
                 # # Prompt
@@ -185,58 +189,66 @@ screens = [
                 # widget.Prompt(),
                 
                 # Window Name
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = padding, background = colors[0]),
                 widget.WindowName(foreground = colors[2], background = colors[0]),
                 
                 # Unknown
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = padding, background = colors[0]),
                 
                 widget.Chord(
                     chords_colors={
-                        'launch': ("#ff0000", "#ffffff"),
+                        'launch': ("#f92672", "#f8f8f2"),
                     },
                     name_transform=lambda name: name.upper(),
                 ),
 				
                 # Temperature
-                widget.TextBox(text = "🔥", padding = 5, foreground = colors[2], background = colors[4], fontsize = 15),
-				widget.ThermalSensor(foreground = colors[2], background = colors[4], threshold = 90, padding = 2),
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[4]),
+                widget.TextBox(text = "🔥", padding = padding, background = colors[0], fontsize = icon_font_size),
+				widget.ThermalSensor(foreground = colors[2], background = colors[0], threshold = 90, padding = 2),
+                widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[0]),
 				
                 # Ram
-                widget.TextBox(text = "💾", foreground = colors[2], background = colors[6], padding = 5, fontsize = 15),
+                widget.TextBox(text = "💾", background = colors[1], padding = padding, fontsize = icon_font_size),
 				# TODO Install bpytop and open it when clicked
 				# widget.Memory(foreground = colors[2], background = colors[4], mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn(myTerm + ' -e bpytop')}, padding = 5),
-				widget.Memory(format = '{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}', measure_mem='G', update_interval = 1, foreground = colors[0], background = colors[6]),
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[6]),
+				widget.Memory(format = '{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1]),
+                widget.Sep(linewidth = 0, padding = padding, background = colors[1]),
 
                 # Disk
-                widget.TextBox(text = "💻", foreground = colors[2], background = colors[4], padding = 5, fontsize = 15),
-				widget.DF(format = '{p} ({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[4]),
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[4]),
+                widget.TextBox(text = "💻", background = colors[0], padding = padding, fontsize = icon_font_size),
+				widget.DF(format = '{p} ({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[0]),
 
                 # Volume
-				widget.TextBox( text = "📢", foreground = colors[2], background = colors[6],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 5, fontsize = 15),
-                widget.Volume(fontsize = 14,
+				widget.TextBox( text = "📢", background = colors[1],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 5, fontsize = icon_font_size),
+                widget.Volume(
                 fmt = '{} ',
-                foreground = colors[0],
-                background = colors[6],
+                foreground = colors[2],
+                background = colors[1],
                 padding = 5,
                 # mute_command = 'amixer -D pipewire sset Master toggle'.split(),
                 # volume_up_command = 'amixer -D pipewire sset Master 1%+'.split(),
                 # volume_down_command = 'amixer -D pipewire sset Master 1%-'.split(),
                 get_volume_command = 'amixer -D pipewire get Master'.split()),
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[6]),
+                widget.Sep(linewidth = 0, padding = padding, background = colors[1]),
 
                 # Battery
-                # widget.TextBox(text = "🔋", foreground = colors[2],background = colors[4],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 5, fontsize = 15),
-                widget.Battery(fontsize = 14, foreground = colors[2],background = colors[4], padding = 5, charge_char='C', discharge_char='D', full_char='F', notify_below=5),
-                widget.BatteryIcon(foreground = colors[2],background = colors[4], padding = 5),
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[4]),
+                # widget.TextBox(text = "🔋", foreground = colors[2],background = colors[4],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 5, fontsize = icon_font_size),
+                widget.BatteryIcon(foreground = colors[2],background = colors[0], padding = padding),
+                widget.Battery(foreground = colors[2],background = colors[0], padding = padding, charge_char='⏫', discharge_char='⏬', full_char='🔋', notify_below=5),
+                # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
 
                 # Wallpaper
                 # widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['xwallpaper', '--zoom']),
-                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🎨 ', fontsize = 15, foreground = colors[2], background = colors[6]),
+                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🎨 ', fontsize = icon_font_size, background = colors[1]),
+                
+                # TODO
+                # widget.Bluethooth(),
+                # widget.CapsNumLockIndicator(),
+                # widget.CPU(),
+                # widget.CPUGraph(),
+                # widget.KhalCalendar(),
+                # widget.MemoryGraph(),
                 
                 # System Tray
                 widget.Systray(foreground = colors[2], background = colors[0]),
@@ -247,7 +259,7 @@ screens = [
                 # Logout
                 # widget.QuickExit(),
             ],
-            24, # Top Bar Height
+            bar_size,
         ),
     ),
 ]
