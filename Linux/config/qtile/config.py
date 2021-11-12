@@ -106,7 +106,17 @@ keys = [
     Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch TODO List"),
 ]
 
-groups = [Group(i) for i in "123456789"]
+groups = [Group("1", layout='treetab'),
+          Group("2", layout='bsp'),
+          Group("3", layout='bsp'),
+          Group("4", layout='max'),
+          Group("5", layout='bsp'),
+          Group("6", layout='bsp'),
+          Group("7", layout='bsp'),
+          Group("8", layout='bsp'),
+          Group("9", layout='bsp'),
+          Group("0", layout='floating')]
+# groups = [Group(i) for i in "123456789"]
 
 for i in groups:
     keys.extend([
