@@ -82,26 +82,29 @@ keys = [
     Key([mod, "control"], "r", lazy.restart(), desc="Restart Qtile"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
 	Key([mod], "c", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
+
+    Key([mod], "m", lazy.layout.maximize(), desc='Toggle window between minimum and maximum sizes'),
+	Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='Toggle floating'),
+	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
 	
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+" -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
     # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
     Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open-beta"), desc="Launch Ranger"),	
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
+    Key([mod], "c", lazy.spawn("xfce4-terminal -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
 
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
     Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
     Key([mod], "e", lazy.spawn("/home/manuj/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
 	
-	Key([mod], "m", lazy.layout.maximize(), desc='Toggle window between minimum and maximum sizes'),
-	Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='Toggle floating'),
-	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
-	
+    ## Volume
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
 
+    ## Scratchpads
     Key([mod2, mod3], "a", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
     Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch TODO List"),
 ]
