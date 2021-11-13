@@ -31,7 +31,7 @@ import re
 import socket
 import subprocess
 
-from libqtile import bar, layout, widget, hook
+from libqtile import bar, layout, widget, hook, qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
@@ -85,7 +85,7 @@ keys = [
 	
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+" -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
-    # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),	
+    # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
     Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open-beta"), desc="Launch Ranger"),	
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
 
@@ -170,8 +170,8 @@ widget_defaults = dict(
 )
 extension_defaults = widget_defaults.copy()
 
-def open_terminal():
-	qtile.cmd_spawn('alacritty')
+def open_bpytop():
+	qtile.cmd_spawn(myTerm+" -e bpytop")
 
 padding = 5
 icon_font_size = 15
@@ -213,24 +213,27 @@ screens = [
                 ),
 				
                 # Temperature
-                widget.TextBox(text = "🔥", padding = padding, background = colors[0], fontsize = icon_font_size),
-				widget.ThermalSensor(foreground = colors[2], background = colors[0], threshold = 90, padding = 2),
+                widget.TextBox(text = "🌡️", padding = 0, background = colors[1], fontsize = icon_font_size),
+				widget.ThermalSensor(foreground = colors[2], background = colors[1], threshold = 90, padding = 2),
+                widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[1]),
+
+                # CPU
+                widget.TextBox(text = "🧠", padding = padding, background = colors[0], fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+                widget.CPU(foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[0]),
 				
                 # Ram
-                widget.TextBox(text = "💾", background = colors[1], padding = padding, fontsize = icon_font_size),
-				# TODO Install bpytop and open it when clicked
-				# widget.Memory(foreground = colors[2], background = colors[4], mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn(myTerm + ' -e bpytop')}, padding = 5),
-				widget.Memory(format = '{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1]),
+                widget.TextBox(text = "🐏", background = colors[1], padding = padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+				widget.Memory(format = '{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = padding, background = colors[1]),
 
                 # Disk
-                widget.TextBox(text = "💻", background = colors[0], padding = padding, fontsize = icon_font_size),
-				widget.DF(format = '{p} ({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0]),
+                widget.TextBox(text = "🗄️", background = colors[0], padding = padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+				widget.DF(format = '{p} ({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[0]),
 
                 # Volume
-				widget.TextBox( text = "📢", background = colors[1],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 5, fontsize = icon_font_size),
+				widget.TextBox( text = "🔊", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e alsamixer")}, padding = padding, fontsize = icon_font_size),
                 widget.Volume(
                 fmt = '{} ',
                 foreground = colors[2],
@@ -250,12 +253,11 @@ screens = [
 
                 # Wallpaper
                 # widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['xwallpaper', '--zoom']),
-                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🎨 ', fontsize = icon_font_size, background = colors[1]),
+                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🌄 ', fontsize = icon_font_size, background = colors[1]),
                 
                 # TODO
                 # widget.Bluethooth(),
                 # widget.CapsNumLockIndicator(),
-                # widget.CPU(),
                 # widget.CPUGraph(),
                 # widget.KhalCalendar(),
                 # widget.MemoryGraph(),
@@ -264,7 +266,7 @@ screens = [
                 widget.Systray(foreground = colors[2], background = colors[0]),
 
                 # Clock
-                widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0]),
+                widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e sh -c 'sleep 0.1 && calcurse'")}),
                 
                 # Logout
                 # widget.QuickExit(),
