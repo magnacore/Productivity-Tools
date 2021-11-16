@@ -109,9 +109,10 @@ keys = [
     Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch TODO List"),
 ]
 
-groups = [Group("1", layout='treetab'),
+# Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
+groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdi", "Ghb", "Thunderbird", "Transmission-gtk"])]),
           Group("2", layout='bsp'),
-          Group("3", layout='bsp'),
+          Group("3", layout='bsp', matches=[Match(wm_class=["Firefox"])]),
           Group("4", layout='max'),
           Group("5", layout='bsp'),
           Group("6", layout='bsp'),
