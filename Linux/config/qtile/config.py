@@ -315,9 +315,9 @@ auto_minimize = True
 @hook.subscribe.startup_once
 def start_once():
     processes = [
-        ['firefox'],
-        ['flatpak', 'run', 'fr.handbrake.ghb'],
-        ['flatpak', 'run', 'org.mozilla.Thunderbird']
+        [myBrowser],
+        "flatpak run fr.handbrake.ghb".split(),
+        "flatpak run org.mozilla.Thunderbird".split(),
     ]
 
     for p in processes:
