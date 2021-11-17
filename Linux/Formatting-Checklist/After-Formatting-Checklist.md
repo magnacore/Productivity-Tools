@@ -129,7 +129,6 @@ flatpak install flathub org.keepassxc.KeePassXC
 flatpak install flathub nz.mega.MEGAsync
 flatpak install flathub org.signal.Signal
 flatpak install flathub fr.handbrake.ghb
-flatpak install flathub com.ozmartians.VidCutter
 flatpak install flathub io.github.gitahead.GitAhead (look for a fork)
 flatpak install flathub org.gimp.GIMP
 flatpak install flathub us.zoom.Zoom
@@ -143,6 +142,7 @@ flatpak install flathub com.github.tchx84.Flatseal
 flatpak install flathub com.github.miguelmota.Cointop
 flatpak install flathub org.shotcut.Shotcut
 flatpak install flathub org.blender.Blender
+flatpak install flathub org.inkscape.Inkscape
 
 =====================================================================
 
