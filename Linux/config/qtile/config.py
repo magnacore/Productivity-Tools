@@ -318,6 +318,8 @@ def start_once():
         [myBrowser],
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
+        f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh".split(),
+        f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e /home/manuj/Bin/ranger-open-beta".split(),
     ]
 
     for p in processes:
