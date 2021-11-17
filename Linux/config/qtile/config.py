@@ -314,8 +314,14 @@ auto_minimize = True
 
 @hook.subscribe.startup_once
 def start_once():
-    home = os.path.expanduser('~')
-    # subprocess.call([home + '/.config/qtile/autostart.sh']) TODO Run startup script
+    processes = [
+        ['firefox'],
+        ['flatpak', 'run', 'fr.handbrake.ghb'],
+        ['flatpak', 'run', 'org.mozilla.Thunderbird']
+    ]
+
+    for p in processes:
+        subprocess.Popen(p)
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
