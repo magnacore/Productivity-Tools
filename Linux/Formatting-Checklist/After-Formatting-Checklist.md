@@ -143,6 +143,7 @@ flatpak install flathub com.github.miguelmota.Cointop
 flatpak install flathub org.shotcut.Shotcut
 flatpak install flathub org.blender.Blender
 flatpak install flathub org.inkscape.Inkscape
+flatpak install flathub com.valvesoftware.Steam
 
 =====================================================================
 
