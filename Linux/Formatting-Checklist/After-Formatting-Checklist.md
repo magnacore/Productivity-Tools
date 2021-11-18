@@ -16,7 +16,6 @@ Install anaconda, do not use sudo
 conda create --name qtile
 conda create --name xonsh
 conda create --name util
-conda create --name quant
 conda create --name ranger
 
 Install pip in all environments
@@ -176,7 +175,7 @@ For qtile memory module
 
 ===
 
-Quant
+# quant
 conda create --name quant --clone base
 If we get an error that package is corrupted, delete all files in the /home/manuj/anaconda3/pkgs folder and the quant env folder and retry.
 /home/manuj/anaconda3/envs/quant/bin/pip install vectorbt
