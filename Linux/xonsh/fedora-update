@@ -15,9 +15,6 @@ mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 
 mv --backup=numbered @(p"~/Productivity_System/01 TASK CAPTURE BIN/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
-print(f"{cyan}Deleting None files...{no_color}")
-find $HOME/ -type f -name "None" -delete
-
 print(f"{cyan}Update repositories...{no_color}")
 sudo dnf check-update -y
 
@@ -50,6 +47,12 @@ if(day_of_week == 0):
 
     print(f"{cyan}Deleting __MACOSX directories...{no_color}")
     find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
+
+    print(f"{cyan}Deleting unsued conda packages...{no_color}")
+    conda clean --all -y
+
+    print(f"{cyan}Deleting None files...{no_color}")
+    find $HOME/ -type f -name "None" -delete
 
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
