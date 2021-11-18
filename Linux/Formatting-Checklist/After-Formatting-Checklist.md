@@ -174,6 +174,15 @@ conda install -c conda-forge go-ipfs
 For qtile memory module
 /home/manuj/anaconda3/envs/qtile/bin/pip install psutil
 
+===
+
+Quant
+conda create --name quant --clone base
+If we get an error that package is corrupted, delete all files in the /home/manuj/anaconda3/pkgs folder and the quant env folder and retry.
+/home/manuj/anaconda3/envs/quant/bin/pip install vectorbt
+/home/manuj/anaconda3/envs/quant/bin/pip install pandas-ta
+/home/manuj/anaconda3/envs/quant/bin/pip install nsepy
+
 =====================================================================
 
 # RPM
