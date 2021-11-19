@@ -252,6 +252,7 @@ flatpak install flathub org.shotcut.Shotcut
 flatpak install flathub org.blender.Blender
 flatpak install flathub org.inkscape.Inkscape
 flatpak install flathub com.valvesoftware.Steam
+flatpak install flathub com.github.vikdevelop.photopea_app
 
 =====================================================================
 
