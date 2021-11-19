@@ -12,6 +12,114 @@ sudo dnf upgrade
 
 =====================================================================
 
+Fedora Snapper Setup
+
+lsblk
+
+Note the root partition like vda3
+df -h | grep vda 
+
+sudo btrfs subvolume list /
+
+sudo dnf install snapper python3-dnf-plugin-snapper
+
+sudo snapper -c root create-config /
+(-c create, root is the name of the config, / is the subvolume)
+
+sudo btrfs subvolume list /
+Now an extra subvolume called .snapshot will be created. Its top level ID is same as root which means its created under the root subvolume.
+We want to manually mount so we want to delete this, create a directory and create a subvolume in that directory
+
+sudo btrfs subvolume delete /.snapshots
+
+Now we create a new directory where will will create a new subvolume that we will mount later
+
+sudo mkdir /.snapshots
+
+Now we need to mount the file system so we can create a new subvolume in there
+
+sudo mkdir /mnt/btrfs
+
+Now we need to mount the root partition into this sub directory so we can see the subvolumes
+
+sudo mount /dev/vda3 /mnt/btrfs/
+
+cd /mnt/btrfs/
+ls
+home root (we will see 2 subvolumes)
+
+Now we will create a new subvolume and mount it in the directory we created before (.snapshots)
+sudo btrfs subvolume create snapshots
+ls
+cd.. to go back to the mnt directory
+
+sudo umount /mnt/btrfs
+
+sudo rmdir btrfs/
+
+Now we need to create a new mount point into the fstab (file system table)
+sudo nvim /etc/fstab/
+We will see root and home have the same UUID, copy that
+UUID=XXX	/.snapshots	btrsf	subvol=snapshots	0	0
+
+sudo mount -a
+we should have no error
+
+sudo btrfs subvolume get-default /
+
+we want to make sure when the system boots the default subvolume will be the root subvolume
+
+sudo btrfs subvolume set-default 258 /
+sudo btrfs subvolume get-default /
+
+sudo grubby --info=ALL
+sudo grubby --update-kernel=ALL --remove-args="rootflags=subvol=root"
+sudo grubby --info=ALL
+
+reboot
+
+sudo btrfs subvolume get-default /
+
+sudo snapper ls
+empty
+
+sudo dnf install neofetch
+
+sudo snapper ls
+pre and post
+
+Try without ambit first
+sudo snapper --ambit classic rollback 1
+
+reboot
+
+sudo snapper ls
+
+sudo snapper roolback 2
+
+sudo snapper delete 4
+
+systemctl status cronie
+
+sudo nvim /etc/snapper/configs/root
+root is the configuration we created before
+
+hourly 3 daily 5 rent zero
+cleaup flag will only work if cronie is installed
+
+sudo dnf install cronie
+
+reboot
+or
+systemctl start crodd.service
+
+systemctl status crond.service
+
+Manual backup
+sudo snapper --config root create --description "My Message" --cleanup-algorithm timeline
+
+=====================================================================
+
 Install anaconda, do not use sudo
 conda create --name qtile
 conda create --name xonsh
