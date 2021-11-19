@@ -16,7 +16,7 @@ Fedora Snapper Setup
 
 lsblk
 
-Note the root partition like vda3
+Note the root partition like nvme0n1p3 (this is home and root)
 df -h | grep vda 
 
 sudo btrfs subvolume list /
