@@ -320,6 +320,7 @@ def start_once():
         "flatpak run org.mozilla.Thunderbird".split(),
         f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh".split(),
         f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e /home/manuj/Bin/ranger-open-beta".split(),
+        "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
     ]
 
     for p in processes:
