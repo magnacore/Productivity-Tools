@@ -123,6 +123,7 @@ Note: flatpak commands can be run by ranger, even if they are not available in t
 
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
+flatpak install flathub com.github.tchx84.Flatseal
 flatpak install flathub org.libreoffice.LibreOffice
 flatpak install flathub org.keepassxc.KeePassXC
 flatpak install flathub nz.mega.MEGAsync
