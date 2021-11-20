@@ -24,7 +24,7 @@ sudo btrfs subvolume list /
 sudo dnf install snapper python3-dnf-plugin-snapper
 
 sudo snapper -c root create-config /
-(-c create, root is the name of the config, / is the subvolume)
+(-c create, root is the name of the config, / is the partition)
 
 sudo btrfs subvolume list /
 Now an extra subvolume called .snapshot will be created. Its top level ID is same as root which means its created under the root subvolume.
@@ -42,7 +42,9 @@ sudo mkdir /mnt/btrfs
 
 Now we need to mount the root partition into this sub directory so we can see the subvolumes
 
-sudo mount /dev/vda3 /mnt/btrfs/
+sudo mount /dev/nvme0n1p3 /mnt/btrfs/
+OR
+sudo mount /dev/mapper/luks-0fd3694f-0b13-4296-a44f-9900b3970f31 /mnt/btrfs/
 
 cd /mnt/btrfs/
 ls
@@ -60,7 +62,7 @@ sudo rmdir btrfs/
 Now we need to create a new mount point into the fstab (file system table)
 sudo nvim /etc/fstab/
 We will see root and home have the same UUID, copy that
-UUID=XXX	/.snapshots	btrsf	subvol=snapshots	0	0
+UUID=XXX	/.snapshots	btrfs	subvol=snapshots	0	0
 
 sudo mount -a
 we should have no error
@@ -72,9 +74,15 @@ we want to make sure when the system boots the default subvolume will be the roo
 sudo btrfs subvolume set-default 258 /
 sudo btrfs subvolume get-default /
 
+Do this in bash, not in xonsh otherwise the flags will not get removed
 sudo grubby --info=ALL
 sudo grubby --update-kernel=ALL --remove-args="rootflags=subvol=root"
+OR
+sudo grubby --update-kernel=ALL --remove-args="rootflags=subvol=@ rd.luks.uuid=luks-0fd3694f-0b13-4296-a44f-9900b3970f31"
 sudo grubby --info=ALL
+
+This should remain
+args="ro rhgb quiet"
 
 reboot
 
