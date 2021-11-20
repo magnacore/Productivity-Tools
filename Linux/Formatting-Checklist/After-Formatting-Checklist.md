@@ -103,7 +103,7 @@ reboot
 
 sudo snapper ls
 
-sudo snapper roolback 2
+sudo snapper rollback 2
 
 sudo snapper delete 4
 
@@ -112,7 +112,7 @@ systemctl status cronie
 sudo nvim /etc/snapper/configs/root
 root is the configuration we created before
 
-hourly 3 daily 5 rent zero
+hourly 3 daily 5 rest zero
 cleaup flag will only work if cronie is installed
 
 sudo dnf install cronie
