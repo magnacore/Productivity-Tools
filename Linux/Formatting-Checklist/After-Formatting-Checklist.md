@@ -126,6 +126,13 @@ systemctl status crond.service
 Manual backup
 sudo snapper --config root create --description "My Message" --cleanup-algorithm timeline
 
+This may disable scanning of home
+sudo nvim /etc/updatedb.conf
+a) PRUNE_BIND_MOUNTS = "no" ;  man page says the default is no, but Fedora's /etc/updatedb.conf sets it to "yes" which is the central problem in this bug.
+b) PRUNEPATHS ; man page says the default is no paths are skipped, but Fedora's /etc/updatedb.conf has quite a long list, but you can add more, e.g. /.snapshots /home/chris/.snapshots
+c) sudo updatedb
+(Ideally, I'd like to see the .directory convention for btrfs snapshots go away. It causes problems for find, and du results too. And it's a potential security risk. A better convention is for programs to create them in the hidden top-level of the file system, which is normally not mounted. libbtrfsutil provides an _fd variant for subvolume/snapshot creation/removal for this purpose; both C API and Python bindings are available.)
+
 =====================================================================
 
 Install anaconda, do not use sudo
