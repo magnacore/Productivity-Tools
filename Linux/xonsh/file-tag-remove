@@ -1,0 +1,28 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+import sys
+from tqdm import tqdm
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	
+	allFiles = sys.argv[2:]
+	tag = sys.argv[1]
+	allFiles.sort()
+
+	print(f"{cyan}Removing tag #{tag}{no_color}")
+
+	for file in tqdm(allFiles):
+		new_filename = file.replace(f" #{tag}", "")
+		new_filename = new_filename.strip()
+		os.rename(file, new_filename)

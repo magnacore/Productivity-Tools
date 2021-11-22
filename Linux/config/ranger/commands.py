@@ -602,3 +602,37 @@ class gpg_decrypt_file(Command):
                 f"""shell -f gpg -o "{root_ext[0]}" -d "{f.relative_path}" """)
 
 ###############################################################################
+
+class tag_files(Command):
+    """:tag files"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            tag = self.rest(1)
+        else:
+            tag = 'noTag'
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-tag {tag} %s")
+
+###############################################################################
+
+class tag_files_remove(Command):
+    """:remove file tags"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            tag = self.rest(1)
+        else:
+            tag = 'noTag'
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-tag-remove {tag} %s")
+
+###############################################################################
