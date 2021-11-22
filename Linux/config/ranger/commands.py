@@ -474,12 +474,20 @@ class unmark_tag(mark_tag):
 ###############################################################################
 
 
-class convert_image_1080(Command):
-    """:convert_image_1080"""
+class convert_image(Command):
+    """:Resize images"""
 
     def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            dimension = self.rest(1)
+        else:
+            dimension = 1080
+        
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell image-resize-ranger %s")
+        self.fm.execute_console(f"shell image-resize {dimension} %s")
 
 
 ###############################################################################

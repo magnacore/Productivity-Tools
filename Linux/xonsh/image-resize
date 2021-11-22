@@ -13,11 +13,9 @@ mimetypes.init()
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
-	resize_dimension = '1080'
-elif len(sys.argv) == 2:
-	resize_dimension = sys.argv[1]
-else:
-	resize_dimension = sys.argv[1]
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
 
 def get_mime(file):
 	mimestart = mimetypes.guess_type(file)[0]
@@ -28,21 +26,24 @@ def get_mime(file):
 	else:
 		return None
 
-allMediaFiles = glob.glob("*.*")
-# allMediaFiles.sort()
+if selection:	
+	
+	allMediaFiles = sys.argv[2:]
+	resize_dimension = int(sys.argv[1])
+	allMediaFiles.sort()
 
-print(f"{cyan}Changing image dimension to {resize_dimension}p...{no_color}")
+	print(f"{cyan}Changing image dimension to {resize_dimension}p...{no_color}")
 
-for media in tqdm(allMediaFiles):
+	for media in tqdm(allMediaFiles):
 
-	mimestart = get_mime(media)
+		mimestart = get_mime(media)
 
-	if mimestart != None:
-		
-		if mimestart in ['image']:
-			root_ext = os.path.splitext(media)
-			file_name = root_ext[0]
-			extension = root_ext[1]
+		if mimestart != None:
+			
+			if mimestart in ['image']:
+				root_ext = os.path.splitext(media)
+				file_name = root_ext[0]
+				extension = root_ext[1]
 
-			new_filename = file_name + f'_{resize_dimension}' + extension
-			convert @(media) -resize x@(resize_dimension) @(new_filename)
+				new_filename = file_name + f'_{resize_dimension}' + extension
+				convert @(media) -resize x@(resize_dimension) @(new_filename)
