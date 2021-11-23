@@ -1,0 +1,23 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+import glob
+import sys
+from tqdm import tqdm
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	for file in tqdm(allFiles):
+
+		new_filename = os.path.splitext(file)[0] + '.video'
+		touch @(new_filename)
+		# echo @(new_filename) > @(new_filename)

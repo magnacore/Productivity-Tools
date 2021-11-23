@@ -644,3 +644,12 @@ class tag_files_remove(Command):
         self.fm.execute_console(f"shell file-tag-remove {tag} %s")
 
 ###############################################################################
+
+class file_convert_text(Command):
+    """:Converts file/folder names to text files"""
+
+    def execute(self):
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-convert-text %s")
+
+###############################################################################
