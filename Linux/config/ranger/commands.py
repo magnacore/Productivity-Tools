@@ -474,7 +474,7 @@ class unmark_tag(mark_tag):
 ###############################################################################
 
 
-class convert_image(Command):
+class image_convert(Command):
     """:Resize images"""
 
     def execute(self):
@@ -611,7 +611,7 @@ class gpg_decrypt_file(Command):
 
 ###############################################################################
 
-class tag_files(Command):
+class files_tag(Command):
     """:tag files"""
 
     def execute(self):
@@ -628,7 +628,7 @@ class tag_files(Command):
 
 ###############################################################################
 
-class tag_files_remove(Command):
+class files_tag_remove(Command):
     """:remove file tags"""
 
     def execute(self):
