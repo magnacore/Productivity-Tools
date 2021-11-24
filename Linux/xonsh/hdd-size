@@ -19,3 +19,6 @@ print(f"{free_space} of {total_space} or {100-used_percentage}% of disk is free.
 
 print(f"{cyan}Used RAM Space: {no_color}")
 free -h
+
+print(f"\n{cyan}Used Trash Space: {no_color}")
+du -hs ~/.local/share/Trash
