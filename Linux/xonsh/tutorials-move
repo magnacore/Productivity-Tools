@@ -3,10 +3,10 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 print(f"{cyan}Moving Converted...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/01 CONVERTED")/* @(p"/media/manuj/LEARNING/VIDEO TUTORIALS/CONVERTED/0 TO SORT/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/01 CONVERTED")/* @(p"/run/media/manuj/LEARNING/VIDEO TUTORIALS/CONVERTED/0 TO SORT/")
 
 print(f"{cyan}Moving 01...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/02 TO CONVERT/01")/* @(p"/media/manuj/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/01 IMP UR/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/02 TO CONVERT/01")/* @(p"/run/media/manuj/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/01 IMP UR/")
 
 print(f"{cyan}Moving 02...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/02 TO CONVERT/02")/* @(p"/media/manuj/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/02 IMP NOT URGENT/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/02 TO CONVERT/02")/* @(p"/run/media/manuj/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/02 IMP NOT URGENT/")
