@@ -1,5 +1,5 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
-rsync --delete --progress -vahi /media/manuj/BACKUP_01_A/ /media/manuj/BACKUP_01_B/
+rsync --delete --progress -vahi /run/media/manuj/BACKUP_01_A/ /run/media/manuj/BACKUP_01_B/
 
 date > ~/Software/logs/backup-backup.txt
