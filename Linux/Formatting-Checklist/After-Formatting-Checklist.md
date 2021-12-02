@@ -106,6 +106,7 @@ sudo snapper ls
 sudo snapper rollback 2
 
 sudo snapper delete 4
+sudo snapper --config root delete 7-25
 
 systemctl status cronie
 
