@@ -290,6 +290,7 @@ conda install -c conda-forge tqdm
 /home/manuj/anaconda3/envs/util/bin/pip install ueberzug
 
 conda install -c conda-forge go-ipfs
+conda install -c conda-forge pyperclip
 
 ===
 
