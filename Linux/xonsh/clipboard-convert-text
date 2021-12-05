@@ -5,6 +5,7 @@
 import pyperclip as pc
 import unicodedata
 import re
+from playsound import playsound
 
 def slugify(value, allow_unicode=False):
     """
@@ -32,3 +33,5 @@ file.write(clipboard_content)
  
 #close file
 file.close()
+
+playsound('/home/manuj/Bin/stereo/bell.wav')
