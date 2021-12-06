@@ -59,4 +59,4 @@ else:
 
 hdd-size
 
-date > /home/manuj/Software/logs/system-update.txt
+date > ~/Software/logs/system-update.txt

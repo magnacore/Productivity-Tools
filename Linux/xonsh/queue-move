@@ -3,40 +3,40 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 print(f"{cyan}Moving Relax Passive Assorted...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/A-RELAX PASSIVE ASSORTED")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE ASSORTED/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/A-RELAX PASSIVE ASSORTED")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE ASSORTED/")
 
 print(f"{cyan}Moving Audio Books...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE AUDIO BOOK")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE AUDIO BOOK/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE AUDIO BOOK")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE AUDIO BOOK/")
 
 print(f"{cyan}Moving Trading...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/C-STUDY PASSIVE TRADING")/* @(p"/run/media/manuj/QUEUE/QUEUE/STUDY PASSIVE TRADING/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/C-STUDY PASSIVE TRADING")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE TRADING/")
 
 print(f"{cyan}Moving Data Science...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/D-STUDY PASSIVE DATA SCIENCE")/* @(p"/run/media/manuj/QUEUE/QUEUE/STUDY PASSIVE DATA SCIENCE/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/D-STUDY PASSIVE DATA SCIENCE")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE DATA SCIENCE/")
 
 print(f"{cyan}Moving Movies...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/E-RELAX PASSIVE MOVIES")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE MOVIES/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/E-RELAX PASSIVE MOVIES")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE MOVIES/")
 
 print(f"{cyan}Moving Games...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/G-RELAX PASSIVE GAMES")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE GAMES/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/G-RELAX PASSIVE GAMES")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE GAMES/")
 
 print(f"{cyan}Moving Money...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/M-RELAX PASSIVE LEARNING 01 MONEY FI")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE LEARNING/01 MONEY/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/M-RELAX PASSIVE LEARNING 01 MONEY FI")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/01 MONEY/")
 
 print(f"{cyan}Moving Learning Others...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/O-RELAX PASSIVE LEARNING 04 OTHERS")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE LEARNING/04 OTHERS/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/O-RELAX PASSIVE LEARNING 04 OTHERS")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/04 OTHERS/")
 
 print(f"{cyan}Moving Study Passive Assorted...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/P-STUDY PASSIVE ASSORTED")/* @(p"/run/media/manuj/QUEUE/QUEUE/STUDY PASSIVE ASSORTED/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/P-STUDY PASSIVE ASSORTED")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE ASSORTED/")
 
 print(f"{cyan}Moving AR...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/R-RELAX PASSIVE LEARNING 03 AR")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE LEARNING/03 AR/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/R-RELAX PASSIVE LEARNING 03 AR")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/03 AR/")
 
 print(f"{cyan}Moving Sports...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/U-RELAX PASSIVE SPORTS")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE SPORTS/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/U-RELAX PASSIVE SPORTS")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE SPORTS/")
 
 print(f"{cyan}Moving Health...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/V-RELAX PASSIVE LEARNING 02 HEALTH VEGAN LE")/* @(p"/run/media/manuj/QUEUE/QUEUE/RELAX PASSIVE LEARNING/02 HEALTH VEGAN LE/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/V-RELAX PASSIVE LEARNING 02 HEALTH VEGAN LE")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/02 HEALTH VEGAN LE/")
 
 print(f"{cyan}Moving Blockcahin...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/K-STUDY PASSIVE BLOCKCHAIN")/* @(p"/run/media/manuj/QUEUE/QUEUE/STUDY PASSIVE BLOCKCHAIN/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/K-STUDY PASSIVE BLOCKCHAIN")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE BLOCKCHAIN/")
