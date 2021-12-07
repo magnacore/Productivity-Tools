@@ -1,0 +1,21 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+import sys
+from tqdm import tqdm
+
+# target_path = p"~/NA/*.*"
+
+allFiles = glob.glob("/home/manuj/NA/*.*")
+
+print(f"{cyan}Renaming Files...{no_color}")
+for file in tqdm(allFiles):
+	new_filename = file.replace("NA - ", "")
+	os.rename(file,new_filename)
+
+print(f"{cyan}Moving Files...{no_color}")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/NA")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
