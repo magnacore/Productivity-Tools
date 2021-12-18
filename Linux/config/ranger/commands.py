@@ -653,3 +653,23 @@ class file_convert_text(Command):
         self.fm.execute_console(f"shell file-convert-text %s")
 
 ###############################################################################
+
+class media_split_equal_in_place(Command):
+    """
+    :media_split_equal_in_place 300
+    Splits media in place and deletes the original media
+    """
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            duration = self.rest(1)
+        else:
+            duration = 300
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell media-split-equal-in-place {duration} %s")
+
+###############################################################################

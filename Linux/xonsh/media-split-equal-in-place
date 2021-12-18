@@ -1,0 +1,106 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+# If there is a : in the file name the splitting will not work
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+import sys
+import datetime
+from tqdm import tqdm
+
+threshold_seconds = 600
+
+def get_mime(file):
+	mimestart = $(file --mime-type @(file))
+
+	if mimestart != None:
+		mimestart = mimestart.split(':')[1]
+		mimestart = mimestart.split('/')[0]
+		return mimestart.strip().lower()
+	else:
+		return None
+
+def get_duration(file):
+	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
+
+	if duration == '':
+		print(f"{file} is not returning a valid duration.")
+		duration = '0'
+
+	return float(duration)
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	
+	allFiles = sys.argv[2:]
+	split_duration = sys.argv[1]
+	allFiles.sort()
+
+	to_split = False
+
+	print(f"{cyan}Looking for media longer than threshold of {int(threshold_seconds)//60} minutes...{no_color}")
+
+	for file in allFiles:
+		mimestart = get_mime(file)
+
+		if mimestart != None:		
+			if mimestart in ['audio', 'video']:
+
+				duration = get_duration(file)
+				
+				if duration > float(threshold_seconds):
+					print(f"{cyan}Media longer than threshold of {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
+					to_split = True
+					break
+
+	if to_split == True:
+		
+		for file in tqdm(allFiles):
+
+			mimestart = get_mime(file)
+
+			if mimestart != None:
+				
+				if mimestart in ['audio', 'video']:
+
+					duration = get_duration(file)
+					split_duration = float(split_duration)
+					
+					parts=int(duration//split_duration)
+
+					root_ext = os.path.splitext(file)
+					extension = root_ext[1]
+
+					if mimestart == 'audio':
+						extension = ".mka"
+					elif mimestart == 'video':
+						extension = ".mkv"
+					
+					if (parts != 0):
+						remaining = duration%split_duration
+						excess = round(remaining/parts,0)
+						split_duration_individual = int(split_duration + excess)
+
+						#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
+
+						new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
+						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_individual)+'s')
+					else:
+						new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
+						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
+
+					trash-put @(file)
+				
+				else:
+					print(f"Skipping {file}")
+
+	else:
+		print(f"{cyan}Nothing to split...exiting.{no_color}")
