@@ -8,6 +8,10 @@ Plug 'haya14busa/incsearch.vim'
 Plug 'haya14busa/incsearch-fuzzy.vim'
 Plug 'haya14busa/incsearch-easymotion.vim'
 
+Plug 'tpope/vim-surround'
+
+Plug 'inkarkat/vim-ReplaceWithRegister'
+
 call plug#end()
 
 set ruler
@@ -107,6 +111,10 @@ noremap <silent><expr> /  incsearch#go(<SID>config_easyfuzzymotion())
 noremap <silent><expr> ?  incsearch#go(<SID>incsearch_config({'command': '?'}))
 noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
 noremap <silent><expr> <Space>/ incsearch#go(<SID>incsearch_config())
+
+nmap <Leader>r  <Plug>ReplaceWithRegisterOperator
+nmap <Leader>rr <Plug>ReplaceWithRegisterLine
+xmap <Leader>r  <Plug>ReplaceWithRegisterVisual
 
 " Neovide
 " set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
