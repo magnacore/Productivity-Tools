@@ -222,7 +222,11 @@ sudo dnf install neovim
 sudo dnf install calcurse
 sudo dnf install git
 
-install vim plug
+install Vim Plug
+
+sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+
 Create an empty file at /home/manuj/.config/nvim/init.vim
 .vimrc from home automatically gets copied to it once we start nvim
 :PlugInstall
