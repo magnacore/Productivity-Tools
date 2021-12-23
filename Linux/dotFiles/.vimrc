@@ -69,19 +69,19 @@ nnoremap <leader>fw :Windows<CR>
 "Easymotion
 
 " <Leader>f{char} to move to {char}
-map  <Leader>f <Plug>(easymotion-bd-f)
-nmap <Leader>f <Plug>(easymotion-overwin-f)
+map  <Leader>gf <Plug>(easymotion-bd-f)
+nmap <Leader>gf <Plug>(easymotion-overwin-f)
 
 " s{char}{char} to move to {char}{char}
-nmap <Leader>s <Plug>(easymotion-overwin-f2)
+nmap <Leader>gs <Plug>(easymotion-overwin-f2)
 
 " Move to line
-map <Leader>l <Plug>(easymotion-bd-jk)
-nmap <Leader>l <Plug>(easymotion-overwin-line)
+map <Leader>gl <Plug>(easymotion-bd-jk)
+nmap <Leader>gl <Plug>(easymotion-overwin-line)
 
 " Move to word
-map  <Leader>w <Plug>(easymotion-bd-w)
-nmap <Leader>w <Plug>(easymotion-overwin-w)
+map  <Leader>gw <Plug>(easymotion-bd-w)
+nmap <Leader>gw <Plug>(easymotion-overwin-w)
 
 function! s:incsearch_config(...) abort
 	return incsearch#util#deepextend(deepcopy({
