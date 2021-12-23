@@ -65,12 +65,13 @@ vnoremap K :m '<-2<CR>gv=gv
 
 nnoremap <Leader>h :nohl<CR> 
 
-" FZF shortcuts
-nnoremap <Leader>ff :Files<CR>
-nnoremap <Leader>fl :Lines<CR>
-nnoremap <Leader>fb :BLines<CR>
-nnoremap <Leader>fm :Marks<CR>
-nnoremap <Leader>fw :Windows<CR>
+" FZF shortcuts, ! opens in full screen
+nnoremap <Leader>ff :Files!<CR>
+nnoremap <Leader>fl :Lines!<CR>
+nnoremap <Leader>fb :BLines!<CR>
+nnoremap <Leader>fm :Marks!<CR>
+nnoremap <Leader>fw :Windows!<CR>
+nnoremap <Leader>fr :Rg!<CR>
 
 "Easymotion
 
