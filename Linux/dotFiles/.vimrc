@@ -3,6 +3,11 @@ call plug#begin('~/.vim/plugged')
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 
+Plug 'easymotion/vim-easymotion'
+Plug 'haya14busa/incsearch.vim'
+Plug 'haya14busa/incsearch-fuzzy.vim'
+Plug 'haya14busa/incsearch-easymotion.vim'
+
 call plug#end()
 
 set ruler
@@ -50,6 +55,58 @@ set spelllang=en,cjk
 set spell
 nnoremap <silent> <F11> :set spell!<cr>
 inoremap <silent> <F11> <C-O>:set spell!<cr>
+
+vnoremap J :m '>+1<CR>gv=gv 
+vnoremap K :m '<-2<CR>gv=gv 
+
+" FZF shortcuts
+nnoremap <leader>ff :Files<CR>
+nnoremap <leader>fl :Lines<CR>
+nnoremap <leader>fb :BLines<CR>
+nnoremap <leader>fm :Marks<CR>
+nnoremap <leader>fw :Windows<CR>
+
+"Easymotion
+
+" <Leader>f{char} to move to {char}
+map  <Leader>f <Plug>(easymotion-bd-f)
+nmap <Leader>f <Plug>(easymotion-overwin-f)
+
+" s{char}{char} to move to {char}{char}
+nmap <Leader>s <Plug>(easymotion-overwin-f2)
+
+" Move to line
+map <Leader>l <Plug>(easymotion-bd-jk)
+nmap <Leader>l <Plug>(easymotion-overwin-line)
+
+" Move to word
+map  <Leader>w <Plug>(easymotion-bd-w)
+nmap <Leader>w <Plug>(easymotion-overwin-w)
+
+function! s:incsearch_config(...) abort
+	return incsearch#util#deepextend(deepcopy({
+				\   'modules': [incsearch#config#easymotion#module({'overwin': 1})],
+				\   'keymap': {
+				\     "\<CR>": '<Over>(easymotion)'
+				\   },
+				\   'is_expr': 0
+				\ }), get(a:, 1, {}))
+endfunction
+
+function! s:config_easyfuzzymotion(...) abort
+  return extend(copy({
+  \   'converters': [incsearch#config#fuzzyword#converter()],
+  \   'modules': [incsearch#config#easymotion#module({'overwin': 1})],
+  \   'keymap': {"\<CR>": '<Over>(easymotion)'},
+  \   'is_expr': 0,
+  \   'is_stay': 1
+  \ }), get(a:, 1, {}))
+endfunction
+
+noremap <silent><expr> /  incsearch#go(<SID>config_easyfuzzymotion())
+noremap <silent><expr> ?  incsearch#go(<SID>incsearch_config({'command': '?'}))
+noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
+noremap <silent><expr> <Space>/ incsearch#go(<SID>incsearch_config())
 
 " Neovide
 " set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
