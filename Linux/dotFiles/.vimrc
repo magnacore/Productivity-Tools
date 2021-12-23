@@ -63,12 +63,14 @@ inoremap <silent> <F11> <C-O>:set spell!<cr>
 vnoremap J :m '>+1<CR>gv=gv 
 vnoremap K :m '<-2<CR>gv=gv 
 
+nnoremap <Leader>h :nohl<CR> 
+
 " FZF shortcuts
-nnoremap <leader>ff :Files<CR>
-nnoremap <leader>fl :Lines<CR>
-nnoremap <leader>fb :BLines<CR>
-nnoremap <leader>fm :Marks<CR>
-nnoremap <leader>fw :Windows<CR>
+nnoremap <Leader>ff :Files<CR>
+nnoremap <Leader>fl :Lines<CR>
+nnoremap <Leader>fb :BLines<CR>
+nnoremap <Leader>fm :Marks<CR>
+nnoremap <Leader>fw :Windows<CR>
 
 "Easymotion
 
