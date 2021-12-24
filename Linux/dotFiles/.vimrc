@@ -12,6 +12,12 @@ Plug 'tpope/vim-surround'
 
 Plug 'inkarkat/vim-ReplaceWithRegister'
 
+Plug 'preservim/nerdtree'
+
+Plug 'tpope/vim-commentary'
+
+Plug 'ap/vim-css-color'
+
 call plug#end()
 
 set ruler
@@ -44,13 +50,13 @@ set scrolloff=5
 
 set tabstop=4
 
-" add incrementing numbers
+" Add incrementing numbers
 let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
 
-" remove NA - from lines
+" Remove NA - from lines
 let @r ='ggG4lx' 
 
-" enable clipboard
+" Enable clipboard
 set clipboard+=unnamedplus
 
 " spelling languages
@@ -60,9 +66,11 @@ set spell
 nnoremap <silent> <F11> :set spell!<cr>
 inoremap <silent> <F11> <C-O>:set spell!<cr>
 
+" Move selection
 vnoremap J :m '>+1<CR>gv=gv 
 vnoremap K :m '<-2<CR>gv=gv 
 
+" Toggle Highlight
 nnoremap <Leader>h :nohl<CR> 
 
 " FZF shortcuts, ! opens in full screen
@@ -73,7 +81,7 @@ nnoremap <Leader>fm :Marks!<CR>
 nnoremap <Leader>fw :Windows!<CR>
 nnoremap <Leader>fr :Rg!<CR>
 
-"Easymotion
+" Easymotion
 
 " <Leader>f{char} to move to {char}
 map  <Leader>gf <Plug>(easymotion-bd-f)
@@ -115,9 +123,16 @@ noremap <silent><expr> ?  incsearch#go(<SID>incsearch_config({'command': '?'}))
 noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
 noremap <silent><expr> <Space>/ incsearch#go(<SID>incsearch_config())
 
+" Replace With Register
 nmap <Leader>r  <Plug>ReplaceWithRegisterOperator
 nmap <Leader>rr <Plug>ReplaceWithRegisterLine
 xmap <Leader>r  <Plug>ReplaceWithRegisterVisual
+
+" Enable autocompletion:
+set wildmode=longest,list,full
+
+" Splits open at the bottom and right
+set splitbelow splitright
 
 " Neovide
 " set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
