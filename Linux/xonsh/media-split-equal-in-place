@@ -9,6 +9,7 @@ import os
 import glob
 import sys
 import datetime
+import math
 from tqdm import tqdm
 
 threshold_seconds = 600
@@ -86,7 +87,7 @@ if selection:
 					
 					if (parts != 0):
 						remaining = duration%split_duration
-						excess = round(remaining/parts,0)
+						excess = math.ceil(remaining/parts)
 						split_duration_individual = int(split_duration + excess)
 
 						#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
