@@ -18,6 +18,8 @@ Plug 'tpope/vim-commentary'
 
 Plug 'ap/vim-css-color'
 
+Plug 'christoomey/vim-titlecase'
+
 call plug#end()
 
 set ruler
