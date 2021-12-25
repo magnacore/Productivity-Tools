@@ -194,6 +194,8 @@ If the above does not work try also
 sudo dnf groupinstall "Development Tools" "Development Libraries"
 I added ~/.local/bin in Xonsh path already (no need to do)
 
+Dragon, Pistol and Hugo-extended are already build and can be copied to ~/.local/bin from ~/Software/bin
+
 Just run `make` to compile dragon and get an executable you can run immediately or put where you like. To install, run `make install`, which will put it into ~/.local/bin by default.
 
 sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
