@@ -90,7 +90,7 @@ vnoremap K :m '<-2<CR>gv=gv
 nnoremap <Leader>h :nohl<CR> 
 
 " Open registers
-nnoremap <Leader>r :registers
+nnoremap <Leader>r :reg<CR>
 
 " FZF shortcuts, ! opens in full screen
 nnoremap <Leader>ff :Files!<CR>
