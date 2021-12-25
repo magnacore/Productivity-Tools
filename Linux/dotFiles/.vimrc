@@ -75,6 +75,9 @@ vnoremap K :m '<-2<CR>gv=gv
 " Toggle Highlight
 nnoremap <Leader>h :nohl<CR> 
 
+" Open registers
+nnoremap <Leader>r :registers
+
 " FZF shortcuts, ! opens in full screen
 nnoremap <Leader>ff :Files!<CR>
 nnoremap <Leader>fl :Lines!<CR>
@@ -126,9 +129,9 @@ noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
 noremap <silent><expr> <Space>/ incsearch#go(<SID>incsearch_config())
 
 " Replace With Register
-nmap <Leader>r  <Plug>ReplaceWithRegisterOperator
-nmap <Leader>rr <Plug>ReplaceWithRegisterLine
-xmap <Leader>r  <Plug>ReplaceWithRegisterVisual
+nmap <Leader>p  <Plug>ReplaceWithRegisterOperator
+nmap <Leader>pp <Plug>ReplaceWithRegisterLine
+xmap <Leader>p  <Plug>ReplaceWithRegisterVisual
 
 " Enable autocompletion:
 set wildmode=longest,list,full
