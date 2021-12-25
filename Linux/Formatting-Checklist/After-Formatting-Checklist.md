@@ -140,9 +140,12 @@ conda create --name qtile
 conda create --name xonsh
 conda create --name util
 conda create --name ranger
+conda create --name go
 
 Install pip in all environments
 conda install -c anaconda pip
+
+conda install -c conda-forge go
 
 =====================================================================
 
@@ -230,6 +233,11 @@ sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.
 Create an empty file at /home/manuj/.config/nvim/init.vim
 .vimrc from home automatically gets copied to it once we start nvim
 :PlugInstall
+
+To install vim-hexokinase go to
+~/.vim/plugged/vim-hexokinas
+change to go env from bash shell
+make hexokinase
 
 sudo dnf install trash-cli
 File ranger/core/actions.py, line 459, in

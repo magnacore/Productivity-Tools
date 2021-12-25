@@ -16,9 +16,14 @@ Plug 'preservim/nerdtree'
 
 Plug 'tpope/vim-commentary'
 
-Plug 'ap/vim-css-color'
+Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
 
 Plug 'christoomey/vim-titlecase'
+
+Plug 'morhetz/gruvbox'
+Plug 'sickill/vim-monokai'
+
+"Plug 'yuttie/comfortable-motion.vim'
 
 call plug#end()
 
@@ -42,7 +47,13 @@ set autoindent
 
 set smartindent
 
+" Set color scheme
 set bg=dark
+syntax enable
+colorscheme monokai
+set termguicolors
+"let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+"let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 
 set wrap
 
@@ -57,6 +68,9 @@ let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
 
 " Remove NA - from lines
 let @r ='ggG4lx' 
+
+" Highlight Colors
+let g:Hexokinase_highlighters = ['backgroundfull']
 
 " Enable clipboard
 set clipboard+=unnamedplus
