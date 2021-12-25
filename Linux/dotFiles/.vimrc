@@ -23,7 +23,7 @@ Plug 'christoomey/vim-titlecase'
 Plug 'morhetz/gruvbox'
 Plug 'sickill/vim-monokai'
 
-"Plug 'yuttie/comfortable-motion.vim'
+Plug 'yuttie/comfortable-motion.vim'
 
 call plug#end()
 
@@ -152,6 +152,10 @@ set wildmode=longest,list,full
 
 " Splits open at the bottom and right
 set splitbelow splitright
+
+" Comfortable motion
+let g:comfortable_motion_scroll_down_key = "j"
+let g:comfortable_motion_scroll_up_key = "k"
 
 " Neovide
 " set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
