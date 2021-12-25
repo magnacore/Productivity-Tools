@@ -107,8 +107,7 @@ class fzf_select(Command):
 
         env = os.environ.copy()
         env['FZF_DEFAULT_COMMAND'] = fzf_default_command
-        # TODO Replace with Pistol
-        env['FZF_DEFAULT_OPTS'] = "--height=100% --layout=reverse --ansi --preview='less {}'"
+        env['FZF_DEFAULT_OPTS'] = "--height=100% --layout=reverse --ansi --preview='pistol {}'"
 
         fzf = self.fm.execute_command('fzf --no-multi', env=env,
                                       universal_newlines=True, stdout=subprocess.PIPE)
@@ -673,3 +672,4 @@ class media_split_equal_in_place(Command):
         self.fm.execute_console(f"shell media-split-equal-in-place {duration} %s")
 
 ###############################################################################
+
