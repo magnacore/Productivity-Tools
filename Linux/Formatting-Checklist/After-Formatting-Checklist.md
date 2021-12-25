@@ -194,7 +194,7 @@ If the above does not work try also
 sudo dnf groupinstall "Development Tools" "Development Libraries"
 I added ~/.local/bin in Xonsh path already (no need to do)
 
-Dragon, Pistol and Hugo-extended are already build and can be copied to ~/.local/bin from ~/Software/bin
+Dragon, Pistol and Hugo-extended are already built and can be copied to ~/.local/bin from ~/Software/bin
 
 Just run `make` to compile dragon and get an executable you can run immediately or put where you like. To install, run `make install`, which will put it into ~/.local/bin by default.
 
@@ -244,6 +244,7 @@ change to go env from bash shell
 make hexokinase
 
 sudo dnf install trash-cli
+The following fix was not required for the latest master branch
 File ranger/core/actions.py, line 459, in
 filenames = [f.path for f in files]
 change the line to
