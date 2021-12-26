@@ -95,10 +95,14 @@ nnoremap <Leader>r :reg<CR>
 " FZF shortcuts, ! opens in full screen
 nnoremap <Leader>ff :Files!<CR>
 nnoremap <Leader>fl :Lines!<CR>
-nnoremap <Leader>fb :BLines!<CR>
+nnoremap <Leader>f/ :BLines!<CR>
 nnoremap <Leader>fm :Marks!<CR>
 nnoremap <Leader>fw :Windows!<CR>
 nnoremap <Leader>fr :Rg!<CR>
+nnoremap <Leader>fc :Colors!<CR>
+nnoremap <Leader>fh :History!<CR>
+nnoremap <Leader>fx :Commands!<CR>
+nnoremap <Leader>fb :Buffers!<CR>
 
 " Easymotion
 
