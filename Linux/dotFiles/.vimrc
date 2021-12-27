@@ -1,50 +1,95 @@
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" PLUGINS
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 call plug#begin('~/.vim/plugged')
 
+" Fuzzy finder
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 
+" Jump to anywhere in file
 Plug 'easymotion/vim-easymotion'
+
+" Fuzzy search
 Plug 'haya14busa/incsearch.vim'
 Plug 'haya14busa/incsearch-fuzzy.vim'
 Plug 'haya14busa/incsearch-easymotion.vim'
 
+" Surround objects
 Plug 'tpope/vim-surround'
 
+" Replace motion with register contents
 Plug 'inkarkat/vim-ReplaceWithRegister'
 
+" File explorer
 Plug 'preservim/nerdtree'
 
+" Comment with motion
 Plug 'tpope/vim-commentary'
 
+" Show hex colors
 Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
 
+" Convert text to title case using motion
 Plug 'christoomey/vim-titlecase'
 
+" Color themes
 Plug 'morhetz/gruvbox'
 Plug 'sickill/vim-monokai'
 
+" Physics based scrolling
 Plug 'yuttie/comfortable-motion.vim'
+
+" Status bar
+Plug 'vim-airline/vim-airline'
+
+" Auto popup for autocomplete
+Plug 'eikenb/acp'
 
 call plug#end()
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" VIM SETTINGS
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set ruler
 
+" Show relative line numbers
 set number relativenumber
 
+" Show current command
 set showcmd
 
+" Show current mode
+set showmode
+
+" Enable autocompletion for commands
 set wildmenu
+set wildmode=list:longest,full
 
-"set hlsearch
+" Autocomplete words
+set complete+=kspell
+set completeopt=menuone,longest
 
-"set incsearch
+" Search settings
+" Searches are case insensitive
+set ignorecase
+" Scroll to search
+set incsearch
+" if search term is lowercase, case insensitive search is used, else case
+" sensitive search is used
+set smartcase
+" Highlight search
+set hlsearch
+" Toggle Highlight
+nnoremap <Leader>h :nohl<CR> 
 
-"set smartcase
-
+" Wrap text
+set wrap
+" Do not break wrap in the middle of words
 set lbr
 
+" Indentation
 set autoindent
-
 set smartindent
 
 " Set color scheme
@@ -52,23 +97,46 @@ set bg=dark
 syntax enable
 colorscheme monokai
 set termguicolors
-"let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-"let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-
-set wrap
 
 set history=1000
 
-set scrolloff=5
+set scrolloff=10
 
 set tabstop=4
 
-" Add incrementing numbers
-let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
+" Splits open at the bottom and right
+set splitbelow splitright
 
-" Remove NA - from lines
-let @r ='ggG4lx' 
+set encoding=utf-8
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" CUSTOM SHORTCUTS
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Window Navigation
+nnoremap <C-h> <C-w>h
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-l> <C-w>l
+
+" Remap ESC to ii
+:imap ii <Esc>
+
+" Make adjusing split sizes a bit more friendly
+noremap <silent> <C-Left> :vertical resize +3<CR>
+noremap <silent> <C-Right> :vertical resize -3<CR>
+noremap <silent> <C-Up> :resize +3<CR>
+noremap <silent> <C-Down> :resize -3<CR>
+
+" Change 2 split windows from vert to horiz or horiz to vert
+map <Leader>th <C-w>t<C-w>H
+map <Leader>tk <C-w>t<C-w>K
+
+" Open Xonsh shell
+map <Leader>tt :new term://~/anaconda3/envs/xonsh/bin/xonsh --rc ~/.xonshrc<CR>
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" PLUGIN SETTINGS
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight Colors
 let g:Hexokinase_highlighters = ['backgroundfull']
 
@@ -86,9 +154,6 @@ inoremap <silent> <F11> <C-O>:set spell!<cr>
 vnoremap J :m '>+1<CR>gv=gv 
 vnoremap K :m '<-2<CR>gv=gv 
 
-" Toggle Highlight
-nnoremap <Leader>h :nohl<CR> 
-
 " Open registers
 nnoremap <Leader>r :reg<CR>
 
@@ -105,7 +170,6 @@ nnoremap <Leader>fx :Commands!<CR>
 nnoremap <Leader>fb :Buffers!<CR>
 
 " Easymotion
-
 " <Leader>f{char} to move to {char}
 map  <Leader>gf <Plug>(easymotion-bd-f)
 nmap <Leader>gf <Plug>(easymotion-overwin-f)
@@ -151,12 +215,6 @@ nmap <Leader>p  <Plug>ReplaceWithRegisterOperator
 nmap <Leader>pp <Plug>ReplaceWithRegisterLine
 xmap <Leader>p  <Plug>ReplaceWithRegisterVisual
 
-" Enable autocompletion:
-set wildmode=longest,list,full
-
-" Splits open at the bottom and right
-set splitbelow splitright
-
 " Comfortable motion
 let g:comfortable_motion_scroll_down_key = "j"
 let g:comfortable_motion_scroll_up_key = "k"
@@ -167,3 +225,12 @@ set guifont=LM\ Mono\ 10:h20
 let g:neovide_transparency=0.95
 let g:neovide_cursor_antialiasing=v:true
 " let g:neovide_cursor_vfx_mode = "pixiedust"
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" CUSTOM MACROS
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Add incrementing numbers
+let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
+
+" Remove NA - from lines
+let @r ='ggG4lx' 
