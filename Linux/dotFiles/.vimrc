@@ -49,6 +49,28 @@ Plug 'eikenb/acp'
 " For linters and fixers
 Plug 'dense-analysis/ale'
 
+" Autocomplete code
+" --- Just Some Notes ---
+" :PlugClean :PlugInstall :UpdateRemotePlugins
+"
+" :CocInstall coc-python
+" :CocInstall coc-clangd
+" :CocInstall coc-snippets
+" :CocCommand snippets.edit... FOR EACH FILE TYPE
+Plug 'neoclide/coc.nvim'
+
+" Development icons
+Plug 'ryanoasis/vim-devicons'
+
+" CTRL + N for multiple cursors
+Plug 'terryma/vim-multiple-cursors'
+
+" Vim Terminal
+Plug 'tc50cal/vim-terminal'
+
+" Tagbar for code navigation
+Plug 'preservim/tagbar'
+
 call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -233,6 +255,18 @@ let g:neovide_cursor_antialiasing=v:true
 let g:ale_linters={'python' : ['pylint']}
 let g:ale_fixers={'*' : ['remove_trailing_lines', 'trim_whitespace'], 'python' : ['black', 'isort']}
 let g:ale_fix_on_save=1
+
+" Nerdtree
+nnoremap <Leader>nf :NERDTreeFocus<CR>
+nnoremap <Leader>nn :NERDTree<CR>
+nnoremap <F7> :NERDTreeToggle<CR>
+nnoremap <Leader>nl :call CocActionAsync('jumpDefinition')<CR>
+
+" Tagbar
+nmap <F8> :TagbarToggle<CR>
+
+" Coc
+inoremap <expr> <Tab> pumvisible() ? coc#_select_confirm() : "<Tab>"
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " CUSTOM MACROS

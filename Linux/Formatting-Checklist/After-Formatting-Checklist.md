@@ -17,7 +17,7 @@ Fedora Snapper Setup
 lsblk
 
 Note the root partition like nvme0n1p3 (this is home and root)
-df -h | grep vda 
+df -h | grep vda
 
 sudo btrfs subvolume list /
 
@@ -154,7 +154,7 @@ pip install qtile
 
 There was an error in installing qtile, it was solved using:
 The pip cache is cleared (remove ~/.cache/pip, if it exists)
-pip uninstall cairocffi 
+pip uninstall cairocffi
 pip install --no-cache-dir cairocffi[xcb]
 
 ===
@@ -326,6 +326,10 @@ If we get an error that package is corrupted, delete all files in the /home/manu
 /home/manuj/anaconda3/envs/quant/bin/pip install vectorbt
 /home/manuj/anaconda3/envs/quant/bin/pip install pandas-ta
 /home/manuj/anaconda3/envs/quant/bin/pip install nsepy
+
+conda install -c anaconda pylint
+conda install -c conda-forge black
+pip install isort
 
 =====================================================================
 
