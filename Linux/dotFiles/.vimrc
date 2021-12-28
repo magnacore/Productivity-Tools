@@ -46,6 +46,9 @@ Plug 'vim-airline/vim-airline'
 " Auto popup for autocomplete
 Plug 'eikenb/acp'
 
+" For linters and fixers
+Plug 'dense-analysis/ale'
+
 call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -81,7 +84,7 @@ set smartcase
 " Highlight search
 set hlsearch
 " Toggle Highlight
-nnoremap <Leader>h :nohl<CR> 
+nnoremap <Leader>h :nohl<CR>
 
 " Wrap text
 set wrap
@@ -145,8 +148,8 @@ nnoremap <silent> <F11> :set spell!<cr>
 inoremap <silent> <F11> <C-O>:set spell!<cr>
 
 " Move selection
-vnoremap J :m '>+1<CR>gv=gv 
-vnoremap K :m '<-2<CR>gv=gv 
+vnoremap J :m '>+1<CR>gv=gv
+vnoremap K :m '<-2<CR>gv=gv
 
 " Open registers
 nnoremap <Leader>c :reg<CR>
@@ -226,6 +229,11 @@ let g:neovide_transparency=0.95
 let g:neovide_cursor_antialiasing=v:true
 " let g:neovide_cursor_vfx_mode = "pixiedust"
 
+" ALE
+let g:ale_linters={'python' : ['pylint']}
+let g:ale_fixers={'*' : ['remove_trailing_lines', 'trim_whitespace'], 'python' : ['black', 'isort']}
+let g:ale_fix_on_save=1
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " CUSTOM MACROS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -233,4 +241,4 @@ let g:neovide_cursor_antialiasing=v:true
 let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
 
 " Remove NA - from lines
-let @r ='ggG4lx' 
+let @r ='ggG4lx'
