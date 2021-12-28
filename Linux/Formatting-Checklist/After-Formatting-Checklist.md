@@ -228,7 +228,9 @@ sudo dnf install zathura zathura-pdf-mupdf zathura-pdf-poppler
 sudo dnf install neovim
 sudo dnf install calcurse
 sudo dnf install git
+sudo dnf install nodejs
 
+## Vim installation
 install Vim Plug
 
 sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
@@ -242,6 +244,19 @@ To install vim-hexokinase go to
 ~/.vim/plugged/vim-hexokinas
 change to go env from bash shell
 make hexokinase
+
+coc installation
+cd ~/.vim/plugged/coc.nvim
+sudo npm install -g yarn
+yarn install
+yarn build
+/home/manuj/anaconda3/envs/quant/bin/pip install jedi (conda install -c conda-forge jedi)
+/home/manuj/anaconda3/envs/quant/bin/pip install pynvim (:checkhealth to see any missing error)
+from within nvim
+:CocInstall coc-python
+
+To change the venv
+:CocCommand then fuzzy search for python.setInterpreter and choose the venv.
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch

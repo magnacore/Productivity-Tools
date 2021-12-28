@@ -43,9 +43,6 @@ Plug 'yuttie/comfortable-motion.vim'
 " Status bar
 Plug 'vim-airline/vim-airline'
 
-" Auto popup for autocomplete
-Plug 'eikenb/acp'
-
 " For linters and fixers
 Plug 'dense-analysis/ale'
 
@@ -257,10 +254,10 @@ let g:ale_fixers={'*' : ['remove_trailing_lines', 'trim_whitespace'], 'python' :
 let g:ale_fix_on_save=1
 
 " Nerdtree
-nnoremap <Leader>nf :NERDTreeFocus<CR>
-nnoremap <Leader>nn :NERDTree<CR>
-nnoremap <F7> :NERDTreeToggle<CR>
-nnoremap <Leader>nl :call CocActionAsync('jumpDefinition')<CR>
+nnoremap <A-f> :NERDTreeFocus<CR>
+" nnoremap <A-n> :NERDTree<CR>
+nnoremap <A-t> :NERDTreeToggle<CR>
+nnoremap <A-l> :call CocActionAsync('jumpDefinition')<CR>
 
 " Tagbar
 nmap <F8> :TagbarToggle<CR>
