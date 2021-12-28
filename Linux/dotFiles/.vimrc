@@ -134,12 +134,6 @@ map <Leader>tk <C-w>t<C-w>K
 " Open Xonsh shell
 map <Leader>tt :new term://~/anaconda3/envs/xonsh/bin/xonsh --rc ~/.xonshrc<CR>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" PLUGIN SETTINGS
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Highlight Colors
-let g:Hexokinase_highlighters = ['backgroundfull']
-
 " Enable clipboard
 set clipboard+=unnamedplus
 
@@ -155,7 +149,13 @@ vnoremap J :m '>+1<CR>gv=gv
 vnoremap K :m '<-2<CR>gv=gv 
 
 " Open registers
-nnoremap <Leader>r :reg<CR>
+nnoremap <Leader>c :reg<CR>
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" PLUGIN SETTINGS
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Highlight Colors
+let g:Hexokinase_highlighters = ['backgroundfull']
 
 " FZF shortcuts, ! opens in full screen
 nnoremap <Leader>ff :Files!<CR>
@@ -205,15 +205,15 @@ function! s:config_easyfuzzymotion(...) abort
   \ }), get(a:, 1, {}))
 endfunction
 
-noremap <silent><expr> /  incsearch#go(<SID>config_easyfuzzymotion())
+noremap <silent><expr> / incsearch#go(<SID>incsearch_config())
+noremap <silent><expr> <space>/  incsearch#go(<sid>config_easyfuzzymotion())
 noremap <silent><expr> ?  incsearch#go(<SID>incsearch_config({'command': '?'}))
 noremap <silent><expr> g/ incsearch#go(<SID>incsearch_config({'is_stay': 1}))
-noremap <silent><expr> <Space>/ incsearch#go(<SID>incsearch_config())
 
 " Replace With Register
-nmap <Leader>p  <Plug>ReplaceWithRegisterOperator
-nmap <Leader>pp <Plug>ReplaceWithRegisterLine
-xmap <Leader>p  <Plug>ReplaceWithRegisterVisual
+nmap <Leader>r  <Plug>ReplaceWithRegisterOperator
+nmap <Leader>rr <Plug>ReplaceWithRegisterLine
+xmap <Leader>r  <Plug>ReplaceWithRegisterVisual
 
 " Comfortable motion
 let g:comfortable_motion_scroll_down_key = "j"
