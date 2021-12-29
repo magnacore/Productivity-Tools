@@ -2,10 +2,12 @@
 # Since we are importing python3 from util environment, pyperclip should be installed in util environment too
 # pip install pyperclip
 
-import pyperclip as pc
-import unicodedata
 import re
+import unicodedata
+
+import pyperclip as pc
 from playsound import playsound
+
 
 def slugify(value, allow_unicode=False):
     """
@@ -17,21 +19,24 @@ def slugify(value, allow_unicode=False):
     """
     value = str(value)
     if allow_unicode:
-        value = unicodedata.normalize('NFKC', value)
+        value = unicodedata.normalize("NFKC", value)
     else:
-        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-    value = re.sub(r'[^\w\s-]', '', value.lower())
-    return re.sub(r'[-\s]+', '-', value).strip('-_')
+        value = (
+            unicodedata.normalize("NFKD", value)
+            .encode("ascii", "ignore")
+            .decode("ascii")
+        )
+    value = re.sub(r"[^\w\s-]", "", value.lower())
+    return re.sub(r"[-\s]+", "-", value).strip("-_")
+
 
 clipboard_content = pc.paste()
+
 file_name = slugify(clipboard_content[:40].strip())
+file_name = f"/home/manuj/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name} #todo.md"
 
-#open file
-file = open(f"/home/manuj/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name} #todo.md", "w")
+# open file
+with open(file_name, "a+") as f:
+    f.write(clipboard_content + "\n")
 
-file.write(clipboard_content)
- 
-#close file
-file.close()
-
-playsound('/home/manuj/Bin/stereo/bell.wav')
+playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
