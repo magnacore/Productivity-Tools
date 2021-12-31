@@ -18,7 +18,7 @@ font:
     family: SauceCodePro Nerd Font Mono
     style: Bold Italic
 
-  size: 14  #13 font size will cause an empty line to appear below nvim for this font
+  size: 12  #13 font size will cause an empty line to appear below nvim for this font
 
 colors:
   name: Monokai (dark)
