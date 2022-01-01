@@ -42,6 +42,7 @@ Plug 'yuttie/comfortable-motion.vim'
 
 " Status bar
 Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 
 " For linters and fixers
 Plug 'dense-analysis/ale'
@@ -114,10 +115,14 @@ set autoindent
 set smartindent
 
 " Set color scheme
-set bg=dark
+" set bg=dark
 syntax enable
 colorscheme monokai
-set termguicolors
+let g:airline_theme='molokai'
+
+if (has("termguicolors"))
+		set termguicolors
+endif
 
 set history=1000
 
@@ -129,6 +134,7 @@ set tabstop=4
 set splitbelow splitright
 
 set encoding=utf-8
+set fileformat=unix
 
 set title
 
