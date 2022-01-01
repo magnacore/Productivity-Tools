@@ -63,6 +63,9 @@ Plug 'terryma/vim-multiple-cursors'
 " Tagbar for code navigation
 Plug 'preservim/tagbar'
 
+" Open buffers in tabs
+Plug 'ap/vim-buftabline'
+
 " Git
 Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
 Plug 'Xuyuanp/nerdtree-git-plugin'
@@ -408,6 +411,11 @@ if has('nvim-0.4.0') || has('patch-8.2.0750')
   vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
   vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
 endif
+
+" Vim bufftagline
+" set hidden
+nnoremap <Leader>bn :bnext<CR>
+nnoremap <Leader>bp :bprev<CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " CUSTOM MACROS
