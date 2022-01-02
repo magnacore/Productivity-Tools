@@ -1,6 +1,8 @@
 window:
   opacity: 0.95
 
+# family: SauceCodePro Nerd Font size 12
+# family: RobotoMono Nerd Font size 12.5
 font:
   normal:
     family: RobotoMono Nerd Font
