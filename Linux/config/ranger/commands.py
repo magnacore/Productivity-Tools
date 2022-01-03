@@ -721,7 +721,7 @@ class media_split_equal_in_place(Command):
 ###############################################################################
 
 
-class files_number(Command):
+class file_number(Command):
     """:number files based on a starting number and padding"""
 
     def execute(self):

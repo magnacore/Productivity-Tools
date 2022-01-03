@@ -22,7 +22,7 @@ if selection:
 
 	allFiles.sort()
 
-	print(f"{cyan}Start numbring from {start_number} with a padding of {padding}")
+	print(f"{cyan}Start numbering from {start_number} with a padding of {padding}...{no_color}")
 
 	for file in tqdm(allFiles):
 		new_filename = str(start_number).zfill(padding) + " " + file
