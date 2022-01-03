@@ -7,11 +7,11 @@
 # A simple command for demonstration purposes follows.
 # -----------------------------------------------------------------------------
 
-from __future__ import (absolute_import, division, print_function)
-from collections import deque
+from __future__ import absolute_import, division, print_function
 
 # You can import any python module as needed.
 import os
+from collections import deque
 
 # You always need to import ranger.api.commands here to get the Command class:
 from ranger.api.commands import Command
@@ -63,6 +63,7 @@ class my_edit(Command):
         # content of the current directory.
         return self._tab_directory_content()
 
+
 ###############################################################################
 
 
@@ -77,40 +78,47 @@ class fzf_select(Command):
 
     def execute(self):
         import subprocess
+
         from ranger.ext.get_executables import get_executables
 
-        if 'fzf' not in get_executables():
-            self.fm.notify('Could not find fzf in the PATH.', bad=True)
+        if "fzf" not in get_executables():
+            self.fm.notify("Could not find fzf in the PATH.", bad=True)
             return
 
         fd = None
-        if 'fdfind' in get_executables():
-            fd = 'fdfind'
-        elif 'fd' in get_executables():
-            fd = 'fd'
+        if "fdfind" in get_executables():
+            fd = "fdfind"
+        elif "fd" in get_executables():
+            fd = "fd"
 
         if fd is not None:
-            hidden = ('--hidden' if self.fm.settings.show_hidden else '')
+            hidden = "--hidden" if self.fm.settings.show_hidden else ""
             exclude = "--no-ignore-vcs --exclude '.git' --exclude '*.py[co]' --exclude '__pycache__'"
-            only_directories = ('--type directory' if self.quantifier else '')
-            fzf_default_command = '{} --follow {} {} {} --color=always'.format(
+            only_directories = "--type directory" if self.quantifier else ""
+            fzf_default_command = "{} --follow {} {} {} --color=always".format(
                 fd, hidden, exclude, only_directories
             )
         else:
             hidden = (
-                '-false' if self.fm.settings.show_hidden else r"-path '*/\.*' -prune")
+                "-false" if self.fm.settings.show_hidden else r"-path '*/\.*' -prune"
+            )
             exclude = r"\( -name '\.git' -o -iname '\.*py[co]' -o -fstype 'dev' -o -fstype 'proc' \) -prune"
-            only_directories = ('-type d' if self.quantifier else '')
-            fzf_default_command = 'find -L . -mindepth 1 {} -o {} -o {} -print | cut -b3-'.format(
-                hidden, exclude, only_directories
+            only_directories = "-type d" if self.quantifier else ""
+            fzf_default_command = (
+                "find -L . -mindepth 1 {} -o {} -o {} -print | cut -b3-".format(
+                    hidden, exclude, only_directories
+                )
             )
 
         env = os.environ.copy()
-        env['FZF_DEFAULT_COMMAND'] = fzf_default_command
-        env['FZF_DEFAULT_OPTS'] = "--height=100% --layout=reverse --ansi --preview='pistol {}'"
+        env["FZF_DEFAULT_COMMAND"] = fzf_default_command
+        env[
+            "FZF_DEFAULT_OPTS"
+        ] = "--height=100% --layout=reverse --ansi --preview='pistol {}'"
 
-        fzf = self.fm.execute_command('fzf --no-multi', env=env,
-                                      universal_newlines=True, stdout=subprocess.PIPE)
+        fzf = self.fm.execute_command(
+            "fzf --no-multi", env=env, universal_newlines=True, stdout=subprocess.PIPE
+        )
         stdout, _ = fzf.communicate()
         if fzf.returncode == 0:
             selected = os.path.abspath(stdout.strip())
@@ -134,6 +142,7 @@ class fzf_locate(Command):
 
     def execute(self):
         import subprocess
+
         if self.quantifier:
             command = "locate home media | fzf -e -i"
         else:
@@ -141,7 +150,7 @@ class fzf_locate(Command):
         fzf = self.fm.execute_command(command, stdout=subprocess.PIPE)
         stdout, stderr = fzf.communicate()
         if fzf.returncode == 0:
-            fzf_file = os.path.abspath(stdout.decode('utf-8').rstrip('\n'))
+            fzf_file = os.path.abspath(stdout.decode("utf-8").rstrip("\n"))
             if os.path.isdir(fzf_file):
                 self.fm.cd(fzf_file)
             else:
@@ -149,6 +158,7 @@ class fzf_locate(Command):
 
 
 ###############################################################################
+
 
 class fd_search(Command):
     """
@@ -165,53 +175,62 @@ class fd_search(Command):
     def execute(self):
         import re
         import subprocess
+
         from ranger.ext.get_executables import get_executables
 
         self.SEARCH_RESULTS.clear()
 
-        if 'fdfind' in get_executables():
-            fd = 'fdfind'
-        elif 'fd' in get_executables():
-            fd = 'fd'
+        if "fdfind" in get_executables():
+            fd = "fdfind"
+        elif "fd" in get_executables():
+            fd = "fd"
         else:
             self.fm.notify("Couldn't find fd in the PATH.", bad=True)
             return
 
         if self.arg(1):
-            if self.arg(1)[:2] == '-d':
+            if self.arg(1)[:2] == "-d":
                 depth = self.arg(1)
                 target = self.rest(2)
             else:
-                depth = '-d1'
+                depth = "-d1"
                 target = self.rest(1)
         else:
             self.fm.notify(":fd_search needs a query.", bad=True)
             return
 
-        hidden = ('--hidden' if self.fm.settings.show_hidden else '')
+        hidden = "--hidden" if self.fm.settings.show_hidden else ""
         exclude = "--no-ignore-vcs --exclude '.git' --exclude '*.py[co]' --exclude '__pycache__'"
-        command = '{} --follow {} {} {} --print0 {}'.format(
+        command = "{} --follow {} {} {} --print0 {}".format(
             fd, depth, hidden, exclude, target
         )
         fd = self.fm.execute_command(
-            command, universal_newlines=True, stdout=subprocess.PIPE)
+            command, universal_newlines=True, stdout=subprocess.PIPE
+        )
         stdout, _ = fd.communicate()
 
         if fd.returncode == 0:
-            results = filter(None, stdout.split('\0'))
+            results = filter(None, stdout.split("\0"))
             if not self.fm.settings.show_hidden and self.fm.settings.hidden_filter:
                 hidden_filter = re.compile(self.fm.settings.hidden_filter)
-                results = filter(lambda res: not hidden_filter.search(
-                    os.path.basename(res)), results)
-            results = map(lambda res: os.path.abspath(
-                os.path.join(self.fm.thisdir.path, res)), results)
+                results = filter(
+                    lambda res: not hidden_filter.search(os.path.basename(res)), results
+                )
+            results = map(
+                lambda res: os.path.abspath(os.path.join(self.fm.thisdir.path, res)),
+                results,
+            )
             self.SEARCH_RESULTS.extend(sorted(results, key=str.lower))
             if len(self.SEARCH_RESULTS) > 0:
-                self.fm.notify('Found {} result{}.'.format(len(self.SEARCH_RESULTS),
-                                                           ('s' if len(self.SEARCH_RESULTS) > 1 else '')))
+                self.fm.notify(
+                    "Found {} result{}.".format(
+                        len(self.SEARCH_RESULTS),
+                        ("s" if len(self.SEARCH_RESULTS) > 1 else ""),
+                    )
+                )
                 self.fm.select_file(self.SEARCH_RESULTS[0])
             else:
-                self.fm.notify('No results found.')
+                self.fm.notify("No results found.")
 
 
 class fd_next(Command):
@@ -241,6 +260,7 @@ class fd_prev(Command):
         elif len(fd_search.SEARCH_RESULTS) == 1:
             self.fm.select_file(fd_search.SEARCH_RESULTS[0])
 
+
 ###############################################################################
 
 
@@ -267,6 +287,7 @@ class fd_prev(Command):
 #         self.fm.execute_console(f"shell mkdir ./{target_foldername}")
 #         self.fm.execute_console(f"shell mv %s ./{target_foldername}")
 #         self.fm.notify("Done moving.")
+
 
 class mkdirmv(Command):
     """:mkdirmv <target_directory>"""
@@ -302,8 +323,8 @@ class mkdirmv(Command):
             self.fm.notify("Error: target directory not specified", bad=True)
             return
 
-        from os.path import join, expanduser, lexists
         from os import makedirs
+        from os.path import expanduser, join, lexists
 
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
 
@@ -311,17 +332,17 @@ class mkdirmv(Command):
             makedirs(target_dir)
 
         for f in files:
-            destination = self.make_safe_path(
-                join(target_dir, f.relative_path))
+            destination = self.make_safe_path(join(target_dir, f.relative_path))
             self.fm.rename(f, destination)
 
         # Change mode to normal in case visual selection mode was on
-        self.fm.change_mode('normal')
+        self.fm.change_mode("normal")
 
         self.fm.notify(f"Done moving to {target_dir}")
 
     def tab(self):
         return self._tab_directory_content()
+
 
 ###############################################################################
 
@@ -336,8 +357,8 @@ class ranger_pycopy(Command):
     def execute(self):
         # We are passing current directory as the second parameter
         # In the Xonsh script it will be the last item in the list
-        self.fm.execute_console(
-            f"shell file-copy-ranger %c %d")
+        self.fm.execute_console(f"shell file-copy-ranger %c %d")
+
 
 ###############################################################################
 
@@ -393,6 +414,7 @@ class toggle_flat(Command):
             self.fm.thisdir.load_content()
             self.fm.notify("Flattened.")
 
+
 ###############################################################################
 
 
@@ -407,13 +429,15 @@ class copy_selected_to_highlight(Command):
             self.fm.notify("Error: target directory not highlighted", bad=True)
             return
 
-        from os.path import join, expanduser
+        from os.path import expanduser, join
+
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
 
         self.fm.execute_console("copy")
         self.fm.do_cut = False
         self.fm.paste(dest=target_dir)
         self.fm.notify(f"Done copying to {target_dir}")
+
 
 ###############################################################################
 
@@ -429,11 +453,13 @@ class directories_number_highlight(Command):
             self.fm.notify("Error: target directory not highlighted", bad=True)
             return
 
-        from os.path import join, expanduser
+        from os.path import expanduser, join
+
         target_dir = join(self.fm.thisdir.path, expanduser(target_dir))
 
         self.fm.execute_console(f"shell -f directory-number '{target_dir}'")
         self.fm.notify("Done numbering directories.")
+
 
 ###############################################################################
 
@@ -444,6 +470,7 @@ class mark_tag(Command):
     Mark all tags that are tagged with either of the given tags.
     When leaving out the tag argument, all tagged files are marked.
     """
+
     do_mark = True
 
     def execute(self):
@@ -468,7 +495,9 @@ class unmark_tag(mark_tag):
     Unmark all tags that are tagged with either of the given tags.
     When leaving out the tag argument, all tagged files are unmarked.
     """
+
     do_mark = False
+
 
 ###############################################################################
 
@@ -484,12 +513,13 @@ class image_convert(Command):
             dimension = self.rest(1)
         else:
             dimension = 1080
-        
+
         # %s sends each file as an argument
         self.fm.execute_console(f"shell image-resize {dimension} %s")
 
 
 ###############################################################################
+
 
 class open_in_tabs(Command):
     """
@@ -510,6 +540,7 @@ class open_in_tabs(Command):
         for f in files:
             # narg=f.relative_path sets the name of the tab
             self.fm.tab_new(narg=f.relative_path, path=f"{f}")
+
 
 ###############################################################################
 
@@ -532,9 +563,11 @@ class gpg_detached_sign(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"""shell -f gpg --detach-sign "{f.relative_path}" """)
+                f"""shell -f gpg --detach-sign "{f.relative_path}" """
+            )
 
         self.fm.notify("Done signing.")
+
 
 ###############################################################################
 
@@ -559,7 +592,9 @@ class gpg_signature_verify(Command):
             root_ext = os.path.splitext(f.relative_path)
             if root_ext[1] == ".sig":
                 self.fm.execute_console(
-                    f"""shell -w gpg --verify "{f.relative_path}" """)
+                    f"""shell -w gpg --verify "{f.relative_path}" """
+                )
+
 
 ###############################################################################
 
@@ -582,7 +617,9 @@ class gpg_encrypt_file(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"""shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' "{f.relative_path}" """)
+                f"""shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' "{f.relative_path}" """
+            )
+
 
 ###############################################################################
 
@@ -606,9 +643,12 @@ class gpg_decrypt_file(Command):
         for f in files:
             root_ext = os.path.splitext(f.relative_path)
             self.fm.execute_console(
-                f"""shell -f gpg -o "{root_ext[0]}" -d "{f.relative_path}" """)
+                f"""shell -f gpg -o "{root_ext[0]}" -d "{f.relative_path}" """
+            )
+
 
 ###############################################################################
+
 
 class files_tag(Command):
     """:tag files"""
@@ -620,12 +660,14 @@ class files_tag(Command):
             # self.rest(1) contains self.arg(1) and everything that follows
             tag = self.rest(1)
         else:
-            tag = 'noTag'
+            tag = "noTag"
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag {tag} %s")
 
+
 ###############################################################################
+
 
 class files_tag_remove(Command):
     """:remove file tags"""
@@ -637,12 +679,14 @@ class files_tag_remove(Command):
             # self.rest(1) contains self.arg(1) and everything that follows
             tag = self.rest(1)
         else:
-            tag = 'noTag'
+            tag = "noTag"
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag-remove {tag} %s")
 
+
 ###############################################################################
+
 
 class file_convert_text(Command):
     """:Converts file/folder names to text files"""
@@ -651,7 +695,9 @@ class file_convert_text(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-convert-text %s")
 
+
 ###############################################################################
+
 
 class media_split_equal_in_place(Command):
     """
@@ -671,5 +717,26 @@ class media_split_equal_in_place(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell media-split-equal-in-place {duration} %s")
 
+
 ###############################################################################
 
+
+class files_number(Command):
+    """:number files based on a starting number and padding"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            starting_number = self.arg(1)
+            padding = self.arg(2)
+        else:
+            starting_number = 1
+            padding = 3
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-number {starting_number} {padding} %s")
+
+
+###############################################################################

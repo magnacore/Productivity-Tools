@@ -1,0 +1,30 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+import sys
+from tqdm import tqdm
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+
+	allFiles = sys.argv[3:]
+	start_number = int(sys.argv[1])
+	padding = int(sys.argv[2])
+
+	allFiles.sort()
+
+	print(f"{cyan}Start numbring from {start_number} with a padding of {padding}")
+
+	for file in tqdm(allFiles):
+		new_filename = str(start_number).zfill(padding) + " " + file
+		os.rename(file, new_filename)
+		start_number += 1
