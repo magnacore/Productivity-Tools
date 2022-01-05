@@ -1,29 +1,3 @@
-# Copyright (c) 2010 Aldo Cortesi
-# Copyright (c) 2010, 2014 dequis
-# Copyright (c) 2012 Randall Ma
-# Copyright (c) 2012-2014 Tycho Andersen
-# Copyright (c) 2012 Craig Barnes
-# Copyright (c) 2013 horsik
-# Copyright (c) 2013 Tao Sauvage
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from typing import List  # noqa: F401
 
 import os
@@ -168,9 +142,9 @@ colors = [["#272822", "#272822"], # panel background
           ["#ecbbfb", "#ecbbfb"]] # backbround for inactive screens
 
 widget_defaults = dict(
-    font='sans',
-    fontsize=12,
-    padding=3,
+    font='RobotoMono Nerd Font',
+    fontsize=13,
+    padding=0,
     # background=colors[2]
 )
 extension_defaults = widget_defaults.copy()
@@ -178,25 +152,21 @@ extension_defaults = widget_defaults.copy()
 def open_bpytop():
 	qtile.cmd_spawn(myTerm+" -e bpytop")
 
-padding = 5
+widget_padding = 0
+seperator_padding = 5
 icon_font_size = 15
 bar_size = 24
 
 screens = [
     Screen(
         top=bar.Bar(
-            [
-                # Logo
-				# widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
-				# widget.Image(filename = "~/.config/qtile/icons/python-white.png", scale = "False", foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_terminal}),
-				
+            [                		
                 # Layout Icon
-                # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
-				widget.CurrentLayoutIcon(padding = padding, scale = 0.9, background = colors[0]),
+                widget.CurrentLayoutIcon(padding = widget_padding, scale = 0.9, background = colors[0]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[0]),
                 widget.CurrentLayout(foreground = colors[2], background = colors[0]),
                 
                 # Groupbox
-                widget.Sep(linewidth = 0, padding = padding, background = colors[0]),
                 widget.GroupBox(active = colors[2], background = colors[0], inactive = colors[1], disable_drag = True),
                 
                 # # Prompt
@@ -204,11 +174,7 @@ screens = [
                 # widget.Prompt(),
                 
                 # Window Name
-                widget.Sep(linewidth = 0, padding = padding, background = colors[0]),
                 widget.WindowName(foreground = colors[2], background = colors[0]),
-                
-                # Unknown
-                widget.Sep(linewidth = 0, padding = padding, background = colors[0]),
                 
                 widget.Chord(
                     chords_colors={
@@ -218,48 +184,58 @@ screens = [
                 ),
 				
                 # Temperature
-                widget.TextBox(text = "🌡️", padding = 0, background = colors[1], fontsize = icon_font_size),
-				widget.ThermalSensor(foreground = colors[2], background = colors[1], threshold = 90, padding = 2),
-                widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[1]),
+                widget.TextBox(text = "🌡️", padding = widget_padding, background = colors[1], fontsize = icon_font_size),
+				widget.ThermalSensor(foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[1]),
 
                 # CPU
-                widget.TextBox(text = "🧠", padding = padding, background = colors[0], fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
+                widget.TextBox(text = "🧠", padding = widget_padding, background = colors[0], fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.CPU(foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
-                widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 				
                 # Ram
-                widget.TextBox(text = "🐏", background = colors[1], padding = padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
-				widget.Memory(format = '{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1], mouse_callbacks = {'Button1': open_bpytop}),
-                widget.Sep(linewidth = 0, padding = padding, background = colors[1]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+                widget.TextBox(text = "🐏", background = colors[1], padding = widget_padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+                widget.Memory(format = '{MemUsed:.0f}{mm}/{MemTotal:.0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1], mouse_callbacks = {'Button1': open_bpytop}),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
 
                 # Disk
-                widget.TextBox(text = "🗄️", background = colors[0], padding = padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
-				widget.DF(format = '{p} ({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
-                widget.Sep(linewidth = 0, padding = padding, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
+                widget.TextBox(text = "🗄️", background = colors[0], padding = widget_padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
+				widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
+                widget.DF(format = '{p}({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Volume
-				widget.TextBox( text = "🔊", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e alsamixer")}, padding = padding, fontsize = icon_font_size),
+				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+                widget.TextBox(text = "🔊", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e alsamixer")}, padding = widget_padding, fontsize = icon_font_size),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.Volume(
                 fmt = '{} ',
                 foreground = colors[2],
                 background = colors[1],
-                padding = 5,
+                padding = widget_padding,
                 # mute_command = 'amixer -D pipewire sset Master toggle'.split(),
                 # volume_up_command = 'amixer -D pipewire sset Master 1%+'.split(),
                 # volume_down_command = 'amixer -D pipewire sset Master 1%-'.split(),
                 get_volume_command = 'amixer -D pipewire get Master'.split()),
-                widget.Sep(linewidth = 0, padding = padding, background = colors[1]),
 
                 # Battery
-                # widget.TextBox(text = "🔋", foreground = colors[2],background = colors[4],  mouse_callbacks = {'Button1': lambda qtile: qtile.cmd_spawn(myTerm + ' -e pulsemixer')}, padding = 5, fontsize = icon_font_size),
-                widget.BatteryIcon(foreground = colors[2],background = colors[0], padding = padding),
-                widget.Battery(foreground = colors[2],background = colors[0], padding = padding, charge_char='⏫', discharge_char='⏬', full_char='🔋', notify_below=5),
-                # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = 2, foreground = colors[2], background = colors[0]),
+                widget.BatteryIcon(foreground = colors[2],background = colors[0], padding = widget_padding),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
+                widget.Battery(foreground = colors[2],background = colors[0], padding = widget_padding, charge_char='⏫', discharge_char='⏬', full_char='🔋', notify_below=5),
+                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
 
                 # Wallpaper
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label='🌄', fontsize = icon_font_size, background = colors[1]),
                 # widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['xwallpaper', '--zoom']),
-                widget.Wallpaper(directory='~/Pictures/Wallpapers/', random_selection=True, wallpaper_command=['feh', '--bg-fill'], label=' 🌄 ', fontsize = icon_font_size, background = colors[1]),
-                
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+
                 # TODO
                 # widget.Bluethooth(),
                 # widget.CapsNumLockIndicator(),
@@ -268,13 +244,14 @@ screens = [
                 # widget.MemoryGraph(),
                 
                 # System Tray
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.Systray(foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Clock
                 widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e sh -c 'sleep 0.1 && calcurse'")}),
-                
-                # Logout
-                # widget.QuickExit(),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
+
             ],
             bar_size,
         ),
