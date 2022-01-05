@@ -6,12 +6,10 @@ from tqdm import tqdm
 
 tag = " #converted"
 
-all_original_files = glob.glob("*.*")
 all_converted_files = glob.glob(f"*{tag}.*")
 
 print("Finding Unconverted:")
 
-all_original_files_strip = [file for file in all_original_files if tag not in file]
 all_converted_files_strip = [file.replace(tag, "") for file in all_converted_files]
 
 mkdir converted
@@ -21,6 +19,5 @@ for file in tqdm(all_converted_files_strip):
     file_name = root_ext[0]
     extension = root_ext[1]
 
+    # Files containing [ ] in their names are not moved
     mv @(file_name)* ./converted
-
-# Files containing [ ] in their names are not moved
