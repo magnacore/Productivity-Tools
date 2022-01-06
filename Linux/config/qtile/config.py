@@ -111,9 +111,9 @@ for i in groups:
     ])
 
 layout_theme = {"border_width": 2, # Window lighlight width
-                "margin": 1, # Gap wetween windows
+                "margin": 0, # Gap wetween windows
                 "border_focus": "#4f76c7",
-                "border_normal": "#1D2330"
+                "border_normal": "#3d3f4b"
                 }
 
 layouts = [
