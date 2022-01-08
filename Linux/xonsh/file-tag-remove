@@ -26,3 +26,5 @@ if selection:
 		new_filename = file.replace(f" #{tag}", "")
 		new_filename = new_filename.strip()
 		os.rename(file, new_filename)
+
+print(u'\u2500' * os.get_terminal_size().columns)

@@ -39,3 +39,5 @@ for video in tqdm(allFiles):
 			ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 2 -r 15 -vsync vfr -n -c:a libopus -b:a 32k -ac 1 f"./converted/{filename}"
 
 rm ffmpeg2pass-0.log
+
+print(u'\u2500' * os.get_terminal_size().columns)

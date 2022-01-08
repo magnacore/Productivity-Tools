@@ -1,4 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
@@ -28,7 +31,9 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     rsync --delete --progress -vahi $HOME/ /media/$USER/laptop_backup_full/@current    
 
     date > ~/Software/logs/laptop-backup-full.txt
-    print(f"{cyan}Done.{no_color}")
     sudo btrfs filesystem show
+    print(f"{cyan}Done.{no_color}")
+    print(u'\u2500' * os.get_terminal_size().columns)
+
 else:
     print(f"{cyan}Something went wrong. Could not mount.{no_color}")

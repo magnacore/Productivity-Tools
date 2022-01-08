@@ -2,7 +2,7 @@
 
 from PIL import Image
 import glob
-# import os
+import os
 from tqdm import tqdm
 
 allPdfFiles = glob.glob("*.jpg")
@@ -14,3 +14,5 @@ for filename in tqdm(allPdfFiles):
     new_name = filename[:-4] + ".pdf"
     image.save(new_name, "PDF", resolution = 100.0)
     # os.remove(filename)
+
+print(u'\u2500' * os.get_terminal_size().columns)

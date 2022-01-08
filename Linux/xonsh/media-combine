@@ -20,3 +20,6 @@ os.remove(temp_filename)
 
 # https://github.com/xonsh/xonsh/issues/1307
 # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
+
+print(f"{cyan}Done.{no_color}")
+print(u'\u2500' * os.get_terminal_size().columns)

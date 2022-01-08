@@ -1,5 +1,9 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
+import os
+
 rsync --delete --progress -vahi /run/media/$USER/LEARNING/ /run/media/$USER/TutsBackup/BACKUP/
 
 date > ~/Software/logs/tutorials-backup.txt
+
+print(u'\u2500' * os.get_terminal_size().columns)

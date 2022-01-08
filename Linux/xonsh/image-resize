@@ -4,7 +4,6 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import os
-import glob
 import sys
 from tqdm import tqdm
 import mimetypes
@@ -47,3 +46,5 @@ if selection:
 
 				new_filename = file_name + f'_{resize_dimension}' + extension
 				convert @(media) -resize x@(resize_dimension) @(new_filename)
+
+print(u'\u2500' * os.get_terminal_size().columns)

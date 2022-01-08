@@ -1,3 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
+import os
+
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Slides.pdf *.pdf
+
+print(u'\u2500' * os.get_terminal_size().columns)

@@ -6,7 +6,6 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import os
-import glob
 import sys
 import datetime
 import math
@@ -58,7 +57,7 @@ if selection:
 				duration = get_duration(file)
 				
 				if duration > float(threshold_seconds):
-					print(f"{cyan}Media longer than threshold of {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
+					print(f"{cyan}Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
 					to_split = True
 					break
 
@@ -102,6 +101,7 @@ if selection:
 				
 				else:
 					print(f"Skipping {file}")
-
 	else:
 		print(f"{cyan}Nothing to split...exiting.{no_color}")
+
+print(u'\u2500' * os.get_terminal_size().columns)

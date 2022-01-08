@@ -1,4 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
@@ -16,3 +19,5 @@ date > ~/Software/logs/laptop-backup-b.txt
 sudo btrfs filesystem show
 
 print(f"{cyan}Done.{no_color}")
+
+print(u'\u2500' * os.get_terminal_size().columns)

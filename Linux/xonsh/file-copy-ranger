@@ -23,3 +23,5 @@ if selection:
 	target_dir = sys.argv[-1]
 
 	~/anaconda3/envs/util/bin/pycp -gip @(allFiles) @(target_dir)
+
+print(u'\u2500' * os.get_terminal_size().columns)

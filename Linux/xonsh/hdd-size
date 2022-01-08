@@ -1,6 +1,9 @@
 # Use bpytop instead
 
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
@@ -22,3 +25,5 @@ free -h
 
 print(f"\n{cyan}Used Trash Space: {no_color}")
 du -hs ~/.local/share/Trash
+
+print(u'\u2500' * os.get_terminal_size().columns)

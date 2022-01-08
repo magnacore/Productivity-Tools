@@ -1,4 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
@@ -10,3 +13,5 @@ print(f"{cyan}Moving 01...{no_color}")
 
 print(f"{cyan}Moving 02...{no_color}")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy To HDD/00 TO COPY/02 TO CONVERT/02")/* @(p"/run/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/02 IMP NOT URGENT/")
+
+print(u'\u2500' * os.get_terminal_size().columns)

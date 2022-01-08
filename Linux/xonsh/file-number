@@ -28,3 +28,5 @@ if selection:
 		new_filename = str(start_number).zfill(padding) + " " + file
 		os.rename(file, new_filename)
 		start_number += 1
+
+print(u'\u2500' * os.get_terminal_size().columns)
