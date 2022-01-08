@@ -1,10 +1,8 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import os
-import glob
 import sys
 
 # sys.argv[0] is the name of the script which will always be there
@@ -16,7 +14,7 @@ elif len(sys.argv) > 1:
 
 if selection:
 	# The first element in the list is the current file name 
-	# The send onwards are the %c sent from Ranger
+	# The second element onwards are the %c sent from Ranger
 	# We also sent a %d so that is the last item in the list
 	allFiles = sys.argv[1:-1]
 

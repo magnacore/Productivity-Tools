@@ -1,4 +1,5 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
 source ~/.xonshrc
+
 /home/$USER/anaconda3/envs/ranger/bin/ranger

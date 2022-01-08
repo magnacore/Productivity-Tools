@@ -1,11 +1,8 @@
-# Use bpytop instead
-
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-
-import os
-
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
+
+import os
 
 print(f"{cyan}Used Disk Space: {no_color}")
 subprocess_output = $(df -h /home | grep /dev)

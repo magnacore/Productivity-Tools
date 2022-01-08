@@ -1,9 +1,8 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-
-# If there is a : in the file name the splitting will not work
-
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
+
+# TODO : If there is a : in the file name the splitting will not work
 
 import os
 import sys

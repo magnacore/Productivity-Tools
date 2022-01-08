@@ -21,3 +21,5 @@ for file in tqdm(all_converted_files_strip):
 
     # Files containing [ ] in their names are not moved
     mv @(file_name)* ./converted
+
+print(u'\u2500' * os.get_terminal_size().columns)

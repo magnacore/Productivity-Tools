@@ -27,7 +27,7 @@ def pdf_splitter(paths):
 
 
 if __name__ == '__main__':
-    paths = glob.glob('*.pdf')
-    paths.sort()
-    pdf_splitter(paths)
+	paths = glob.glob('*.pdf')
+	paths.sort()
+	pdf_splitter(paths)
 	print(u'\u2500' * os.get_terminal_size().columns)

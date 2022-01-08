@@ -1,9 +1,8 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-
-import os
-
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
+
+import os
 
 print(f"{cyan}Open the container...{no_color}")
 sudo cryptsetup luksOpen /dev/sdb luks-laptop-backup-full
@@ -31,8 +30,9 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     rsync --delete --progress -vahi $HOME/ /media/$USER/laptop_backup_full/@current    
 
     date > ~/Software/logs/laptop-backup-full.txt
+    
     sudo btrfs filesystem show
-    print(f"{cyan}Done.{no_color}")
+    
     print(u'\u2500' * os.get_terminal_size().columns)
 
 else:
