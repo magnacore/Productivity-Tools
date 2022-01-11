@@ -4,5 +4,3 @@ alias pdf-combine="gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/
 alias png-convert-pdf="convert *.png output.pdf"
 alias sdb-eject="udisksctl power-off -b /dev/sdb"
 alias hugo-start="hugo server --disableFastRender"
-alias text-split="split --elide-empty-files --suffix-length=3 --numeric-suffixes=1 --line-bytes=10K"
-alias vlc-kill="killall -s 9 vlc.bin"
