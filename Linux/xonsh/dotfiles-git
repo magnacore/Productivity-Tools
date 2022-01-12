@@ -31,6 +31,9 @@ rsync --delete --progress -vahi ~/.Xresources @(dotfiles_path)
 print(f"{cyan}Syncing zathurarc...{no_color}")
 rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
 
+print(f"{cyan}Syncing gromit-mpx.cfg...{no_color}")
+rsync --delete --progress -vahi ~/.config/gromit-mpx.cfg @(config_path)
+
 print(f"{cyan}Syncing Xonsh scripts...{no_color}")
 rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
 
