@@ -2,7 +2,7 @@
 
 import os
 
-rsync --delete --progress -vahi /media/$USER/QUEUE/QUEUE/ /media/$USER/Q_BACKUP/QUEUE_BACKUP/
+rsync --delete --progress -vahi /run/media/$USER/QUEUE/QUEUE/ /run/media/$USER/Q_BACKUP/QUEUE_BACKUP/
 
 date > ~/Software/logs/queue-backup.txt
 
