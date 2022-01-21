@@ -8,7 +8,7 @@ max_parallel_downloads=10
 =====================================================================
 
 sudo dnf check-update
-sudo dnf upgrade
+sudo dnf upgrade --refresh
 
 =====================================================================
 
@@ -229,6 +229,8 @@ sudo dnf install neovim
 sudo dnf install calcurse
 sudo dnf install git
 sudo dnf install nodejs
+sudo dnf copr enable elxreno/preload -y && sudo dnf install preload -y
+sudo dnf install bleachbit
 
 ## Vim installation
 install Vim Plug
