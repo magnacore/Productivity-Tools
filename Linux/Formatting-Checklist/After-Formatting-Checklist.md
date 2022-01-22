@@ -231,6 +231,7 @@ sudo dnf install git
 sudo dnf install nodejs
 sudo dnf copr enable elxreno/preload -y && sudo dnf install preload -y
 sudo dnf install bleachbit
+sudo dnf install dnf-plugin-system-upgrade
 
 ## Vim installation
 install Vim Plug
