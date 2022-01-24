@@ -418,7 +418,6 @@ Hugo : Download the binary from github page and put it in ~/.local/bin
 # As Needed
 Avidemux
 jdk by redhat
-bleechbit
 CMap
 Recoll
 
