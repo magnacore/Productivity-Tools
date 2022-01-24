@@ -261,39 +261,6 @@ from within nvim
 To change the venv
 :CocCommand then fuzzy search for python.setInterpreter and choose the venv.
 
-The below is not working : that is using black and jedi and pylint from within coc
-:CocConfig
-
-{
-  "codeLens.enable": true,
-  "coc.preferences.extensionUpdateCheck": "daily",
-  "coc.preferences.formatOnType": true,
-  "coc.preferences.formatOnSaveFiletypes": [
-    "python",
-    "markdown",
-    "javascript",
-    "json"
-  ],
-  "python.formatting.provider": "black",
-  "jedi.enable": true,
-  "jedi.startupMessage": true,
-  "jedi.markupKindPreferred": "plaintext",
-  "jedi.trace.server": true,
-  "jedi.jediSettings.autoImportModules": [],
-  "jedi.executable.command": "jedi-language-server",
-  "jedi.executable.args": [],
-  "jedi.completion.disableSnippets": false,
-  "jedi.diagnostics.enable": true,
-  "jedi.diagnostics.didOpen": true,
-  "jedi.diagnostics.didChange": true,
-  "jedi.diagnostics.didSave": true,
-  "jedi.workspace.extraPaths": [],
-  "suggest.asciiCharactersOnly": true,
-  "diagnostic.format": "%message [%source]",
-  "diagnostic.virtualText": true,
-  "diagnostic.checkCurrentLine": true
-
-}
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
