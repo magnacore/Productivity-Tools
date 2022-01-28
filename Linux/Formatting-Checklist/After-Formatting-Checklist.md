@@ -305,6 +305,7 @@ flatpak install flathub org.inkscape.Inkscape
 flatpak install flathub com.valvesoftware.Steam
 flatpak install flathub com.discordapp.Discord
 flatpak install flathub net.agalwood.Motrix
+flatpak install flathub org.fedoraproject.MediaWriter
 
 =====================================================================
 
