@@ -34,6 +34,8 @@ if(day_of_week == 0):
 
     flatpak uninstall --unused -y
 
+	rm -rf ~/.cache/*
+
     print(f"{cyan}Deleting .DS_Store files...{no_color}")
     find $HOME/ -type f -iname ".DS_Store" -delete
 
