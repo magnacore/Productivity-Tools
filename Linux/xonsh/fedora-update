@@ -9,6 +9,7 @@ sudo updatedb
 
 print(f"{cyan}Delete old files in trash...{no_color}")
 trash-empty 3
+sudo journalctl --vacuum-time=4weeks
 
 print(f"{cyan}Moving Files...{no_color}")
 mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
@@ -30,7 +31,7 @@ if(day_of_week == 0):
 
     sudo dnf autoremove -y
     sudo dnf clean all -y
-    
+
     flatpak uninstall --unused -y
 
     print(f"{cyan}Deleting .DS_Store files...{no_color}")
