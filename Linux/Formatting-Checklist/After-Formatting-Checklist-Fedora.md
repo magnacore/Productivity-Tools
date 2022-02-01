@@ -232,6 +232,7 @@ sudo dnf install nodejs
 sudo dnf copr enable elxreno/preload -y && sudo dnf install preload -y
 sudo dnf install bleachbit
 sudo dnf install dnf-plugin-system-upgrade
+sudo dnf install simplescreenrecorder
 
 ## Vim installation
 install Vim Plug
