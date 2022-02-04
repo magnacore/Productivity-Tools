@@ -40,4 +40,8 @@ optimus-manager --switch nvidia --no-confirm
 optimus-manager --switch integrated --no-confirm
 optimus-manager --switch hybrid --no-confirm
 
+Add these environment variables:
+export QT_AUTO_SCREEN_SCALE_FACTOR=0
+export QT_SCALE_FACTOR=2
+
 ===
