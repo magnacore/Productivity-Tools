@@ -299,7 +299,7 @@ set cmdheight=2
 
 " Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
 " delays and poor user experience.
-set updatetime=300
+" set updatetime=300
 
 " TextEdit might fail if hidden is not set.
 set hidden
@@ -413,7 +413,6 @@ if has('nvim-0.4.0') || has('patch-8.2.0750')
 endif
 
 " Vim bufftagline
-" set hidden
 nnoremap <Leader>bn :bnext<CR>
 nnoremap <Leader>bp :bprev<CR>
 
