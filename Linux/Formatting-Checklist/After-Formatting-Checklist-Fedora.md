@@ -141,6 +141,7 @@ conda create --name xonsh
 conda create --name util
 conda create --name ranger
 conda create --name go
+Do not create quant it will be cloned later
 
 Install pip in all environments
 conda install -c anaconda pip
@@ -233,6 +234,7 @@ sudo dnf copr enable elxreno/preload -y && sudo dnf install preload -y
 sudo dnf install bleachbit
 sudo dnf install dnf-plugin-system-upgrade
 sudo dnf install simplescreenrecorder
+sudo dnf install feh
 
 ## Vim installation
 install Vim Plug
@@ -298,7 +300,6 @@ flatpak install flathub com.github.xournalpp.xournalpp
 flatpak install flathub net.codeindustry.MasterPDFEditor
 flatpak install flathub org.ksnip.ksnip
 flatpak install flathub net.christianbeier.Gromit-MPX
-flatpak install flathub com.github.tchx84.Flatseal
 flatpak install flathub com.github.miguelmota.Cointop
 flatpak install flathub org.shotcut.Shotcut
 flatpak install flathub org.blender.Blender
