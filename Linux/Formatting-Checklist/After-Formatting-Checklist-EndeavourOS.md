@@ -319,8 +319,6 @@ yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
 
 --------------------------
 
-rofimoji --selector-args '-dpi 1'
-
 # Problems
 ## Show stoppers
 
