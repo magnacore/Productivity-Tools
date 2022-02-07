@@ -54,7 +54,7 @@ conda create --name xonsh
 conda create --name util
 conda create --name ranger
 conda create --name go
-conda create --name quant (dont create this now, it will be cloned later)
+quant (dont create this now, it will be cloned later)
 
 Install pip in all environments
 conda install -c anaconda pip
@@ -138,7 +138,7 @@ obs-studio
 calibre (ranger will use this so we do not use flatpak)
 ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
 rofi
-yay ttf-emojione-color (not installing)
+yay ttf-emojione-color (not installing but rofimoji was working without it)
 xdotool xsel
 cmus
 sxiv
@@ -155,7 +155,6 @@ trash-cli
 yay gitahead (default option)
 yay visual-studio-code-bin
 yay ferdi
-feh
 
 ## Vim installation
 install Vim Plug
@@ -227,6 +226,7 @@ flatpak install flathub com.discordapp.Discord
 flatpak install flathub net.agalwood.Motrix
 flatpak install flathub org.fedoraproject.MediaWriter
 
+flatpak install flathub io.lbry.lbry-app
 =====================================================================
 
 # PIP/Conda Install
@@ -274,13 +274,12 @@ pip install isort
 
 =====================================================================
 
-# RPM
 sudo pacman -S veracrypt
 yay go-ipfs-git
 flatpak install flathub com.transmissionbt.Transmission
 firefox login
 
-yay appimagelauncher-git (did not build)
+yay appimagelauncher (did not build)
 then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory.
 integrate and run
 
@@ -306,3 +305,29 @@ passmenu
 zbarimg
 
 ===
+
+Can you run rofi -h for the detected dpi and check the dpi setting?
+
+eos-welcome --enable
+
+~/.Xresources
+Xft.dpi: 192
+
+https://wiki.archlinux.org/title/HiDPIhttps://wiki.archlinux.org/title/HiDPIhttps://wiki.archlinux.org/title/HiDPI
+
+yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
+
+--------------------------
+
+# Problems
+## Show stoppers
+rofimoji not scaling
+rofi -modi "emoji:/home/manuj/anaconda3/envs/util/lib/python3.8/site-packages/picker/rofimoji.py>" -show emoji -dpi 1
+
+# Annoyances
+qtile not scaling
+imagemagick-perl (could not install)
+zathura-pdf-mupdf zathura-pdf-poppler (they are in conflict but pdf is opening)
+
+yay appimagelauncher (not building)
+yay autokey-qt (did not build)
