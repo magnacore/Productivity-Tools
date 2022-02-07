@@ -10,7 +10,7 @@ update system: yay
 install timeshift : yay timeshift
 1,2 (to install timeshift and timeshift-autosnap)
 remove dependencies after install
-for differences select N
+for differences select N to show no diffs
 
 sudo pacman -S grub-btrfs (manual snapshots will not appear until we update grub config)
 sudo grub-mkconfig -o /boot/grub/grub.cfg (if we boot into this snapshot it will be read only)
@@ -40,13 +40,7 @@ optimus-manager --switch nvidia --no-confirm
 optimus-manager --switch integrated --no-confirm
 optimus-manager --switch hybrid --no-confirm
 
-Add these environment variables:
-export QT_AUTO_SCREEN_SCALE_FACTOR=0
-export QT_SCALE_FACTOR=2
-
-===
-
-=====================================================================
+---------------------------------------------------------------------
 
 Install anaconda, do not use sudo
 conda create --name qtile
@@ -61,7 +55,7 @@ conda install -c anaconda pip
 
 conda install -c conda-forge go
 
-=====================================================================
+---------------------------------------------------------------------
 
 Go to respective environments and install
 pip install qtile
@@ -71,90 +65,103 @@ The pip cache is cleared (remove ~/.cache/pip, if it exists)
 pip uninstall cairocffi
 pip install --no-cache-dir cairocffi[xcb]
 
-===
-sudo pacman -S zoxide (install system wide, not in environment)
-pip install ranger-fm
+## For HiDPI
+https://wiki.archlinux.org/title/HiDPIhttps://wiki.archlinux.org/title/HiDPIhttps://wiki.archlinux.org/title/HiDPI
 
-===
+xfce appearance > scale 2 (do this before enabling qtile, wallpaper directory must be present)
+
+qt env variables in xonshrc (already set no need to set)
+$QT_AUTO_SCREEN_SCALE_FACTOR=0
+$QT_SCALE_FACTOR=2
+
+rofi -dpi 1 flag (already set in qtile config, no need to set)
+
+---
+
+pip install ranger-fm (master branch was used)
+
+---
 
 conda install -c conda-forge xonsh
 
 make xonsh default - was giving a problem was it was not made default
 
-=====================================================================
+---------------------------------------------------------------------
 
 copy laptop data
 pgp, fonts, icons copy
 
-=====================================================================
+---------------------------------------------------------------------
 
 in xfce keyboard, restore numlock on startup
 session and startup : lock screen before sleep
 Application autostart : enable clipman to start automatically
 in logout do not save sessions
+Enable system sounds
 
-=====================================================================
+---------------------------------------------------------------------
 
 copy all configs to their respective folders
 
-=====================================================================
+---------------------------------------------------------------------
 
-# pacman yay
+# pacman
 when a bin option is available in yay use that as the package will be ready made, example gitahead
 
-for dragon and ueberzug, which was installed using "make install"
-sudo dnf install gtk3-devel
-If the above does not work try also
-sudo dnf groupinstall "Development Tools" "Development Libraries"
 I added ~/.local/bin in Xonsh path already (no need to do)
 
-Dragon, Pistol and Hugo-extended are already built and can be copied to ~/.local/bin from ~/Software/bin
+Pistol and Hugo-extended are already built and can be copied to ~/.local/bin from ~/Software/bin
 
-Just run `make` to compile dragon and get an executable you can run immediately or put where you like. To install, run `make install`, which will put it into ~/.local/bin by default.
-
-sudo pacman -S
-
-ffmpeg
-alacritty
-fzf
+sudo pacman -S ffmpeg
+sudo pacman -S alacritty
+sudo pacman -S fzf
 sudo pacman -S highlight atool mediainfo
-yay w3m-imgcat
-libcaca
-poppler
-w3m
-yay mkvtoolnix mkvtoolnix-gui
-fd
-mlocate
-imagemagick
-imagemagick-perl (could not install)
-mpv (do not use flatpak)
-syncthing
-yay autokey-gtk (did not build)
-ncdu
-bpytop
-virtualbox select virtualbox-host-modules-arch
-yay stacer
-obs-studio
-calibre (ranger will use this so we do not use flatpak)
-ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
-rofi
-yay ttf-emojione-color (not installing but rofimoji was working without it)
-xdotool xsel
-cmus
-sxiv
-zathura
-zathura-pdf-mupdf zathura-pdf-poppler (they are in conflict)
-neovim
-calcurse
-git
-nodejs
-yay preload (5th option in AUR)
-bleachbit
-simplescreenrecorder
-trash-cli
-yay gitahead (default option)
+sudo pacman -S libcaca
+sudo pacman -S poppler
+sudo pacman -S w3m
+sudo pacman -S fd
+sudo pacman -S mlocate
+sudo pacman -S imagemagick
+sudo pacman -S mpv (do not use flatpak)
+sudo pacman -S syncthing
+sudo pacman -S ncdu
+sudo pacman -S bpytop
+sudo pacman -S virtualbox select virtualbox-host-modules-arch
+sudo pacman -S obs-studio
+sudo pacman -S calibre (ranger will use this so we do not use flatpak)
+sudo pacman -S ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
+sudo pacman -S rofi
+sudo pacman -S xdotool xsel
+sudo pacman -S cmus
+sudo pacman -S sxiv
+sudo pacman -S zathura zathura-pdf-mupdf
+sudo pacman -S neovim
+sudo pacman -S calcurse
+sudo pacman -S git
+sudo pacman -S nodejs
+sudo pacman -S bleachbit
+sudo pacman -S simplescreenrecorder
+sudo pacman -S trash-cli
+sudo pacman -S veracrypt
+sudo pacman -S zoxide (install system wide, not in environment)
+sudo pacman -S feh
+
+---------------------------------------------------------------------
+
+# yay
+
+yay gitahead (use bin option)
 yay visual-studio-code-bin
 yay ferdi
+yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
+yay go-ipfs-git
+yay -S brave-bin
+yay preload (5th option in AUR)
+yay stacer
+yay mkvtoolnix mkvtoolnix-gui
+yay w3m-imgcat
+
+---------------------------------------------------------------------
 
 ## Vim installation
 install Vim Plug
@@ -183,16 +190,13 @@ from within nvim
 To change the venv
 :CocCommand then fuzzy search for python.setInterpreter and choose the venv.
 
-
 The following fix was not required for the latest master branch
 File ranger/core/actions.py, line 459, in
 filenames = [f.path for f in files]
 change the line to
 filenames = [f if isinstance(f, str) else f.path for f in files]
 
-yay -S brave-bin
-
-=====================================================================
+---------------------------------------------------------------------
 
 # FLATPAK
 Note: flatpak commands can be run by ranger, even if they are not available in terminal. See ksnip as an example. But if a 3rd part software is executing terminal command then we should install terminal version.
@@ -208,7 +212,6 @@ flatpak install flathub org.keepassxc.KeePassXC
 flatpak install flathub nz.mega.MEGAsync
 flatpak install flathub org.signal.Signal
 flatpak install flathub fr.handbrake.ghb
-flatpak install flathub io.github.gitahead.GitAhead (look for a fork)
 flatpak install flathub org.gimp.GIMP
 flatpak install flathub us.zoom.Zoom
 flatpak install flathub com.skype.Client
@@ -225,9 +228,10 @@ flatpak install flathub com.valvesoftware.Steam
 flatpak install flathub com.discordapp.Discord
 flatpak install flathub net.agalwood.Motrix
 flatpak install flathub org.fedoraproject.MediaWriter
-
+flatpak install flathub com.transmissionbt.Transmission
 flatpak install flathub io.lbry.lbry-app
-=====================================================================
+
+---------------------------------------------------------------------
 
 # PIP/Conda Install
 
@@ -253,13 +257,13 @@ conda install -c conda-forge pyperclip
 
 /home/manuj/anaconda3/envs/util/bin/pip install playsound
 
-===
+---
 
 # qtile
 For qtile memory module
 /home/manuj/anaconda3/envs/qtile/bin/pip install psutil
 
-===
+---
 
 # quant
 conda create --name quant --clone base
@@ -272,24 +276,17 @@ conda install -c anaconda pylint
 conda install -c conda-forge black
 pip install isort
 
-=====================================================================
+---------------------------------------------------------------------
 
-sudo pacman -S veracrypt
-yay go-ipfs-git
-flatpak install flathub com.transmissionbt.Transmission
 firefox login
 
-yay appimagelauncher (did not build)
-then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory.
-integrate and run
-
-=====================================================================
+---------------------------------------------------------------------
 
 AppImages
 Sourcetrail
 ImageMosaic
 
-=======
+---
 
 Hugo : Download the binary from github page and put it in ~/.local/bin
 
@@ -304,18 +301,12 @@ pass-otp
 passmenu
 zbarimg
 
-===
-
-Can you run rofi -h for the detected dpi and check the dpi setting?
+---
 
 eos-welcome --enable
 
 ~/.Xresources
 Xft.dpi: 192
-
-https://wiki.archlinux.org/title/HiDPIhttps://wiki.archlinux.org/title/HiDPIhttps://wiki.archlinux.org/title/HiDPI
-
-yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
 
 --------------------------
 
@@ -326,6 +317,10 @@ yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
 qtile not scaling
 imagemagick-perl (could not install)
 zathura-pdf-mupdf zathura-pdf-poppler (they are in conflict but pdf is opening)
-
-yay appimagelauncher (not building)
 yay autokey-qt (did not build)
+
+yay appimagelauncher (did not build)
+then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory.
+integrate and run
+
+---
