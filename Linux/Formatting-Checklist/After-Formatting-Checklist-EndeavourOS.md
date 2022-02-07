@@ -319,10 +319,10 @@ yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
 
 --------------------------
 
+rofimoji --selector-args '-dpi 1'
+
 # Problems
 ## Show stoppers
-rofimoji not scaling
-rofi -modi "emoji:/home/manuj/anaconda3/envs/util/lib/python3.8/site-packages/picker/rofimoji.py>" -show emoji -dpi 1
 
 # Annoyances
 qtile not scaling
