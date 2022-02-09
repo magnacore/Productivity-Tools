@@ -359,6 +359,9 @@ pip install isort
 
 # RPM
 
+greenclip was downloaded using the https://github.com/erebe/greenclip/releases and put in ~/.local/bin
+Qtile config is already modified to use it
+
 sudo dnf install code did not work, rpm was downloaded and installed from website
 
 Fredi was installed using rpm download

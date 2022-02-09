@@ -160,6 +160,7 @@ yay preload (5th option in AUR)
 yay stacer
 yay mkvtoolnix mkvtoolnix-gui
 yay w3m-imgcat
+yay rofi-greenclip
 
 ---------------------------------------------------------------------
 
