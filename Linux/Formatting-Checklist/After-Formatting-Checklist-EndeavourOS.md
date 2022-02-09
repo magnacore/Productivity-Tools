@@ -145,6 +145,7 @@ sudo pacman -S trash-cli
 sudo pacman -S veracrypt
 sudo pacman -S zoxide (install system wide, not in environment)
 sudo pacman -S feh
+sudo pacman -S pass pass-otp zbar (not tried)
 
 ---------------------------------------------------------------------
 

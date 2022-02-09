@@ -235,6 +235,7 @@ sudo dnf install bleachbit
 sudo dnf install dnf-plugin-system-upgrade
 sudo dnf install simplescreenrecorder
 sudo dnf install feh
+sudo dnf pass pass-otp zbar
 
 ## Vim installation
 install Vim Plug
