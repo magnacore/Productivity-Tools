@@ -396,11 +396,6 @@ jdk by redhat
 CMap
 Recoll
 
-pass
-pass-otp
-passmenu
-zbarimg
-
 ===
 
 Gnome:
