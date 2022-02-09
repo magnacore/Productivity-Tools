@@ -66,13 +66,14 @@ keys = [
     # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
     Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open-beta"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
-    Key([mod], "c", lazy.spawn("xfce4-terminal -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
+    Key([mod, "shift"], "c", lazy.spawn("xfce4-terminal -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn("/home/manuj/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
 
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
     Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
     Key([mod], "e", lazy.spawn("/home/manuj/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
+    Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}'"), desc='Run Greenclip in Rofi'),
 	
     ## Volume
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
@@ -300,6 +301,7 @@ def start_once():
         f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e /home/manuj/Bin/ranger-open-beta".split(),
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
+        "/home/manuj/.local/bin/greenclip daemon".split(),
     ]
 
     for p in processes:
