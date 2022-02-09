@@ -31,7 +31,10 @@ rsync --delete --progress -vahi ~/.Xresources @(dotfiles_path)
 print(f"{cyan}Syncing zathurarc...{no_color}")
 rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
 
-print(f"{cyan}Syncing gromit-mpx.cfg...{no_color}")
+print(f"{cyan}Syncing Greenclip Config...{no_color}")
+rsync --delete --progress -vahi ~/.config/greenclip.toml @(config_path)
+
+print(f"{cyan}Syncing Gromit-mpx.cfg...{no_color}")
 rsync --delete --progress -vahi ~/.var/app/net.christianbeier.Gromit-MPX/config/gromit-mpx.cfg @(config_path)
 
 print(f"{cyan}Syncing Xonsh scripts...{no_color}")
