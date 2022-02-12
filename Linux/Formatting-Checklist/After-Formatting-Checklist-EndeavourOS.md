@@ -166,7 +166,6 @@ yay stacer
 yay mkvtoolnix mkvtoolnix-gui
 yay w3m-imgcat
 yay rofi-greenclip
-yay rofi-greenclip
 
 ---------------------------------------------------------------------
 
