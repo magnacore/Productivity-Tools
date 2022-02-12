@@ -149,6 +149,7 @@ sudo pacman -S pass pass-otp zbar (not tried)
 sudo pacman -S catfish
 sudo pacman -S pass pass-otp
 sudo pacman -S gnome-disk-utility
+sudo pacman -S xclip
 
 ---------------------------------------------------------------------
 
