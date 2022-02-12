@@ -70,11 +70,11 @@ keys = [
     Key([mod], "d", lazy.spawn("/home/manuj/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
 
     ## Rofi
-    Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
-    Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
-    Key([mod], "e", lazy.spawn("/home/manuj/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
-    Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}'"), desc='Run Greenclip in Rofi'),
-	
+    Key([mod], "r", lazy.spawn("rofi -show drun -show-icons -dpi 1"), desc='Run Rofi Application Launcher'),
+    Key([alt], "Tab", lazy.spawn("rofi -show window -dpi 1"), desc='Run Rofi Window Switcher'),
+    Key([mod], "e", lazy.spawn("/home/manuj/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate' --selector-args '-dpi 1'"), desc='Run Rofi emoji picker'),
+	Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:greenclip print' -show clipboard -run-command '{cmd}' -dpi 1"), desc='Run Greenclip in Rofi'),
+
     ## Volume
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
@@ -144,8 +144,8 @@ colors = [["#272822", "#272822"], # panel background
 
 widget_defaults = dict(
     font='RobotoMono Nerd Font',
-    fontsize=13,
-    padding=0,
+    fontsize=26,
+    padding=5,
     # background=colors[2]
 )
 extension_defaults = widget_defaults.copy()
@@ -155,8 +155,8 @@ def open_bpytop():
 
 widget_padding = 0
 seperator_padding = 5
-icon_font_size = 15
-bar_size = 24
+icon_font_size = 25
+bar_size = 48
 
 screens = [
     Screen(
@@ -168,7 +168,7 @@ screens = [
                 widget.CurrentLayout(foreground = colors[2], background = colors[0]),
                 
                 # Groupbox
-                widget.GroupBox(active = colors[2], background = colors[0], inactive = colors[1], disable_drag = True),
+                widget.GroupBox(active = colors[2], background = colors[0], inactive = colors[1], disable_drag = True, padding = 5),
                 
                 # # Prompt
                 # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
@@ -246,7 +246,7 @@ screens = [
                 
                 # System Tray
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
-                widget.Systray(foreground = colors[2], background = colors[0]),
+                widget.Systray(foreground = colors[2], background = colors[0], icon_size = 40),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Clock
@@ -301,7 +301,7 @@ def start_once():
         f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e /home/manuj/Bin/ranger-open-beta".split(),
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
-        "/home/manuj/.local/bin/greenclip daemon".split(),
+        "greenclip daemon".split(),
     ]
 
     for p in processes:

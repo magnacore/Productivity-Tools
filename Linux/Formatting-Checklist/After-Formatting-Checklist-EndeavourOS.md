@@ -146,6 +146,9 @@ sudo pacman -S veracrypt
 sudo pacman -S zoxide (install system wide, not in environment)
 sudo pacman -S feh
 sudo pacman -S pass pass-otp zbar (not tried)
+sudo pacman -S catfish
+sudo pacman -S pass pass-otp
+sudo pacman -S gnome-disk-utility
 
 ---------------------------------------------------------------------
 
@@ -161,6 +164,7 @@ yay preload (5th option in AUR)
 yay stacer
 yay mkvtoolnix mkvtoolnix-gui
 yay w3m-imgcat
+yay rofi-greenclip
 yay rofi-greenclip
 
 ---------------------------------------------------------------------
