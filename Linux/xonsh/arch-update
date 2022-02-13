@@ -16,20 +16,23 @@ mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 
 mv --backup=numbered @(p"~/Productivity_System/01 TASK CAPTURE BIN/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
-print(f"{cyan}Upgrade software...{no_color}")
-yay
+print(f"{cyan}Upgrade flatpaks...{no_color}")
 flatpak update -y
 
 # Monday is 0
 day_of_week = datetime.datetime.today().weekday()
 
 if(day_of_week == 4):
-    print(f"{cyan}Clean software cache...{no_color}")
+    print(f"{cyan}Upgrade software...{no_color}")
+    yay
 
+    print(f"{cyan}Clean software cache...{no_color}")
     sudo pacman -Sc
+    sudo pacman -Rns @$(pacman -Qtdq)
 
     flatpak uninstall --unused -y
 
+    print(f"{cyan}Clean cache...{no_color}")
     rm -rf @(p"~/.cache")/*
 
     print(f"{cyan}Deleting .DS_Store files...{no_color}")
