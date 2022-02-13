@@ -186,14 +186,14 @@ screens = [
 				
                 # Temperature
                 widget.TextBox(text = "🌡️", padding = widget_padding, background = colors[1], fontsize = icon_font_size),
-				widget.ThermalSensor(foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
+				widget.ThermalSensor(tag_sensor = 'CPU',foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[1]),
 
                 # CPU
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.TextBox(text = "🧠", padding = widget_padding, background = colors[0], fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
-                widget.CPU(foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
+                widget.CPUGraph(foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 				
                 # Ram
