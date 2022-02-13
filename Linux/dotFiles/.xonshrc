@@ -30,6 +30,7 @@ $QT_SCALE_FACTOR=2
 aliases ["vvv"] = "bash /home/manuj/Software/VVV-1.4.0-x86_64/vvv-start.sh"
 aliases ["cmap"] = "bash /home/manuj/Software/CMapTools/bin/CmapTools"
 aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
+aliases ["sda-eject"] = "udisksctl power-off -b /dev/sda"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
 
 # =================================== paths =================================
