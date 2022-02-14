@@ -150,6 +150,7 @@ sudo pacman -S catfish
 sudo pacman -S pass pass-otp
 sudo pacman -S gnome-disk-utility
 sudo pacman -S xclip
+sudo pacman -S odt2txt
 
 ---------------------------------------------------------------------
 
@@ -167,6 +168,7 @@ yay mkvtoolnix mkvtoolnix-gui
 yay w3m-imgcat
 yay rofi-greenclip
 yay sioyek-git
+yay python-xlsx2csv
 
 ---------------------------------------------------------------------
 
