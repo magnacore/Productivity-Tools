@@ -151,7 +151,7 @@ sudo pacman -S pass pass-otp
 sudo pacman -S gnome-disk-utility
 sudo pacman -S xclip
 sudo pacman -S odt2txt
-sudo pacman -S pandoc
+sudo pacman -S pandoc pandoc-crossref
 sudo pacman -S texlive-most
 
 ---------------------------------------------------------------------
