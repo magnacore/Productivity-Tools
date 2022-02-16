@@ -127,7 +127,7 @@ sudo pacman -S syncthing
 sudo pacman -S ncdu
 sudo pacman -S bpytop
 sudo pacman -S virtualbox select virtualbox-host-modules-arch
-sudo pacman -S obs-studio
+sudo pacman -S obs-studio (use flatpak - have not tried virtual camera in flatpak)
 sudo pacman -S calibre (ranger will use this so we do not use flatpak) if not working use: (sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin )
 sudo pacman -S ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
 sudo pacman -S rofi
@@ -241,6 +241,7 @@ flatpak install flathub net.agalwood.Motrix
 flatpak install flathub org.fedoraproject.MediaWriter
 flatpak install flathub com.transmissionbt.Transmission
 flatpak install flathub io.lbry.lbry-app
+flatpak install flathub com.obsproject.Studio (NVME was not working, but an update of flatpaks fixed it automatically)
 
 ---------------------------------------------------------------------
 
