@@ -242,6 +242,8 @@ flatpak install flathub org.fedoraproject.MediaWriter
 flatpak install flathub com.transmissionbt.Transmission
 flatpak install flathub io.lbry.lbry-app
 flatpak install flathub com.obsproject.Studio (NVME was not working, but an update of flatpaks fixed it automatically)
+flatpak install flathub com.github.alexhuntley.Plots
+flatpak install flathub org.gaphor.Gaphor
 
 ---------------------------------------------------------------------
 
