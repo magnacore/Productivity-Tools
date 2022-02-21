@@ -171,6 +171,7 @@ yay w3m-imgcat
 yay rofi-greenclip
 yay sioyek-git
 yay python-xlsx2csv
+yay google-cloud-sdk
 
 ---------------------------------------------------------------------
 
