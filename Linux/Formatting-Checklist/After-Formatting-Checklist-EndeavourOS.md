@@ -128,7 +128,7 @@ sudo pacman -S ncdu
 sudo pacman -S bpytop
 sudo pacman -S virtualbox select virtualbox-host-modules-arch
 sudo pacman -S obs-studio (use flatpak - have not tried virtual camera in flatpak)
-sudo pacman -S calibre (ranger will use this so we do not use flatpak) if not working use: (sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin )
+sudo pacman -S calibre (ranger will use this so we do not use flatpak) if not working (due to xonsh?) use: (sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin ) (sudo calibre-uninstall for uninstalling)
 sudo pacman -S ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
 sudo pacman -S rofi
 sudo pacman -S xdotool xsel
