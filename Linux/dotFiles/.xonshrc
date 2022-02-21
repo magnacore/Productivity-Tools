@@ -24,8 +24,8 @@ $EDITOR=$VISUAL
 $QT_AUTO_SCREEN_SCALE_FACTOR=0
 $QT_SCALE_FACTOR=2
 
-$__GLX_VENDOR_LIBRARY_NAME='nvidia'
-$__NV_PRIME_RENDER_OFFLOAD=1
+# $__GLX_VENDOR_LIBRARY_NAME='nvidia'
+# $__NV_PRIME_RENDER_OFFLOAD=1
 
 # =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
