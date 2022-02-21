@@ -21,6 +21,8 @@ set zoom-min 10
 # When it contains 's', the statusbar is showed. (C-n)
 set guioptions ""
 
+set selection-clipboard clipboard
+
 # zathurarc-dark
 
 #set font "inconsolata 15"
