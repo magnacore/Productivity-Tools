@@ -1,0 +1,30 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import sys
+from tqdm import tqdm
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+
+	allFiles = sys.argv[2:]
+	extension = sys.argv[1]
+	allFiles.sort()
+
+	print(f"{cyan}Converting document to .{extension}{no_color}")
+
+	for file in tqdm(allFiles):
+		root_ext = os.path.splitext(file)
+		file_name = root_ext[0]
+
+		pandoc -V geometry:margin=2cm -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)
+
+
+print(u'\u2500' * os.get_terminal_size().columns)
