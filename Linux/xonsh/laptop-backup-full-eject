@@ -5,10 +5,10 @@ no_color = '\x1b[0m'
 import os
 
 print(f"{cyan}Unmounting...{no_color}")
-sudo umount /media/$USER/laptop_backup_full
+sudo umount /mnt/$USER/laptop_backup_full
 
 print(f"{cyan}Deleting Mountpoint...{no_color}")
-sudo rm -r /media/$USER/laptop_backup_full
+sudo rm -r /mnt/$USER/laptop_backup_full
 
 print(f"{cyan}Unmounting logical volumes...{no_color}")
 sudo lvchange -an vg-laptop-backup-full
