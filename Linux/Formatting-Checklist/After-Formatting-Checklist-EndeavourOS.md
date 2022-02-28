@@ -160,7 +160,7 @@ sudo pacman -S texlive-most
 
 yay gitahead (use bin option)
 yay visual-studio-code-bin
-yay ferdi
+yay ferdi (flatpak install flathub com.getferdi.Ferdi)
 yay dragon-drag-and-drop (it has been renamed to dragon-drag-and-drop)
 yay go-ipfs-git (try to get a non git stable release)
 yay -S brave-bin

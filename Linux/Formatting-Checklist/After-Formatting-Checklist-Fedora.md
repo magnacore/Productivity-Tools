@@ -310,6 +310,7 @@ flatpak install flathub com.discordapp.Discord
 flatpak install flathub net.agalwood.Motrix
 flatpak install flathub org.fedoraproject.MediaWriter
 flatpak install flathub io.lbry.lbry-app
+flatpak install flathub com.getferdi.Ferdi
 
 =====================================================================
 
@@ -364,8 +365,6 @@ greenclip was downloaded using the https://github.com/erebe/greenclip/releases a
 Qtile config is already modified to use it
 
 sudo dnf install code did not work, rpm was downloaded and installed from website
-
-Fredi was installed using rpm download
 
 VaeraCrypt was installed by downloading rpm
 
