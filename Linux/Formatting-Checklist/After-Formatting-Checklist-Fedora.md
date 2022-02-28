@@ -202,6 +202,10 @@ Just run `make` to compile dragon and get an executable you can run immediately 
 sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 
+https://rpmfusion.org/Howto/NVIDIA#Current_GeForce.2FQuadro.2FTesla
+sudo dnf install akmod-nvidia
+sudo dnf install xorg-x11-drv-nvidia-cuda #optional for cuda/nvdec/nvenc support
+
 sudo dnf install ffmpeg
 sudo dnf install timeshift
 sudo dnf install alacritty
