@@ -16,10 +16,12 @@ set scroll-step 100
 #zoom settings
 set zoom-min 10
 
-# Shows  or  hides GUI elements.  
+# Shows  or  hides GUI elements.
 # When it contains 'c', the command line is showed. (:)
 # When it contains 's', the statusbar is showed. (C-n)
 set guioptions ""
+
+set selection-clipboard clipboard
 
 # zathurarc-dark
 
@@ -57,7 +59,7 @@ set recolor-darkcolor "#E0E0E0" #06
 set recolor-reverse-video "true"
 
 set recolor-keephue "true"
-map c recolor-keephue
+# map c recolor-keephue
 
 # set render-loading "false"
 # set scroll-step 50
