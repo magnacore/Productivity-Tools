@@ -167,7 +167,7 @@ pip install ranger-fm
 
 conda install -c conda-forge xonsh
 
-make xonsh default - was giving a problem was it was not made default
+Do not make Xonsh the default shell. Flatpak apps will not appear in rofi, alacritty terminal will not read colors from alacritty.yaml and zramctl command will fail.
 
 =====================================================================
 
@@ -237,6 +237,21 @@ sudo dnf install simplescreenrecorder
 sudo dnf install feh
 sudo dnf pass pass-otp zbar
 
+sudo dnf install trash-cli
+The following fix was not required for the latest master branch
+File ranger/core/actions.py, line 459, in
+filenames = [f.path for f in files]
+change the line to
+filenames = [f if isinstance(f, str) else f.path for f in files]
+
+Brave:
+sudo dnf install dnf-plugins-core
+sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.com/x86_64/
+sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+sudo dnf install brave-browser
+
+---
+
 ## Vim installation
 install Vim Plug
 
@@ -265,19 +280,6 @@ from within nvim
 To change the venv
 :CocCommand then fuzzy search for python.setInterpreter and choose the venv.
 
-
-sudo dnf install trash-cli
-The following fix was not required for the latest master branch
-File ranger/core/actions.py, line 459, in
-filenames = [f.path for f in files]
-change the line to
-filenames = [f if isinstance(f, str) else f.path for f in files]
-
-Brave:
-sudo dnf install dnf-plugins-core
-sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.com/x86_64/
-sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-sudo dnf install brave-browser
 
 =====================================================================
 
