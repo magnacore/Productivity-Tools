@@ -167,7 +167,7 @@ pip install ranger-fm
 
 conda install -c conda-forge xonsh
 
-make xonsh default - was giving a problem was it was not made default
+Do not make Xonsh the default shell. Flatpak apps will not appear in rofi, alacritty terminal will not read colors from alacritty.yaml and zramctl command will fail.
 
 =====================================================================
 
