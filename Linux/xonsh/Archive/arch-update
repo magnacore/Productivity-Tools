@@ -8,7 +8,7 @@ print(f"{cyan}Update locate database...{no_color}")
 sudo updatedb
 
 print(f"{cyan}Delete old files in trash...{no_color}")
-trash-empty 3
+trash-empty -f 3
 sudo journalctl --vacuum-time=4weeks
 
 print(f"{cyan}Deleting None files...{no_color}")
@@ -19,24 +19,26 @@ mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 
 mv --backup=numbered @(p"~/Productivity_System/01 TASK CAPTURE BIN/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
-print(f"{cyan}Update repositories...{no_color}")
-sudo dnf check-update -y
-
-print(f"{cyan}Upgrade software...{no_color}")
-sudo dnf upgrade -y
+print(f"{cyan}Upgrade flatpaks...{no_color}")
 flatpak update -y
 
 # Monday is 0
 day_of_week = datetime.datetime.today().weekday()
 
-if(day_of_week == 0):
-    print(f"{cyan}Clean software cache...{no_color}")
+if(day_of_week == 4):
+    print(f"{cyan}Upgrade mirrors...{no_color}")
+    sudo reflector --latest 50 --sort rate --save /etc/pacman.d/mirrorlist --protocol https --age 24 --verbose -c CA -c DE -c IN -c JP -c SG -c GB -c US
 
-    sudo dnf autoremove -y
-    sudo dnf clean all -y
+    print(f"{cyan}Upgrade software...{no_color}")
+    yay
+
+    print(f"{cyan}Clean software cache...{no_color}")
+    sudo pacman -Sc
+    sudo pacman -Rns @$(pacman -Qtdq)
 
     flatpak uninstall --unused -y
 
+    print(f"{cyan}Clean cache...{no_color}")
     rm -rf @(p"~/.cache")/*
 
     print(f"{cyan}Deleting .DS_Store files...{no_color}")

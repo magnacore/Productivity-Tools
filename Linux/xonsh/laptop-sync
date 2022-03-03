@@ -1,0 +1,31 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+from_path = "/media/manuj/laptop_backup_full/@current/" # end with /
+# echo @(from_path + ".fonts/")
+
+# If there is a space in the destination path enclose in quotes
+rsync --delete --progress -vahi @(from_path + ".fonts/") /home/manuj/.fonts/
+rsync --delete --progress -vahi @(from_path + ".gnupg/") /home/manuj/.gnupg/
+rsync --delete --progress -vahi @(from_path + ".icons/") /home/manuj/.icons/
+rsync --delete --progress -vahi @(from_path + ".password-store/") /home/manuj/.password-store/
+rsync --delete --progress -vahi @(from_path + "Backups/") /home/manuj/Backups/
+rsync --delete --progress -vahi @(from_path + "Bin/") /home/manuj/Bin/
+rsync --delete --progress -vahi @(from_path + "Books/") /home/manuj/Books/
+rsync --delete --progress -vahi @(from_path + "Copy To HDD/") "/home/manuj/Copy To HDD/"
+rsync --delete --progress -vahi @(from_path + "Desktop/") /home/manuj/Desktop/
+rsync --delete --progress -vahi @(from_path + "Documents/") /home/manuj/Documents/
+rsync --delete --progress -vahi @(from_path + "Downloads/") /home/manuj/Downloads/
+rsync --delete --progress -vahi @(from_path + "Installers/") /home/manuj/Installers/
+rsync --delete --progress -vahi @(from_path + "Music/") /home/manuj/Music/
+rsync --delete --progress -vahi @(from_path + "My_Cmaps/") /home/manuj/My_Cmaps/
+rsync --delete --progress -vahi @(from_path + "NA/") /home/manuj/NA/
+rsync --delete --progress -vahi @(from_path + "Pictures/") /home/manuj/Pictures/
+rsync --delete --progress -vahi @(from_path + "Productivity_System/") /home/manuj/Productivity_System/
+rsync --delete --progress -vahi @(from_path + "Projects/") /home/manuj/Projects/
+rsync --delete --progress -vahi @(from_path + "Public/") /home/manuj/Public/
+rsync --delete --progress -vahi @(from_path + "Software/") /home/manuj/Software/
+rsync --delete --progress -vahi @(from_path + "Templates/") /home/manuj/Templates/
+rsync --delete --progress -vahi @(from_path + "To_Convert/") /home/manuj/To_Convert/
+rsync --delete --progress -vahi @(from_path + "Videos/") /home/manuj/Videos/
+rsync --delete --progress -vahi @(from_path + "VirtualBox VMs/") "/home/manuj/VirtualBox VMs/"
+rsync --delete --progress -vahi @(from_path + "Wiki/") /home/manuj/Wiki/
