@@ -740,3 +740,22 @@ class file_number(Command):
 
 
 ###############################################################################
+
+
+class document_convert(Command):
+    """:convert documents using pandoc"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            extension = self.rest(1)
+        else:
+            extension = "pdf"
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell document-convert {extension} %s")
+
+
+###############################################################################
