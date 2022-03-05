@@ -320,6 +320,8 @@ flatpak install flathub com.discordapp.Discord
 flatpak install flathub net.agalwood.Motrix
 flatpak install flathub org.fedoraproject.MediaWriter
 flatpak install flathub io.lbry.lbry-app
+flatpak install flathub com.github.alexhuntley.Plots
+flatpak install flathub org.gaphor.Gaphor
 
 =====================================================================
 
