@@ -37,7 +37,7 @@ if(day_of_week == 0):
 
     flatpak uninstall --unused -y
 
-	print(f"{cyan}Clean cache...{no_color}")
+    print(f"{cyan}Clean cache...{no_color}")
     rm -rf @(p"~/.cache")/*
 
     print(f"{cyan}Deleting .DS_Store files...{no_color}")
