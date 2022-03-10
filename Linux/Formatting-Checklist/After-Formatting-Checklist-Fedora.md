@@ -225,7 +225,7 @@ sudo dnf install rofi
 sudo dnf install eosrei-emojione-fonts xdotool xsel
 sudo dnf install cmus
 sudo dnf install sxiv
-sudo dnf install zathura zathura-pdf-mupdf zathura-pdf-poppler
+sudo dnf install zathura zathura-pdf-mupdf zathura-pdf-poppler zathura-djvu
 sudo dnf install neovim
 sudo dnf install calcurse
 sudo dnf install git
