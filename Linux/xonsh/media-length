@@ -66,4 +66,13 @@ print(datetime.timedelta(seconds = round(total_duration,0)))
 print(f"{cyan}Total media duration @1.5x speed:{no_color}")
 print(datetime.timedelta(seconds = round(total_duration/1.5,0)))
 
+print(f"{cyan}Total media duration @1.65x speed:{no_color}")
+print(datetime.timedelta(seconds = round(total_duration/1.65,0)))
+
+print(f"{cyan}Total media duration @1.82x speed:{no_color}")
+print(datetime.timedelta(seconds = round(total_duration/1.82,0)))
+
+print(f"{cyan}Total media duration @2x speed:{no_color}")
+print(datetime.timedelta(seconds = round(total_duration/2,0)))
+
 print(u'\u2500' * os.get_terminal_size().columns)
