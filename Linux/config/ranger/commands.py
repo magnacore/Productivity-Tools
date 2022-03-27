@@ -665,6 +665,8 @@ class files_tag(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag {tag} %s")
 
+        self.fm.change_mode("normal")
+
 
 ###############################################################################
 
@@ -683,6 +685,8 @@ class files_tag_remove(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag-remove {tag} %s")
+
+        self.fm.change_mode("normal")
 
 
 ###############################################################################
