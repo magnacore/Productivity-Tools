@@ -517,6 +517,8 @@ class image_convert(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell image-resize {dimension} %s")
 
+        self.fm.change_mode("normal")
+
 
 ###############################################################################
 
@@ -540,6 +542,8 @@ class open_in_tabs(Command):
         for f in files:
             # narg=f.relative_path sets the name of the tab
             self.fm.tab_new(narg=f.relative_path, path=f"{f}")
+
+        self.fm.change_mode("normal")
 
 
 ###############################################################################
@@ -566,6 +570,7 @@ class gpg_detached_sign(Command):
                 f"""shell -f gpg --detach-sign "{f.relative_path}" """
             )
 
+        self.fm.change_mode("normal")
         self.fm.notify("Done signing.")
 
 
@@ -595,6 +600,8 @@ class gpg_signature_verify(Command):
                     f"""shell -w gpg --verify "{f.relative_path}" """
                 )
 
+        self.fm.change_mode("normal")
+
 
 ###############################################################################
 
@@ -619,6 +626,8 @@ class gpg_encrypt_file(Command):
             self.fm.execute_console(
                 f"""shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' "{f.relative_path}" """
             )
+
+        self.fm.change_mode("normal")
 
 
 ###############################################################################
@@ -645,6 +654,8 @@ class gpg_decrypt_file(Command):
             self.fm.execute_console(
                 f"""shell -f gpg -o "{root_ext[0]}" -d "{f.relative_path}" """
             )
+
+        self.fm.change_mode("normal")
 
 
 ###############################################################################
@@ -699,6 +710,8 @@ class file_convert_text(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-convert-text %s")
 
+        self.fm.change_mode("normal")
+
 
 ###############################################################################
 
@@ -721,6 +734,8 @@ class media_split_equal_in_place(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell media-split-equal-in-place {duration} %s")
 
+        self.fm.change_mode("normal")
+
 
 ###############################################################################
 
@@ -742,6 +757,8 @@ class file_number(Command):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-number {starting_number} {padding} %s")
 
+        self.fm.change_mode("normal")
+
 
 ###############################################################################
 
@@ -760,6 +777,8 @@ class document_convert(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell document-convert {extension} %s")
+
+        self.fm.change_mode("normal")
 
 
 ###############################################################################
