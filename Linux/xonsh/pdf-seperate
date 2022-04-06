@@ -1,0 +1,28 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+from tqdm import tqdm
+
+print(f"{cyan}Seperating even and odd PDF files for duplex printing...{no_color}")
+
+pdf_files = glob.glob('*.pdf')
+pdf_files.sort()
+
+mkdir even odd
+
+i = 1
+
+for pdf in tqdm(pdf_files):
+	if i%2 != 0:
+		mv @(pdf) odd
+	else:
+		mv @(pdf) even
+	i+=1
+
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Even.pdf even/*.pdf
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Odd.pdf odd/*.pdf
+
+print(u'\u2500' * os.get_terminal_size().columns)
