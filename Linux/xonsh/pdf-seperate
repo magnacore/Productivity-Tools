@@ -24,7 +24,9 @@ if len(pdf_files) > 0:
 			mv @(pdf) even
 		i+=1
 
+	print(f"{cyan}Combining even PDFs...{no_color}")
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Even.pdf even/*.pdf
+	print(f"{cyan}Combining odd PDFs...{no_color}")
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Odd.pdf odd/*.pdf
 
 else:

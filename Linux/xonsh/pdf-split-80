@@ -1,0 +1,33 @@
+#!/home/manuj/anaconda3/envs/util/bin/python3
+
+import os
+import glob
+from PyPDF2 import PdfFileReader, PdfFileWriter
+from tqdm import tqdm
+
+def pdf_splitter(paths):
+
+	for path in tqdm(paths):
+		fname = path
+
+		pdf = PdfFileReader(path)
+
+		pdf_writer = PdfFileWriter()
+
+		for page in tqdm(range(pdf.getNumPages())):
+			pdf_writer.addPage(pdf.getPage(page))
+
+			if (page % 80 == 0) or (page+1 == pdf.getNumPages()):
+				output_filename = f"{fname}_page_{str(page + 1).zfill(4)}.pdf"
+
+				with open(output_filename, 'wb') as out:
+					pdf_writer.write(out)
+
+				pdf_writer = PdfFileWriter()
+
+
+if __name__ == '__main__':
+	paths = glob.glob('*.pdf')
+	paths.sort()
+	pdf_splitter(paths)
+	print(u'\u2500' * os.get_terminal_size().columns)
