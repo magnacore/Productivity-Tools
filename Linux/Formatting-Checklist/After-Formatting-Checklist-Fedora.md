@@ -258,6 +258,10 @@ sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.m
 dnf check-update
 sudo dnf install code
 
+Java
+sudo dnf install java-1.8.0-openjdk.x86_64
+sudo alternatives --config java
+
 ---
 
 ## Vim installation
