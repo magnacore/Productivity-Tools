@@ -782,9 +782,6 @@ class document_convert(Command):
 
 
 ###############################################################################
-#TODO : Make a Xonsh command that will take a file, and it that file is 
-# an image (mime check) then convert it to a text file with the same name
-# as the image
 
 class ocr(Command):
     """
@@ -799,14 +796,9 @@ class ocr(Command):
         if not cwd or not cf:
             self.fm.notify("Error: no file(s) selected", bad=True)
             return
-
-        files = [f for f in self.fm.thistab.get_selection()]
-
-        for f in files:
-            self.fm.execute_console(
-                f"""shell -f tesseract "{f.relative_path}" "{f.relative_path}" """
-            )
-
-        self.fm.change_mode("normal")
+        else:
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell image-convert-text %s")
+            self.fm.change_mode("normal")
 
 ###############################################################################

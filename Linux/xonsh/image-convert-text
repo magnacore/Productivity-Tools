@@ -1,0 +1,40 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+import os
+import sys
+from tqdm import tqdm
+import mimetypes
+
+mimetypes.init()
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
+
+if selection:
+
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	for file in tqdm(allFiles):
+
+		mimestart = get_mime(file)
+
+		if mimestart != None:
+
+			if mimestart in ['image']:
+				output_filename = os.path.splitext(file)[0]
+				tesseract @(file) @(output_filename)
+
+print(u'\u2500' * os.get_terminal_size().columns)
