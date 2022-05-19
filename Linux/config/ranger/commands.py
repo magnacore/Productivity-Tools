@@ -782,3 +782,28 @@ class document_convert(Command):
 
 
 ###############################################################################
+
+class ocr(Command):
+    """
+    :ocr
+    Converts images to text
+    If only one file is highlighted, it will be treated as a single selection
+    """
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+
+        files = [f for f in self.fm.thistab.get_selection()]
+
+        for f in files:
+            self.fm.execute_console(
+                f"""shell -f tesseract "{f.relative_path}" "{f.relative_path}" """
+            )
+
+        self.fm.change_mode("normal")
+
+###############################################################################
