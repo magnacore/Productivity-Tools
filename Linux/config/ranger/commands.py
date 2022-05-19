@@ -782,6 +782,9 @@ class document_convert(Command):
 
 
 ###############################################################################
+#TODO : Make a Xonsh command that will take a file, and it that file is 
+# an image (mime check) then convert it to a text file with the same name
+# as the image
 
 class ocr(Command):
     """
