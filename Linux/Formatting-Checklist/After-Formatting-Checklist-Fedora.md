@@ -238,6 +238,8 @@ sudo dnf install feh
 sudo dnf pass pass-otp zbar
 sudo dnf install pandoc
 sudo dnf install texlive-scheme-full
+sudo dnf install tesseract
+
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
