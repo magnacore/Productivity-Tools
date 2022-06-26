@@ -329,6 +329,7 @@ flatpak install flathub io.lbry.lbry-app
 flatpak install flathub com.github.alexhuntley.Plots
 flatpak install flathub org.gaphor.Gaphor
 flatpak install flathub com.usebottles.bottles
+flatpak install flathub fyi.zoey.TeX-Match
 
 =====================================================================
 
