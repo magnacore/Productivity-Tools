@@ -13,6 +13,8 @@ def pdf_splitter(paths):
 	for path in tqdm(paths):
 		fname = path
 
+		root_ext = os.path.splitext(fname)
+
 		pdf = PdfFileReader(path)
 
 		pdf_writer = PdfFileWriter()
@@ -20,7 +22,7 @@ def pdf_splitter(paths):
 		for page in tqdm(range(pdf.getNumPages())):
 			pdf_writer.addPage(pdf.getPage(page))
 
-			output_filename = f"{fname}_page_{str(page + 1).zfill(4)}.pdf"
+			output_filename = f"{root_ext[0]}_split_{str(page + 1).zfill(4)}.pdf"
 
 			with open(output_filename, 'wb') as out:
 				pdf_writer.write(out)
