@@ -6,6 +6,7 @@ import os
 import glob
 import datetime
 from tqdm import tqdm
+from tabulate import tabulate
 
 # import mimetypes
 # mimetypes.init()
@@ -51,28 +52,40 @@ total_duration = 0.0
 # 	if duration:		
 # 		total_duration += float(duration)
 
+media_list = []
+header = ["Name", "Duration"]
+
 for file in tqdm(allFiles):
 	mimestart = get_mime(file)
 	if mimestart != None:
 		if mimestart in ['audio', 'video']:
 			duration = get_duration(file)
 			total_duration += duration
+			media_list.append([file, datetime.timedelta(seconds = round(duration,0))])
 		else:
 			print(f"Skipping {file}")
 
-print(f"{cyan}Total media duration:{no_color}")
-print(datetime.timedelta(seconds = round(total_duration,0)))
+media_list.append([f"{cyan}Total media duration{no_color}",					f"{cyan}{datetime.timedelta(seconds = round(total_duration,0))}"])
+media_list.append([f"{cyan}Total media duration @1.5x speed{no_color}", 	f"{cyan}{datetime.timedelta(seconds = round(total_duration/1.5,0))}"])
+media_list.append([f"{cyan}Total media duration @1.65x speed{no_color}",	f"{cyan}{datetime.timedelta(seconds = round(total_duration/1.65,0))}"])
+media_list.append([f"{cyan}Total media duration @1.82x speed{no_color}",	f"{cyan}{datetime.timedelta(seconds = round(total_duration/1.82,0))}"])
+media_list.append([f"{cyan}Total media duration @2x speed{no_color}",		f"{cyan}{datetime.timedelta(seconds = round(total_duration/2,0))}"])
 
-print(f"{cyan}Total media duration @1.5x speed:{no_color}")
-print(datetime.timedelta(seconds = round(total_duration/1.5,0)))
+print(tabulate(media_list, headers=header, tablefmt="fancy_grid"))
 
-print(f"{cyan}Total media duration @1.65x speed:{no_color}")
-print(datetime.timedelta(seconds = round(total_duration/1.65,0)))
+# print(f"{cyan}Total media duration:{no_color}")
+# print(datetime.timedelta(seconds = round(total_duration,0)))
 
-print(f"{cyan}Total media duration @1.82x speed:{no_color}")
-print(datetime.timedelta(seconds = round(total_duration/1.82,0)))
+# print(f"{cyan}Total media duration @1.5x speed:{no_color}")
+# print(datetime.timedelta(seconds = round(total_duration/1.5,0)))
 
-print(f"{cyan}Total media duration @2x speed:{no_color}")
-print(datetime.timedelta(seconds = round(total_duration/2,0)))
+# print(f"{cyan}Total media duration @1.65x speed:{no_color}")
+# print(datetime.timedelta(seconds = round(total_duration/1.65,0)))
+
+# print(f"{cyan}Total media duration @1.82x speed:{no_color}")
+# print(datetime.timedelta(seconds = round(total_duration/1.82,0)))
+
+# print(f"{cyan}Total media duration @2x speed:{no_color}")
+# print(datetime.timedelta(seconds = round(total_duration/2,0)))
 
 print(u'\u2500' * os.get_terminal_size().columns)

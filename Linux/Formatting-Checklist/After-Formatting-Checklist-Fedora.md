@@ -335,16 +335,15 @@ flatpak install flathub fyi.zoey.TeX-Match
 
 # PIP/Conda Install
 
-# util
-# YoutubeDL using pip in conda environment util:
-# /home/manuj/anaconda3/envs/util/bin/pip install youtube-dl
+## util
+### YoutubeDL using pip in conda environment util:
 /home/manuj/anaconda3/envs/util/bin/pip install -U yt-dlp
 
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
 
 Note: for scripts which are using python like pdf-split-1, we are importing a path like this:
 #!/home/manuj/anaconda3/envs/util/bin/python3
-The imports must be installed in the same invironment from which we are importing python, in this case util
+The imports must be installed in the same environment from which we are importing python, in this case util
 conda install -c conda-forge pypdf2
 conda install -c conda-forge tqdm
 
@@ -376,6 +375,11 @@ conda install -c anaconda pylint
 conda install -c conda-forge black
 pip install isort
 
+===
+
+# xonsh
+/home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate
+
 =====================================================================
 
 # RPM
@@ -383,11 +387,11 @@ pip install isort
 greenclip was downloaded using the https://github.com/erebe/greenclip/releases and put in ~/.local/bin
 Qtile config is already modified to use it
 
-sudo dnf install code did not work, rpm was downloaded and installed from website
+sudo dnf install code did not work, install as per instructions on fedora on VSCode website
 
 Fredi was installed using rpm download
 
-VaeraCrypt was installed by downloading rpm
+VeraCrypt was installed by downloading rpm
 
 IPFS was installed using rpm downloaded from github page, but check there is appimage also and there may be other installers as well later.
 sudo rpm -i sample_file.rpm
