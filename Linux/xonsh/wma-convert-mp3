@@ -1,0 +1,37 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+from tqdm import tqdm
+import mimetypes
+
+mimetypes.init()
+
+def get_mime(file):
+	mimestart = mimetypes.guess_type(file)[0]
+
+	if mimestart != None:
+		mimestart = mimestart.split('/')[0]
+		return mimestart
+	else:
+		return None
+
+allFiles = glob.glob("*.*")
+allFiles.sort()
+
+print(f"{cyan}Converting wma to mp3...{no_color}")
+
+mkdir converted
+
+for audio in tqdm(allFiles):
+	mimestart = get_mime(audio)
+	
+	if mimestart != None:		
+		if mimestart in ['audio']:
+			filename = os.path.splitext(audio)[0]+' #converted.mp3'
+
+			ffmpeg -i @(audio) -acodec libmp3lame -ab 128k f"./converted/{filename}"
+
+print(u'\u2500' * os.get_terminal_size().columns)
