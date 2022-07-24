@@ -1,8 +1,17 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
 
 import os
 
-rsync --delete --progress -vahi /run/media/$USER/SAWY_01_A/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/
+print(f"{cyan}Deleting previous snapshot...{no_color}")
+sudo btrfs subvolume delete /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
+
+print(f"{cyan}Creating a new read only snapshot...{no_color}")
+sudo btrfs subvolume snapshot -r /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
+
+print(f"{cyan}Synchronizing...{no_color}")
+rsync --delete --progress -vahi /run/media/$USER/SAWY_01_A/SAWY/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
 
 date > ~/Software/logs/sawy-backup.txt
 
