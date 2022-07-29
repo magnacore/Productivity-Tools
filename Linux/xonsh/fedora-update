@@ -16,7 +16,7 @@ find $HOME/ -type f -name "None" -delete
 
 print(f"{cyan}Moving Files...{no_color}")
 mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
-mv --backup=numbered @(p"~/Productivity_System/01 TASK CAPTURE BIN/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+mv --backup=numbered @(p"~/Productivity_System/02 POOL/01 CREATION ACTIVE/02 RELAX ACTIVE MATERIAL/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
 print(f"{cyan}Update repositories...{no_color}")
