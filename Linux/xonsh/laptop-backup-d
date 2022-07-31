@@ -14,6 +14,7 @@ print(f"{cyan}Synchronizing...{no_color}")
 rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /run/media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/
 
 date > ~/Software/logs/laptop-backup-d.txt
+date > /run/media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/backup_date.txt
 
 sudo btrfs filesystem show
 
