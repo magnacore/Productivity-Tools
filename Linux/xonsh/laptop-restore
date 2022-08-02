@@ -18,7 +18,6 @@ rsync --delete --progress -vahi @(from_path + "Downloads/") /home/manuj/Download
 rsync --delete --progress -vahi @(from_path + "Installers/") /home/manuj/Installers/
 rsync --delete --progress -vahi @(from_path + "Music/") /home/manuj/Music/
 rsync --delete --progress -vahi @(from_path + "My_Cmaps/") /home/manuj/My_Cmaps/
-rsync --delete --progress -vahi @(from_path + "NA/") /home/manuj/NA/
 rsync --delete --progress -vahi @(from_path + "Pictures/") /home/manuj/Pictures/
 rsync --delete --progress -vahi @(from_path + "Productivity_System/") /home/manuj/Productivity_System/
 rsync --delete --progress -vahi @(from_path + "Projects/") /home/manuj/Projects/
