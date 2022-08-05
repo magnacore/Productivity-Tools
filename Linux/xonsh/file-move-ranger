@@ -1,0 +1,25 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import sys
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	print("No file moved...") # If no file is selected, the highlighted file is sent as the %s
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	# The first element in the list is the current file name
+	# The second element onwards are the %c sent from Ranger
+	# We also sent a %d so that is the last item in the list
+	allFiles = sys.argv[1:-1]
+
+	target_dir = sys.argv[-1]
+
+	~/anaconda3/envs/util/bin/pymv -gip @(allFiles) @(target_dir)
+
+print(u'\u2500' * os.get_terminal_size().columns)

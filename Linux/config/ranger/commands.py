@@ -359,6 +359,19 @@ class ranger_pycopy(Command):
         # In the Xonsh script it will be the last item in the list
         self.fm.execute_console(f"shell file-copy-ranger %c %d")
 
+###############################################################################
+
+class ranger_pymove(Command):
+    """
+    :ranger_pymove
+
+    Move selected files to the current directory
+    """
+
+    def execute(self):
+        # We are passing current directory as the second parameter
+        # In the Xonsh script it will be the last item in the list
+        self.fm.execute_console(f"shell file-move-ranger %c %d")
 
 ###############################################################################
 
