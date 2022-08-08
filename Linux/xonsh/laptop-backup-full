@@ -30,6 +30,7 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     rsync --delete --progress -vahi $HOME/ /media/$USER/laptop_backup_full/@current    
 
     date > ~/Software/logs/laptop-backup-full.txt
+    date > /media/$USER/laptop_backup_full/@current/backup_date.txt
     
     sudo btrfs filesystem show
     
