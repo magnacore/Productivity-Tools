@@ -9,7 +9,6 @@ sudo updatedb
 
 print(f"{cyan}Delete old files in trash...{no_color}")
 trash-empty 3
-sudo journalctl --vacuum-time=4weeks
 
 print(f"{cyan}Deleting None files...{no_color}")
 find $HOME/ -type f -name "None" -delete
@@ -28,8 +27,9 @@ flatpak update -y
 
 # Monday is 0
 day_of_week = datetime.datetime.today().weekday()
+this_month = datetime.datetime.today().month
 
-if(day_of_week == 0):
+if(day_of_week == 5 and (month % 2 == 0)):
     print(f"{cyan}Clean software cache...{no_color}")
 
     sudo dnf autoremove -y
@@ -39,6 +39,9 @@ if(day_of_week == 0):
 
     print(f"{cyan}Clean cache...{no_color}")
     rm -rf @(p"~/.cache")/*
+
+    print(f"{cyan}Clean Xonsh history...{no_color}")
+    rm -rf @(p"~/.local/share/xonsh/history_json")/*
 
     print(f"{cyan}Deleting .DS_Store files...{no_color}")
     find $HOME/ -type f -iname ".DS_Store" -delete
@@ -57,6 +60,9 @@ if(day_of_week == 0):
 
     print(f"{cyan}Deleting unsued conda packages...{no_color}")
     conda clean --all -y
+
+    print(f"{cyan}Deleting journalctl history...{no_color}")
+    sudo journalctl --vacuum-time=4weeks
 
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
