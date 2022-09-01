@@ -31,11 +31,18 @@ this_month = datetime.datetime.today().month
 
 if(day_of_week == 5 and (month % 2 == 0)):
     print(f"{cyan}Clean software cache...{no_color}")
-
     sudo dnf autoremove -y
     sudo dnf clean all -y
 
+    print(f"{cyan}Clean flatpaks...{no_color}")
+    flatpak update --appstream
     flatpak uninstall --unused -y
+
+    print(f"{cyan}Deleting unsued conda packages...{no_color}")
+    conda clean --all -y
+
+    print(f"{cyan}Deleting journalctl history...{no_color}")
+    sudo journalctl --vacuum-time=4weeks
 
     print(f"{cyan}Clean cache...{no_color}")
     rm -rf @(p"~/.cache")/*
@@ -57,12 +64,6 @@ if(day_of_week == 5 and (month % 2 == 0)):
 
     print(f"{cyan}Deleting __MACOSX directories...{no_color}")
     find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
-
-    print(f"{cyan}Deleting unsued conda packages...{no_color}")
-    conda clean --all -y
-
-    print(f"{cyan}Deleting journalctl history...{no_color}")
-    sudo journalctl --vacuum-time=4weeks
 
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
