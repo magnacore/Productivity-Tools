@@ -29,7 +29,7 @@ flatpak update -y
 day_of_week = datetime.datetime.today().weekday()
 this_month = datetime.datetime.today().month
 
-if(day_of_week == 5 and (month % 2 == 0)):
+if(day_of_week == 5 and (this_month % 2 == 0)):
     print(f"{cyan}Clean software cache...{no_color}")
     sudo dnf autoremove -y
     sudo dnf clean all -y
