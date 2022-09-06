@@ -308,7 +308,7 @@ flatpak install flathub org.keepassxc.KeePassXC
 flatpak install flathub nz.mega.MEGAsync
 flatpak install flathub org.signal.Signal
 flatpak install flathub fr.handbrake.ghb
-flatpak install flathub io.github.gitahead.GitAhead (look for a fork)
+flatpak install flathub com.github.Murmele.Gittyup
 flatpak install flathub org.gimp.GIMP
 flatpak install flathub us.zoom.Zoom
 flatpak install flathub com.skype.Client
