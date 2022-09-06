@@ -395,16 +395,16 @@ Fredi was installed using rpm download
 
 VeraCrypt was installed by downloading rpm
 
+App image launcher was installed using rpm downloaded from github then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
+
 IPFS was installed using rpm downloaded from github page, but check there is appimage also and there may be other installers as well later.
 sudo rpm -i sample_file.rpm
+
+We can also download the IPFS Desktop appimage from github. Make is executable. run it ./<name>. AppImage launcher will ask for integration. Approve it and it will automatically move the appimage to ~/Applications. After that we can launch IPFS from rofi.
 
 firefox login
 
 transmission was already installed
-
-App image launcher was installed using rpm downloaded from github
-then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory.
-integrate and run
 
 =====================================================================
 
