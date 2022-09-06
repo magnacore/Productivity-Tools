@@ -66,7 +66,7 @@ keys = [
     # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
     Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open-beta"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
-    Key([mod, "shift"], "c", lazy.spawn("xfce4-terminal -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
+    Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn("/home/manuj/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
 
     ## Rofi
