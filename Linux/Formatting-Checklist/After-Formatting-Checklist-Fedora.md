@@ -406,6 +406,9 @@ firefox login
 
 transmission was already installed
 
+Move binaries from ~/Software/bin to ~/.local/bin
+Update the binaries by downloading them from GitHub
+
 =====================================================================
 
 AppImages
