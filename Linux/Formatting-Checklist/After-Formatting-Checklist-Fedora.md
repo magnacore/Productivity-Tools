@@ -358,6 +358,8 @@ conda install -c conda-forge pyperclip
 
 /home/manuj/anaconda3/envs/util/bin/pip install playsound
 
+/home/manuj/anaconda3/envs/util/bin/pip install qrcode
+
 ===
 
 # qtile
