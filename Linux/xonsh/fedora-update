@@ -3,6 +3,7 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import datetime
+from playsound import playsound
 
 print(f"{cyan}Update locate database...{no_color}")
 sudo updatedb
@@ -65,9 +66,13 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     print(f"{cyan}Deleting __MACOSX directories...{no_color}")
     find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
 
+    playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg")
+
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
 
 hdd-size
 
 date > ~/Software/logs/system-update.txt
+
+playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
