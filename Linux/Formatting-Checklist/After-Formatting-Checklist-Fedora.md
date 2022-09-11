@@ -332,6 +332,7 @@ flatpak install flathub com.usebottles.bottles
 flatpak install flathub fyi.zoey.TeX-Match
 flatpak install flathub md.obsidian.Obsidian
 flatpak install flathub org.ferdium.Ferdium
+flatpak install flathub org.gnome.meld
 
 =====================================================================
 
