@@ -384,6 +384,7 @@ pip install isort
 
 # xonsh
 /home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate
+/home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
 
 =====================================================================
 
