@@ -1,4 +1,4 @@
-#!xonsh
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
 import os
 from simple_term_menu import TerminalMenu
@@ -8,8 +8,7 @@ root_dir = p"~/.password-store/otp/"
 search_result = []
 
 for root, dirs, files in os.walk(root_dir):
-    for name in files:
-    
+    for name in files:    
         abs_path = os.path.abspath(os.path.join(root, name))
 
         abs_path = abs_path.replace("/home/manuj/.password-store/otp/", "")
@@ -24,6 +23,8 @@ menu_entry_index = terminal_menu.show()
 
 selection = search_result[menu_entry_index]
 
-pass otp @(f"otp/{selection}")
+topt = $(pass otp @(f"otp/{selection}"))
+
+figlet -c -f banner @(f"{topt[:3]} {topt[3:]}")
 
 print(u'\u2500' * os.get_terminal_size().columns)

@@ -240,6 +240,7 @@ sudo dnf install pandoc
 sudo dnf install texlive-scheme-full
 sudo dnf install tesseract
 sudo dnf install ufw
+sudo dnf install figlet
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
