@@ -2,6 +2,7 @@
 
 import os
 from simple_term_menu import TerminalMenu
+import pyperclip as pc
 
 root_dir = p"~/.password-store/otp/"
 
@@ -24,6 +25,8 @@ menu_entry_index = terminal_menu.show()
 selection = search_result[menu_entry_index]
 
 topt = $(pass otp @(f"otp/{selection}"))
+
+pc.copy(topt)
 
 figlet -c -f banner @(f"{topt[:3]} {topt[3:]}")
 
