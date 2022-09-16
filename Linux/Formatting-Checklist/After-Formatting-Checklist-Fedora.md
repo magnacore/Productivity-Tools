@@ -250,12 +250,6 @@ filenames = [f.path for f in files]
 change the line to
 filenames = [f if isinstance(f, str) else f.path for f in files]
 
-Brave:
-sudo dnf install dnf-plugins-core
-sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.com/x86_64/
-sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-sudo dnf install brave-browser
-
 VS Code:
 sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
 sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
@@ -335,6 +329,7 @@ flatpak install flathub fyi.zoey.TeX-Match
 flatpak install flathub md.obsidian.Obsidian
 flatpak install flathub org.ferdium.Ferdium
 flatpak install flathub org.gnome.meld
+flatpak install flathub com.brave.Browser
 
 =====================================================================
 
