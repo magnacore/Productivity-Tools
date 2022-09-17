@@ -82,7 +82,7 @@ keys = [
 
     ## Scratchpads
     Key([mod2, mod3], "a", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
-    Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch TODO List"),
+    Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
 ]
 
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
