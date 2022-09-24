@@ -330,6 +330,7 @@ flatpak install flathub md.obsidian.Obsidian
 flatpak install flathub org.ferdium.Ferdium
 flatpak install flathub org.gnome.meld
 flatpak install flathub com.brave.Browser
+flatpak install flathub net.jami.Jami
 
 =====================================================================
 
