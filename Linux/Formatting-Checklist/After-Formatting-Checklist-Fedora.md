@@ -332,6 +332,7 @@ flatpak install flathub org.gnome.meld
 flatpak install flathub com.brave.Browser
 flatpak install flathub net.jami.Jami
 flatpak install flathub se.manyver.Manyverse
+flatpak install flathub org.gnome.seahorse.Application
 
 =====================================================================
 
