@@ -50,7 +50,7 @@ print(f"Copied: Vigenere encryption of {cyan}{clipboard_content}{no_color} is {c
 
 ## Check
 clipboard_content_check = pc.paste()
-plain_text = originalText(clipboard_content_check, keyword)
+plain_text = originalText(clipboard_content_check, key)
 if plain_text != string:
 	print('ERROR!')
 else:
