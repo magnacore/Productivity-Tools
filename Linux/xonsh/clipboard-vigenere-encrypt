@@ -1,0 +1,59 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import pyperclip as pc
+
+def generateKey(string, key):
+	key = list(key)
+	if len(string) == len(key):
+		return(key)
+	else:
+		for i in range(len(string) - len(key)):
+			key.append(key[i % len(key)])
+	return("" . join(key))
+
+def cipherText(string, key, ascii_min=32, ascii_max=126):
+	cipher_text = []
+	string = str(string)
+	for i in range(len(string)):
+		x = ((ord(string[i])-ascii_min) + (ord(key[i])-ascii_min)) % ((ascii_max+1)-ascii_min)
+		cipher_text.append(chr(x+ascii_min))
+	return("" . join(cipher_text))
+
+def originalText(cipher_text, key, ascii_min=32, ascii_max=126):
+	orig_text = []
+	for i in range(len(cipher_text)):
+		x = ((ord(cipher_text[i])-ascii_min) - (ord(key[i])-ascii_min) + ((ascii_max+1)-ascii_min)) % ((ascii_max+1)-ascii_min)
+		orig_text.append(chr(x+ascii_min))
+	return("" . join(orig_text))
+
+clipboard_content = pc.paste()
+
+with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
+    lines = f.readlines()
+
+# Use raw strings
+# Python cannot handle \ as the last character in a raw string. It can be at the start or middle.
+# What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
+string = clipboard_content
+keyword = lines[0].strip()
+
+key = generateKey(string, keyword)
+
+cipher_text = cipherText(string,key)
+
+pc.copy(cipher_text)
+
+print(f"Copied: Vigenere encryption of {cyan}{clipboard_content}{no_color} is {cyan}{cipher_text}{no_color}")
+
+## Check
+clipboard_content_check = pc.paste()
+plain_text = originalText(clipboard_content_check, keyword)
+if plain_text != string:
+	print('ERROR!')
+else:
+	print('Check Pass.')
+
+print(u'\u2500' * os.get_terminal_size().columns)
