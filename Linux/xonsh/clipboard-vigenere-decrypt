@@ -29,20 +29,18 @@ def originalText(cipher_text, key, ascii_min=32, ascii_max=126):
 		orig_text.append(chr(x+ascii_min))
 	return("" . join(orig_text))
 
-clipboard_content = pc.paste()
-
 with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
     lines = f.readlines()
 
 # Use raw strings
 # Python cannot handle \ as the last character in a raw string. It can be at the start or middle.
 # What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
-string = clipboard_content
+clipboard_content = pc.paste()
 keyword = lines[0].strip()
 
-key = generateKey(string, keyword)
+key = generateKey(clipboard_content, keyword)
 
-plain_text = originalText(string,key)
+plain_text = originalText(clipboard_content,key)
 
 pc.copy(plain_text)
 
