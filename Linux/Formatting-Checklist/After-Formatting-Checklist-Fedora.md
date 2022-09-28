@@ -242,6 +242,7 @@ sudo dnf install tesseract
 sudo dnf install ufw
 sudo dnf install figlet
 sudo dnf install vagrant
+sudo dnf install cpu-x
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
