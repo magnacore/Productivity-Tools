@@ -75,4 +75,4 @@ hdd-size
 
 date > ~/Software/logs/system-update.txt
 
-playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+playsound(p"~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
