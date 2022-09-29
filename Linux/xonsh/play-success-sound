@@ -1,0 +1,6 @@
+#!/home/manuj/anaconda3/envs/util/bin/python3
+# Install /home/manuj/anaconda3/envs/util/bin/pip install pygobject
+
+from playsound import playsound
+
+playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")

@@ -3,7 +3,6 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import datetime
-from playsound import playsound
 
 print(f"{cyan}Update locate database...{no_color}")
 sudo updatedb
@@ -75,4 +74,4 @@ hdd-size
 
 date > ~/Software/logs/system-update.txt
 
-playsound(p"~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+play-success-sound &

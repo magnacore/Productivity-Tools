@@ -7,7 +7,6 @@ import glob
 import datetime
 from tqdm import tqdm
 from tabulate import tabulate
-from playsound import playsound
 
 # import mimetypes
 # mimetypes.init()
@@ -89,6 +88,6 @@ print(tabulate(media_list, headers=header, tablefmt="fancy_grid"))
 # print(f"{light_green}Total media duration @2x speed:{no_color}")
 # print(datetime.timedelta(seconds = round(total_duration/2,0)))
 
-playsound(p"~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+play-success-sound &
 
 print(u'\u2500' * os.get_terminal_size().columns)
