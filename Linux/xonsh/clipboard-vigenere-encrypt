@@ -49,7 +49,9 @@ clipboard_content_check = pc.paste()
 plain_text = originalText(clipboard_content_check, key)
 if plain_text != clipboard_content:
 	print('ERROR!')
+	sound-play-fail &
 else:
 	print(f"Copied: Vigenere encryption of {cyan}{clipboard_content}{no_color} is {cyan}{cipher_text}{no_color}")
+	sound-play-success &
 
 print(u'\u2500' * os.get_terminal_size().columns)

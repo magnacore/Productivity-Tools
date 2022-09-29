@@ -16,3 +16,5 @@ rsync --delete --progress -vahi /run/media/$USER/SAWY_01_A/SAWY/ /run/media/$USE
 date > ~/Software/logs/sawy-backup.txt
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

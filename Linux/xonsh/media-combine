@@ -22,3 +22,5 @@ os.remove(temp_filename)
 # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

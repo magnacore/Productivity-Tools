@@ -38,3 +38,5 @@ if selection:
 				tesseract @(file) @(output_filename)
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

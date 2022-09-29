@@ -7,3 +7,5 @@ rsync --delete --progress -vahi /run/media/$USER/BACKUP_01_A/ /run/media/$USER/B
 date > ~/Software/logs/backup-backup.txt
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

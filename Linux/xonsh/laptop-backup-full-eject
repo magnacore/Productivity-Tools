@@ -28,3 +28,5 @@ udisksctl power-off -b /dev/sdb
 lsblk
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

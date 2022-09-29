@@ -7,3 +7,5 @@ rsync --delete --progress -vahi /run/media/$USER/LEARNING/ /run/media/$USER/Tuts
 date > ~/Software/logs/tutorials-backup.txt
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

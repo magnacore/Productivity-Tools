@@ -28,3 +28,5 @@ if selection:
 
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

@@ -35,3 +35,5 @@ for audio in tqdm(allFiles):
 			ffmpeg -i @(audio) -acodec libmp3lame -ab 128k f"./converted/{filename}"
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

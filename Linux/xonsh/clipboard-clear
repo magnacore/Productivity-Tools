@@ -2,3 +2,5 @@
 
 clear
 greenclip clear
+
+sound-play-success &

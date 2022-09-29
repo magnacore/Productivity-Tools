@@ -10,3 +10,5 @@ date > ~/Software/logs/laptop-backup-a.txt
 date > /media/veracrypt1/SYSTEM_BACKUP/backup_date.txt
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

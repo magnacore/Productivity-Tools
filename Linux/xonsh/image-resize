@@ -47,3 +47,5 @@ if selection:
 				convert @(media) -resize x@(resize_dimension) @(new_filename)
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

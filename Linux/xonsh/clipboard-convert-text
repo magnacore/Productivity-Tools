@@ -1,6 +1,7 @@
 #!/home/manuj/anaconda3/envs/util/bin/python3
 # Since we are importing python3 from util environment, pyperclip should be installed in util environment too
 # pip install pyperclip
+# installing pyobjects in utils venv will cause this script to fail. Only install pyobjects in xonsh venv
 
 import re
 import unicodedata

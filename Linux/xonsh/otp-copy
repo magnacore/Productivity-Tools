@@ -31,3 +31,5 @@ pc.copy(topt)
 figlet -c -f banner @(f"{topt[:3]} {topt[3:]}")
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

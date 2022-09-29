@@ -52,3 +52,5 @@ rsync --delete --progress -vahi ~/.config/qtile/ ~/Projects/Productivity-Tools/L
 print(f"{cyan}Done.{no_color}")
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

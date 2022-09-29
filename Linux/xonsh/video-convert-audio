@@ -34,3 +34,5 @@ for file in tqdm(allFiles):
 			ffmpeg -i @(file) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

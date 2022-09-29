@@ -48,3 +48,5 @@ for root, subdirs, files in walklevel(walk_dir):
 	i += 1
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

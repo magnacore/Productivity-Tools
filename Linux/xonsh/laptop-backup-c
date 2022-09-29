@@ -19,3 +19,5 @@ date > /run/media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/backup_date.txt
 sudo btrfs filesystem show
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

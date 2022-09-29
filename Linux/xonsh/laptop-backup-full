@@ -35,6 +35,8 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     sudo btrfs filesystem show
 
     print(u'\u2500' * os.get_terminal_size().columns)
+    sound-play-success &
 
 else:
     print(f"{cyan}Something went wrong. Could not mount.{no_color}")
+    sound-play-fail &

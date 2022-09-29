@@ -74,4 +74,4 @@ hdd-size
 
 date > ~/Software/logs/system-update.txt
 
-play-success-sound &
+sound-play-success &

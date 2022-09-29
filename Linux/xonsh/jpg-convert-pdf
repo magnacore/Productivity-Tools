@@ -16,3 +16,5 @@ for filename in tqdm(allPdfFiles):
     # os.remove(filename)
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

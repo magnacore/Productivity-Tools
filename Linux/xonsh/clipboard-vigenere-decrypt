@@ -47,3 +47,5 @@ pc.copy(plain_text)
 print(f"Copied: Vigenere decryption of {cyan}{clipboard_content}{no_color} is {cyan}{plain_text}{no_color}")
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

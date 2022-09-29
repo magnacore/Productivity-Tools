@@ -41,3 +41,5 @@ for video in tqdm(allFiles):
 rm ffmpeg2pass-0.log
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

@@ -162,3 +162,5 @@ else:
 # 	print(f"{cyan}Nothing to split...exiting.{no_color}")
 	
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &

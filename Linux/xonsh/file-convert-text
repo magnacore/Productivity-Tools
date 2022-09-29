@@ -22,3 +22,5 @@ if selection:
 		# echo @(new_filename) > @(new_filename)
 
 print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &
