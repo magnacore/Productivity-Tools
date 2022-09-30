@@ -5,21 +5,14 @@ no_color = '\x1b[0m'
 import os
 import glob
 from tqdm import tqdm
-import mimetypes
 
-mimetypes.init()
+import sys
+sys.path.append("/home/manuj/Bin")
 
-def get_mime(file):
-	mimestart = mimetypes.guess_type(file)[0]
-
-	if mimestart != None:
-		mimestart = mimestart.split('/')[0]
-		return mimestart
-	else:
-		return None
+from utilities import get_mime
 
 allFiles = glob.glob("*.*")
-# allFiles.sort()
+allFiles.sort()
 
 print(f"{cyan}Extracting audio form video...{no_color}")
 
