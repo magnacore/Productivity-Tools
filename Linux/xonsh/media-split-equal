@@ -102,7 +102,7 @@ if to_split == True:
 				root_ext = os.path.splitext(file)
 				extension = root_ext[1]
 
-				if mimestart == 'audio':
+				if (mimestart == 'audio') or (extension == ".mka"):
 					extension = ".mka"
 				elif mimestart == 'video':
 					extension = ".mkv"
