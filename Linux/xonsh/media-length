@@ -8,49 +8,15 @@ import datetime
 from tqdm import tqdm
 from tabulate import tabulate
 
-# import mimetypes
-# mimetypes.init()
+import sys
+sys.path.append("/home/manuj/Bin")
 
-# get_mime is not detecting mka files
-# def get_mime(file):
-# 	mimestart = mimetypes.guess_type(file)[0]
-# 
-# 	if mimestart != None:
-# 		mimestart = mimestart.split('/')[0]
-# 		return mimestart
-# 	else:
-# 		return None
-
-def get_mime(file):
-	mimestart = $(file --mime-type @(file))
-
-	if mimestart != None:
-		mimestart = mimestart.split(':')[1]
-		mimestart = mimestart.split('/')[0]
-		return mimestart.strip().lower()
-	else:
-		return None
-
-def get_duration(file):
-	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
-
-	if duration == '':
-		print(f"{file} is not returning a valid duration.")
-		duration = '0'
-
-	return float(duration)
+from utilities import get_mime, get_duration
 
 allFiles = glob.glob("*.*")
 allFiles.sort()
 
 total_duration = 0.0
-
-
-# for file in tqdm(allMediaFiles):
-# 	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
-# 	
-# 	if duration:		
-# 		total_duration += float(duration)
 
 media_list = []
 header = ["Name", "Duration"]
@@ -72,21 +38,6 @@ media_list.append([f"{light_green}Total media duration @1.82x speed{no_color}",	
 media_list.append([f"{light_green}Total media duration @2x speed{no_color}",	f"{light_green}{datetime.timedelta(seconds = round(total_duration/2,0))}{no_color}"])
 
 print(tabulate(media_list, headers=header, tablefmt="fancy_grid"))
-
-# print(f"{light_green}Total media duration:{no_color}")
-# print(datetime.timedelta(seconds = round(total_duration,0)))
-
-# print(f"{light_green}Total media duration @1.5x speed:{no_color}")
-# print(datetime.timedelta(seconds = round(total_duration/1.5,0)))
-
-# print(f"{light_green}Total media duration @1.65x speed:{no_color}")
-# print(datetime.timedelta(seconds = round(total_duration/1.65,0)))
-
-# print(f"{light_green}Total media duration @1.82x speed:{no_color}")
-# print(datetime.timedelta(seconds = round(total_duration/1.82,0)))
-
-# print(f"{light_green}Total media duration @2x speed:{no_color}")
-# print(datetime.timedelta(seconds = round(total_duration/2,0)))
 
 print(u'\u2500' * os.get_terminal_size().columns)
 
