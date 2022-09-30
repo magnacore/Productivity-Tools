@@ -2,5 +2,6 @@
 
 clear
 greenclip clear
+trash-put /home/manuj/.cache/greenclip.history
 
 sound-play-success &
