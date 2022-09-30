@@ -2,4 +2,6 @@
 
 source ~/.xonshrc
 
-/home/$USER/anaconda3/envs/ranger/bin/ranger
+# /home/$USER/anaconda3/envs/ranger/bin/ranger
+
+/home/$USER/Software/ranger-master/ranger.py
