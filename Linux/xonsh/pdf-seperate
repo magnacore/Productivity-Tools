@@ -1,6 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 import os
 import glob
@@ -29,7 +30,9 @@ if len(pdf_files) > 0:
 	print(f"{cyan}Combining odd PDFs...{no_color}")
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Odd.pdf odd/*.pdf
 
+	sound-play-success &
 else:
-	print(f"{cyan}No PDFs found...{no_color}")
+	print(f"{red}No PDFs found...{no_color}")
+	sound-play-fail &
 
 print(u'\u2500' * os.get_terminal_size().columns)
