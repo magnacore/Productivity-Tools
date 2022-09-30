@@ -12,8 +12,10 @@ import datetime
 import math
 from tqdm import tqdm
 
-import mimetypes
-mimetypes.init()
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_mime, get_duration
 
 if len(sys.argv) == 1:
 	split_duration = '300'
@@ -24,25 +26,6 @@ elif len(sys.argv) == 2:
 else:
 	split_duration = sys.argv[1]
 	threshold_seconds = sys.argv[2]
-
-# get_mime cannot detect mime for mka files - this is a linux problem?
-def get_mime(file):
-	mimestart = mimetypes.guess_type(file)[0]
-
-	if mimestart != None:
-		mimestart = mimestart.split('/')[0]
-		return mimestart.strip().lower()
-	else:
-		return None
-
-def get_duration(file):
-	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
-
-	if duration == '':
-		print(f"{file} is not returning a valid duration.")
-		duration = '0'
-
-	return float(duration)
 
 allFiles = glob.glob("*.*")
 allFiles.sort()
