@@ -1,6 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 # TODO : If there is a : in the file name the splitting will not work
 
@@ -11,8 +12,8 @@ import datetime
 import math
 from tqdm import tqdm
 
-# import mimetypes
-# mimetypes.init()
+import mimetypes
+mimetypes.init()
 
 if len(sys.argv) == 1:
 	split_duration = '300'
@@ -24,23 +25,13 @@ else:
 	split_duration = sys.argv[1]
 	threshold_seconds = sys.argv[2]
 
-# get_mime cannot detect mime for mka files
-# def get_mime(file):
-# 	mimestart = mimetypes.guess_type(file)[0]
-# 
-# 	if mimestart != None:
-# 		mimestart = mimestart.split('/')[0]
-# 		return mimestart
-# 	else:
-# 		return None
-
+# get_mime cannot detect mime for mka files - this is a linux problem?
 def get_mime(file):
-	mimestart = $(file --mime-type @(file))
+	mimestart = mimetypes.guess_type(file)[0]
 
 	if mimestart != None:
-		mimestart = mimestart.split(':')[1]
 		mimestart = mimestart.split('/')[0]
-		return mimestart.strip().lower()
+		return mimestart
 	else:
 		return None
 
@@ -72,17 +63,6 @@ for file in allFiles:
 				print(f"{cyan}Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
 				to_split = True
 				break
-
-# for media in allFiles:
-# 	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
-# 
-# 	if duration:
-# 		duration = float(duration)
-# 			
-# 		if duration > float(threshold_seconds):
-# 			print(f"{cyan}Media longer than threshold of {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
-# 			to_split = True
-# 			break
 
 if to_split == True:
 	
@@ -122,45 +102,10 @@ if to_split == True:
 			
 			else:
 				print(f"Skipping {file}")
+				
+	sound-play-success &
 else:
-	print(f"{cyan}Nothing to split...exiting.{no_color}")
+	print(f"{red}Nothing to split...exiting.{no_color}")
+	sound-play-fail &
 
-# if to_split == True:
-# 	
-# 	for media in tqdm(allFiles):
-# 		duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(media))
-# 
-# 		if duration:			
-# 			duration = float(duration)
-# 			split_duration = float(split_duration)
-# 			
-# 			parts=int(duration//split_duration)
-# 
-# 			root_ext = os.path.splitext(media)
-# 			extension = root_ext[1]
-# 
-# 			mimestart = get_mime(media)
-# 			if mimestart == 'audio':
-# 				extension = ".mka"
-# 			elif mimestart == 'video':
-# 				extension = ".mkv"
-# 			
-# 			if (parts != 0):
-# 				remaining = duration%split_duration
-# 				excess = round(remaining/parts,0)
-# 				split_duration_individual = int(split_duration + excess)
-# 
-# 				#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
-# 
-# 				new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
-# 				mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration_individual)+'s')
-# 			else:
-# 				new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
-# 				mkvmerge -q -o SPLIT/@(new_filename) @(media) --split duration:@(str(split_duration)+'s')
-# 
-# else:
-# 	print(f"{cyan}Nothing to split...exiting.{no_color}")
-	
 print(u'\u2500' * os.get_terminal_size().columns)
-
-sound-play-success &

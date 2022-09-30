@@ -1,6 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 # TODO : If there is a : in the file name the splitting will not work
 
@@ -10,15 +11,18 @@ import datetime
 import math
 from tqdm import tqdm
 
+import mimetypes
+mimetypes.init()
+
 threshold_seconds = 600
 
+# get_mime cannot detect mime for mka files - this is a linux problem?
 def get_mime(file):
-	mimestart = $(file --mime-type @(file))
+	mimestart = mimetypes.guess_type(file)[0]
 
 	if mimestart != None:
-		mimestart = mimestart.split(':')[1]
 		mimestart = mimestart.split('/')[0]
-		return mimestart.strip().lower()
+		return mimestart
 	else:
 		return None
 
@@ -100,9 +104,11 @@ if selection:
 				
 				else:
 					print(f"Skipping {file}")
+		
+		sound-play-success &
+	
 	else:
-		print(f"{cyan}Nothing to split...exiting.{no_color}")
+		print(f"{red}Nothing to split...exiting.{no_color}")
+		sound-play-fail &
 
 print(u'\u2500' * os.get_terminal_size().columns)
-
-sound-play-success &
