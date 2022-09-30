@@ -3,24 +3,17 @@
 import os
 import sys
 from tqdm import tqdm
-import mimetypes
 
-mimetypes.init()
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_mime
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
 	selection = False
 elif len(sys.argv) > 1:
 	selection = True
-
-def get_mime(file):
-	mimestart = mimetypes.guess_type(file)[0]
-
-	if mimestart != None:
-		mimestart = mimestart.split('/')[0]
-		return mimestart
-	else:
-		return None
 
 if selection:
 
