@@ -8,7 +8,7 @@ import pyperclip as pc
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from unilities import generateKey, originalText
+from utilities import generateKey, originalText
 
 with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
     lines = f.readlines()
