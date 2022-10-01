@@ -1,3 +1,5 @@
+import os
+
 import mimetypes
 mimetypes.init()
 
@@ -43,3 +45,9 @@ def get_duration(file):
 		duration = '0'
 
 	return float(duration)
+
+def get_filename_extension(file):
+	filename = os.path.splitext(file)[0]
+	extension = os.path.splitext(file)[1]
+
+	return filename, extension

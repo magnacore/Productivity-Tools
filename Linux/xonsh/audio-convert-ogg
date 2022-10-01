@@ -1,0 +1,46 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan = '\x1b[1;36m'
+no_color = '\x1b[0m'
+
+import os
+import glob
+from tqdm import tqdm
+
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_mime, get_filename_extension
+
+allFiles = glob.glob("*.*")
+allFiles.sort()
+
+print(f"{cyan}Converting audio to ogg...{no_color}")
+
+mkdir converted
+
+for audio in tqdm(allFiles):
+	mimestart = get_mime(audio)
+	
+	if mimestart != None:		
+		if mimestart in ['audio']:
+			filename, _ = get_filename_extension(audio)
+			filename = filename +'.ogg'
+
+			ffmpeg -i @(audio) -c:a libvorbis -b:a 128k f"./converted/{filename}"
+
+print(u'\u2500' * os.get_terminal_size().columns)
+
+sound-play-success &
+
+# Quality Guide
+# -q0 	64 kbit/s
+# -q1 	80 kbit/s
+# -q2 	96 kbit/s
+# -q3 	112 kbit/s
+# -q4 	128 kbit/s
+# -q5 	160 kbit/s
+# -q6 	192 kbit/s
+# -q7 	224 kbit/s
+# -q8 	256 kbit/s
+# -q9 	320 kbit/s
+# -q10 	500 kbit/s 
