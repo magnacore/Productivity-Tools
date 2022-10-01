@@ -847,3 +847,22 @@ class paste_ext(Command):
         return self.fm.paste(make_safe_path=paste_ext.make_safe_path)
 
 ###############################################################################
+
+class audio_convert_ogg(Command):
+    """:Convert common audio formats to ogg"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            bitrate = self.rest(1)
+        else:
+            bitrate = 128
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell audio-convert-ogg {bitrate} %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################

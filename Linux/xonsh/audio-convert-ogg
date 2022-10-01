@@ -1,4 +1,8 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+# Usage: audio-convert-ogg 128 *
+# Converts all audio files in a folder to 128kbps ogg
+
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
@@ -11,26 +15,34 @@ sys.path.append("/home/manuj/Bin")
 
 from utilities import get_mime, get_filename_extension
 
-allFiles = glob.glob("*.*")
-allFiles.sort()
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
 
-print(f"{cyan}Converting audio to ogg...{no_color}")
+if selection:
+	allFiles = sys.argv[2:]
+	bitrate = int(sys.argv[1])
+	allFiles.sort()
 
-mkdir converted
+	print(f"{cyan}Converting audio to ogg...{no_color}")
 
-for audio in tqdm(allFiles):
-	mimestart = get_mime(audio)
-	
-	if mimestart != None:		
-		if mimestart in ['audio']:
-			filename, _ = get_filename_extension(audio)
-			filename = filename +'.ogg'
+	mkdir converted
 
-			ffmpeg -i @(audio) -c:a libvorbis -b:a 128k f"./converted/{filename}"
+	for file in tqdm(allFiles):
+		mimestart = get_mime(file)
+		
+		if mimestart != None:		
+			if mimestart in ['audio']:
+				filename, _ = get_filename_extension(file)
+				filename = filename +'.ogg'
 
-print(u'\u2500' * os.get_terminal_size().columns)
+				ffmpeg -i @(file) -c:a libvorbis -b:a @(bitrate)k f"./converted/{filename}"
 
-sound-play-success &
+	print(u'\u2500' * os.get_terminal_size().columns)
+
+	sound-play-success &
 
 # Quality Guide
 # -q0 	64 kbit/s
