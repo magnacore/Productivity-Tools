@@ -866,3 +866,15 @@ class audio_convert_ogg(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class video_convert_audio(Command):
+    """:Extract audio from a video without conversion"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell video-convert-audio %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################

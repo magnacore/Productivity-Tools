@@ -11,22 +11,29 @@ sys.path.append("/home/manuj/Bin")
 
 from utilities import get_mime, get_filename_extension
 
-allFiles = glob.glob("*.*")
-allFiles.sort()
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
 
-print(f"{cyan}Extracting audio form video...{no_color}")
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
 
-mkdir audio
+	print(f"{cyan}Extracting audio form video...{no_color}")
 
-for file in tqdm(allFiles):
-	mimestart = get_mime(file)
-	
-	if mimestart != None:		
-		if mimestart in ['video']:			
-			filename, _ = get_filename_extension(file)
-			filename = filename +'.mka'
-			ffmpeg -i @(file) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
+	mkdir audio
 
-print(u'\u2500' * os.get_terminal_size().columns)
+	for file in tqdm(allFiles):
+		mimestart = get_mime(file)
+		
+		if mimestart != None:		
+			if mimestart in ['video']:			
+				filename, _ = get_filename_extension(file)
+				filename = filename +'.mka'
+				ffmpeg -i @(file) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
 
-sound-play-success &
+	print(u'\u2500' * os.get_terminal_size().columns)
+
+	sound-play-success &
