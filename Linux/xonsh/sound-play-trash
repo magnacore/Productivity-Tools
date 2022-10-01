@@ -1,0 +1,5 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+
+from playsound import playsound
+
+playsound(p"~/Bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg")

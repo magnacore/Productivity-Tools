@@ -25,7 +25,7 @@ print(f"{cyan}Upgrade software...{no_color}")
 sudo dnf upgrade -y
 flatpak update -y
 
-# Monday is 0
+# Monday is 0, Saturday is 5
 day_of_week = datetime.datetime.today().weekday()
 this_month = datetime.datetime.today().month
 
@@ -65,7 +65,7 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     print(f"{cyan}Deleting __MACOSX directories...{no_color}")
     find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
 
-    playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg")
+    sound-play-trash &
 
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
