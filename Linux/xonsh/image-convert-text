@@ -7,7 +7,7 @@ from tqdm import tqdm
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_mime
+from utilities import get_mime, get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
@@ -25,9 +25,8 @@ if selection:
 		mimestart = get_mime(file)
 
 		if mimestart != None:
-
 			if mimestart in ['image']:
-				output_filename = os.path.splitext(file)[0]
+				output_filename, _ = get_filename_extension(file)
 				tesseract @(file) @(output_filename)
 
 print(u'\u2500' * os.get_terminal_size().columns)

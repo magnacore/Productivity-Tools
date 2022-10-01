@@ -14,7 +14,7 @@ from tqdm import tqdm
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_mime, get_duration
+from utilities import get_mime, get_duration, get_filename_extension
 
 threshold_seconds = 600
 
@@ -62,8 +62,7 @@ if selection:
 					
 					parts=int(duration//split_duration)
 
-					root_ext = os.path.splitext(file)
-					extension = root_ext[1]
+					filename, extension = get_filename_extension(file)
 
 					if (mimestart == 'audio') or (extension == ".mka"):
 						extension = ".mka"
@@ -77,10 +76,10 @@ if selection:
 
 						#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
 
-						new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
+						new_filename = filename + f'_SPLIT_EQUAL' + extension
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_individual)+'s')
 					else:
-						new_filename = root_ext[0] + f'_SPLIT_EQUAL' + extension
+						new_filename = filename + f'_SPLIT_EQUAL' + extension
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
 
 					trash-put @(file)

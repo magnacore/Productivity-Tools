@@ -3,8 +3,12 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import os
-import sys
 from tqdm import tqdm
+
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
@@ -21,8 +25,8 @@ if selection:
 	print(f"{cyan}Converting document to .{extension}{no_color}")
 
 	for file in tqdm(allFiles):
-		root_ext = os.path.splitext(file)
-		file_name = root_ext[0]
+
+		file_name, _ = get_filename_extension(file)
 
 		pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)
 

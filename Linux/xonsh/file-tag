@@ -3,8 +3,12 @@ cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
 import os
-import sys
 from tqdm import tqdm
+
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
@@ -21,9 +25,8 @@ if selection:
 	print(f"{cyan}Adding tag #{tag}{no_color}")
 
 	for file in tqdm(allFiles):
-		root_ext = os.path.splitext(file)
-		file_name = root_ext[0]
-		extension = root_ext[1]
+
+		file_name, extension = get_filename_extension(file)
 
 		new_filename = file_name + f' #{tag}' + extension
 		os.rename(file, new_filename)

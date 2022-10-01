@@ -9,7 +9,7 @@ from tqdm import tqdm
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_mime
+from utilities import get_mime, get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
@@ -32,9 +32,8 @@ if selection:
 		if mimestart != None:
 			
 			if mimestart in ['image']:
-				root_ext = os.path.splitext(media)
-				file_name = root_ext[0]
-				extension = root_ext[1]
+
+				file_name, extension = get_filename_extension(media)
 
 				new_filename = file_name + f'_{resize_dimension}' + extension
 				convert @(media) -resize x@(resize_dimension) @(new_filename)

@@ -1,8 +1,12 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
 import os
-import sys
 from tqdm import tqdm
+
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
@@ -16,10 +20,12 @@ if selection:
 	allFiles.sort()
 
 	for file in tqdm(allFiles):
+		
+		new_filename, _ = get_filename_extension(file)
+		new_filename = new_filename + '.video'
 
-		new_filename = os.path.splitext(file)[0] + '.video'
 		touch @(new_filename)
-		# echo @(new_filename) > @(new_filename)
+		echo @(file) > @(new_filename)
 
 print(u'\u2500' * os.get_terminal_size().columns)
 
