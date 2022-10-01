@@ -17,6 +17,9 @@ print(f"{cyan}Free Disk Space: {no_color}")
 free_space = subprocess_output.split()[3]
 print(f"{free_space} of {total_space} or {100-used_percentage}% of disk is free.\n")
 
+df -h
+print("\n")
+
 print(f"{cyan}Used RAM Space: {no_color}")
 free -h
 
