@@ -68,6 +68,7 @@ keys = [
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn("/home/manuj/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
+    Key([mod, "shift"], "m", lazy.spawn(myTerm+" -e /home/manuj/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
 
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
