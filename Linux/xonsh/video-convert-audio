@@ -32,7 +32,7 @@ if selection:
 			if mimestart in ['video']:
 				filename, _ = get_filename_extension(file)
 				filename = filename +'.mka'
-				ffmpeg -i @(file) -n -vn -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
+				ffmpeg -i @(file) -n -vn -hide_banner -loglevel error -acodec copy @(filename)
 
 	print(u'\u2500' * os.get_terminal_size().columns)
 
