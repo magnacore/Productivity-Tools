@@ -21,10 +21,9 @@ execx($(zoxide init xonsh), 'exec', __xonsh__.ctx, filename='zoxide')
 $VISUAL='/usr/bin/nvim'
 $EDITOR=$VISUAL
 
-# =================================== aliases ================================= 
+# =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
 
-aliases ["vvv"] = "bash /home/manuj/Software/VVV-1.4.0-x86_64/vvv-start.sh"
 aliases ["cmap"] = "bash /home/manuj/Software/CMapTools/bin/CmapTools"
 aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
