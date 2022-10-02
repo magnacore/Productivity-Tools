@@ -33,10 +33,12 @@ plain_text = originalText(clipboard_content_check, key)
 if plain_text == clipboard_content:
 	print(f"Copied: Vigenere encryption of {cyan}{clipboard_content}{no_color} is {cyan}{cipher_text}{no_color}")
 
+	warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
+
 	if cipher_text[0] == " ":
-		print(f"{red}Warning: Ciphertext contains a leading space!{no_color}")
+		print(f"{red}Warning: Ciphertext contains a leading space! {warning_cipher_text}{no_color}")
 	elif cipher_text[-1] == " ":
-		print(f"{red}Warning: Ciphertext contains a trailing space!{no_color}")
+		print(f"{red}Warning: Ciphertext contains a trailing space! {warning_cipher_text}{no_color}")
 
 	sound-play-success &
 else:
