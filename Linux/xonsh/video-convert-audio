@@ -23,8 +23,6 @@ if selection:
 
 	print(f"{cyan}Extracting audio form video...{no_color}")
 
-	mkdir audio
-
 	for file in tqdm(allFiles):
 		mimestart = get_mime(file)
 
