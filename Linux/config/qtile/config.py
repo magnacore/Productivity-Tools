@@ -63,7 +63,7 @@ keys = [
 	
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+" -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
-    # Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
+    Key([mod, "shift"], "v", lazy.spawn(myTerm+" -e bash /home/manuj/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
     Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
