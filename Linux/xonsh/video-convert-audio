@@ -27,12 +27,12 @@ if selection:
 
 	for file in tqdm(allFiles):
 		mimestart = get_mime(file)
-		
-		if mimestart != None:		
-			if mimestart in ['video']:			
+
+		if mimestart != None:
+			if mimestart in ['video']:
 				filename, _ = get_filename_extension(file)
 				filename = filename +'.mka'
-				ffmpeg -i @(file) -n -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
+				ffmpeg -i @(file) -n -vn -hide_banner -loglevel error -acodec copy f"./audio/{filename}"
 
 	print(u'\u2500' * os.get_terminal_size().columns)
 
