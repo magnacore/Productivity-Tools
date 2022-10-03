@@ -7,8 +7,6 @@
 # A simple command for demonstration purposes follows.
 # -----------------------------------------------------------------------------
 
-from __future__ import absolute_import, division, print_function
-
 # You can import any python module as needed.
 import os
 from collections import deque
@@ -18,50 +16,50 @@ from ranger.api.commands import Command
 from ranger_udisk_menu.mounter import mount
 
 
-# Any class that is a subclass of "Command" will be integrated into ranger as a
-# command.  Try typing ":my_edit<ENTER>" in ranger!
-class my_edit(Command):
-    # The so-called doc-string of the class will be visible in the built-in
-    # help that is accessible by typing "?c" inside ranger.
-    """:my_edit <filename>
+# # Any class that is a subclass of "Command" will be integrated into ranger as a
+# # command.  Try typing ":my_edit<ENTER>" in ranger!
+# class my_edit(Command):
+#     # The so-called doc-string of the class will be visible in the built-in
+#     # help that is accessible by typing "?c" inside ranger.
+#     """:my_edit <filename>
 
-    A sample command for demonstration purposes that opens a file in an editor.
-    """
+#     A sample command for demonstration purposes that opens a file in an editor.
+#     """
 
-    # The execute method is called when you run this command in ranger.
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1):
-            # self.rest(1) contains self.arg(1) and everything that follows
-            target_filename = self.rest(1)
-        else:
-            # self.fm is a ranger.core.filemanager.FileManager object and gives
-            # you access to internals of ranger.
-            # self.fm.thisfile is a ranger.container.file.File object and is a
-            # reference to the currently selected file.
-            target_filename = self.fm.thisfile.path
+#     # The execute method is called when you run this command in ranger.
+#     def execute(self):
+#         # self.arg(1) is the first (space-separated) argument to the function.
+#         # This way you can write ":my_edit somefilename<ENTER>".
+#         if self.arg(1):
+#             # self.rest(1) contains self.arg(1) and everything that follows
+#             target_filename = self.rest(1)
+#         else:
+#             # self.fm is a ranger.core.filemanager.FileManager object and gives
+#             # you access to internals of ranger.
+#             # self.fm.thisfile is a ranger.container.file.File object and is a
+#             # reference to the currently selected file.
+#             target_filename = self.fm.thisfile.path
 
-        # This is a generic function to print text in ranger.
-        self.fm.notify("Let's edit the file " + target_filename + "!")
+#         # This is a generic function to print text in ranger.
+#         self.fm.notify("Let's edit the file " + target_filename + "!")
 
-        # Using bad=True in fm.notify allows you to print error messages:
-        if not os.path.exists(target_filename):
-            self.fm.notify("The given file does not exist!", bad=True)
-            return
+#         # Using bad=True in fm.notify allows you to print error messages:
+#         if not os.path.exists(target_filename):
+#             self.fm.notify("The given file does not exist!", bad=True)
+#             return
 
-        # This executes a function from ranger.core.acitons, a module with a
-        # variety of subroutines that can help you construct commands.
-        # Check out the source, or run "pydoc ranger.core.actions" for a list.
-        self.fm.edit_file(target_filename)
+#         # This executes a function from ranger.core.acitons, a module with a
+#         # variety of subroutines that can help you construct commands.
+#         # Check out the source, or run "pydoc ranger.core.actions" for a list.
+#         self.fm.edit_file(target_filename)
 
-    # The tab method is called when you press tab, and should return a list of
-    # suggestions that the user will tab through.
-    # tabnum is 1 for <TAB> and -1 for <S-TAB> by default
-    def tab(self, tabnum):
-        # This is a generic tab-completion function that iterates through the
-        # content of the current directory.
-        return self._tab_directory_content()
+#     # The tab method is called when you press tab, and should return a list of
+#     # suggestions that the user will tab through.
+#     # tabnum is 1 for <TAB> and -1 for <S-TAB> by default
+#     def tab(self, tabnum):
+#         # This is a generic tab-completion function that iterates through the
+#         # content of the current directory.
+#         return self._tab_directory_content()
 
 
 ###############################################################################
@@ -264,31 +262,6 @@ class fd_prev(Command):
 ###############################################################################
 
 
-# class mkdirmv(Command):
-#     """
-#     :mkdirmv
-
-#     Create a directory and moves the selected files to the directory
-#     """
-
-#     def execute(self):
-#         # self.arg(1) is the first (space-separated) argument to the function.
-#         # This way you can write ":mkdirmv somefilename<ENTER>".
-#         if self.arg(1):
-#             # self.rest(1) contains self.arg(1) and everything that follows
-#             target_foldername = self.rest(1)
-#         else:
-#             # self.fm is a ranger.core.filemanager.FileManager object and gives
-#             # you access to internals of ranger.
-#             # self.fm.thisfile is a ranger.container.file.File object and is a
-#             # reference to the currently selected file.
-#             target_foldername = "Demo"
-
-#         self.fm.execute_console(f"shell mkdir ./{target_foldername}")
-#         self.fm.execute_console(f"shell mv %s ./{target_foldername}")
-#         self.fm.notify("Done moving.")
-
-
 class mkdirmv(Command):
     """:mkdirmv <target_directory>"""
 
@@ -374,39 +347,6 @@ class ranger_pymove(Command):
         self.fm.execute_console(f"shell file-move-ranger %c %d")
 
 ###############################################################################
-
-# class moveh(Command):
-#     """
-#     :moveh
-
-#     Moves selected files to the highlighted directory
-#     """
-
-#     def execute(self):
-#         target_foldername = "%f"
-#         if target_foldername:
-#             self.fm.execute_console(f"shell -f mv -u %s %f")
-#         else:
-#             self.fm.notify("No folder highlighted", bad=True)
-
-###############################################################################
-
-# class copyh(Command):
-#     """
-#     :copyh
-
-#     Copy selected files to the highlighted directory
-#     """
-
-#     def execute(self):
-#         target_foldername = "%f"
-#         if target_foldername:
-#             self.fm.execute_console(f"shell -f rsync -ru %s %f")
-#         else:
-#             self.fm.notify("No folder highlighted", bad=True)
-
-###############################################################################
-
 
 class toggle_flat(Command):
     """
@@ -874,6 +814,25 @@ class video_convert_audio(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell video-convert-audio %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################
+
+class pdf_split(Command):
+    """:PDF Split"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            split_after = self.rest(1)
+        else:
+            split_after = 1
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell pdf-split {split_after} %s")
 
         self.fm.change_mode("normal")
 

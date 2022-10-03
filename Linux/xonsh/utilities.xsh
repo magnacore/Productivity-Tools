@@ -28,11 +28,11 @@ def originalText(cipher_text, key, ascii_min=32, ascii_max=126):
 	return("" . join(orig_text))
 
 # get_mime cannot detect mime for mka files - this is a linux problem?
-def get_mime(file):
+def get_mime(file, part=0):
 	mimestart = mimetypes.guess_type(file)[0]
 
 	if mimestart != None:
-		mimestart = mimestart.split('/')[0]
+		mimestart = mimestart.split('/')[part]
 		return mimestart.strip().lower()
 	else:
 		return None

@@ -1,0 +1,65 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
+
+import os
+from PyPDF2 import PdfFileReader, PdfFileWriter
+from tqdm import tqdm
+
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_mime, get_filename_extension
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False	
+elif len(sys.argv) == 2:
+	selection = False
+elif len(sys.argv) >= 3:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[2:]
+	split_page = int(sys.argv[1])
+	allFiles.sort()
+
+	print(f"{cyan}Splitting PDFs to {split_page} pages each...{no_color}")
+
+	for fname in tqdm(allFiles):
+
+		mimestart = get_mime(fname, 1)
+
+		if mimestart != None:
+			
+			if mimestart in ['pdf']:
+
+				file_name, _ = get_filename_extension(fname)
+
+				pdf = PdfFileReader(fname)
+
+				pdf_writer = PdfFileWriter()
+
+				part = 1
+
+				for page in tqdm(range(pdf.getNumPages())):
+					pdf_writer.addPage(pdf.getPage(page))
+
+					# if pdf_writer contains split_page pages OR we are on the last page
+					if (pdf_writer.getNumPages() == split_page) or (page+1 == pdf.getNumPages()):
+
+						output_filename = f"{file_name}_part_{str(part).zfill(4)}.pdf"
+
+						with open(output_filename, 'wb') as out:
+							pdf_writer.write(out)
+							part += 1
+
+						pdf_writer = PdfFileWriter()
+
+	print(u'\u2500' * os.get_terminal_size().columns)
+	sound-play-success &
+
+else:
+	print(f"{red}No file selected...exiting.{no_color}")
+	sound-play-fail &
