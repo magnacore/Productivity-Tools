@@ -52,7 +52,7 @@ if selection:
 				filename, _ = get_filename_extension(file)
 				filename = filename +'.ogg'
 
-				if !(ffmpeg -i @(file) -c:a libvorbis -b:a @(bitrate)k f"./ogg_converted/{filename}"):
+				if !(ffmpeg -i @(file) -c:a libvorbis -b:a @(bitrate)k -vn f"./ogg_converted/{filename}"):
 					None
 				else:
 					print(f"Could not convert {file}")
