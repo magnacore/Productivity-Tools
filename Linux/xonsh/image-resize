@@ -39,9 +39,9 @@ if selection:
 				extension = extension.lower().strip()
 
 				if extension == ".jpg" or extension == ".jpeg":
-					cwebp -resize 0 @(resize_dimension) @(media) -o @(file_name).webp			
+					cwebp -quiet -resize 0 @(resize_dimension) @(media) -o @(file_name).webp			
 				else:
-					cwebp -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(file_name).webp
+					cwebp -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(file_name).webp
 
 print(u'\u2500' * os.get_terminal_size().columns)
 
