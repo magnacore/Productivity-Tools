@@ -37,6 +37,9 @@ rsync --delete --progress -vahi ~/.config/greenclip.toml @(config_path)
 print(f"{cyan}Syncing Gromit-mpx.cfg...{no_color}")
 rsync --delete --progress -vahi ~/.var/app/net.christianbeier.Gromit-MPX/config/gromit-mpx.cfg @(config_path)
 
+print(f"{cyan}Syncing Sxiv Config...{no_color}")
+rsync --delete --progress -vahi ~/.config/sxiv/exec/image-info @(config_path)
+
 print(f"{cyan}Syncing Xonsh scripts...{no_color}")
 rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
 
