@@ -12,18 +12,19 @@ sys.path.append("/home/manuj/Bin")
 from utilities import get_mime, get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+if len(sys.argv) >= 3:
 	selection = True
+	resize_dimension = int(sys.argv[1])
 
 if selection:	
-	
-	allMediaFiles = sys.argv[2:]
-	resize_dimension = int(sys.argv[1])
+	allMediaFiles = sys.argv[2:]	
 	allMediaFiles.sort()
 
-	print(f"{cyan}Changing image dimension to {resize_dimension}p...{no_color}")
+	if resize_dimension > 0:
+		print(f"{cyan}Changing image dimension to {resize_dimension}p...{no_color}")
+	else:
+		print(f"{cyan}Converting image to webp format...{no_color}")
 
 	for media in tqdm(allMediaFiles):
 
@@ -35,8 +36,12 @@ if selection:
 
 				file_name, extension = get_filename_extension(media)
 
-				new_filename = file_name + f'_{resize_dimension}' + extension
-				convert @(media) -resize x@(resize_dimension) @(new_filename)
+				extension = extension.lower().strip()
+
+				if extension == ".jpg" or extension == ".jpeg":
+					cwebp -resize 0 @(resize_dimension) @(media) -o @(file_name).webp			
+				else:
+					cwebp -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(file_name).webp
 
 print(u'\u2500' * os.get_terminal_size().columns)
 
