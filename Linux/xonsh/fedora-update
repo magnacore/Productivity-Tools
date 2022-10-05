@@ -4,9 +4,6 @@ no_color = '\x1b[0m'
 
 import datetime
 
-print(f"{cyan}Update locate database...{no_color}")
-sudo updatedb
-
 print(f"{cyan}Delete old files in trash...{no_color}")
 trash-empty 3
 
@@ -69,6 +66,9 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
 
 else:
     print(f"{cyan}Skipping cleanup.{no_color}")
+
+print(f"{cyan}Update locate database...{no_color}")
+sudo updatedb
 
 hdd-size
 
