@@ -41,13 +41,13 @@ if selection:
 					new_filename = f"{file_name}.webp"
 
 				if extension == ".jpg" or extension == ".jpeg":
-					if !(cwebp -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
+					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
 						trash-put @(media)
 					else:
 						print(f"{red}Unable to convert {media}{no_color}")
 						sound-play-fail &
 				else:					
-					if !(cwebp -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
+					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
 						trash-put @(media)
 					else:
 						print(f"{red}Unable to convert {media}{no_color}")
