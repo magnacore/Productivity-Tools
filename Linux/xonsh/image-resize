@@ -1,9 +1,9 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 import os
-import sys
 from tqdm import tqdm
 
 import sys
@@ -13,6 +13,7 @@ from utilities import get_mime, get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
+
 if len(sys.argv) >= 3:
 	selection = True
 	resize_dimension = int(sys.argv[1])
@@ -27,22 +28,34 @@ if selection:
 		print(f"{cyan}Converting image to webp format...{no_color}")
 
 	for media in tqdm(allMediaFiles):
-
 		mimestart = get_mime(media)
 
-		if mimestart != None:
-			
+		if mimestart != None:			
 			if mimestart in ['image']:
-
 				file_name, extension = get_filename_extension(media)
-
 				extension = extension.lower().strip()
 
-				if extension == ".jpg" or extension == ".jpeg":
-					cwebp -quiet -resize 0 @(resize_dimension) @(media) -o @(file_name).webp			
+				if resize_dimension > 0:
+					new_filename = f"{file_name}_{resize_dimension}p.webp"
 				else:
-					cwebp -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(file_name).webp
+					new_filename = f"{file_name}.webp"
+
+				if extension == ".jpg" or extension == ".jpeg":
+					if !(cwebp -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
+						trash-put @(media)
+					else:
+						print(f"{red}Unable to convert {media}{no_color}")
+						sound-play-fail &
+				else:					
+					if !(cwebp -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
+						trash-put @(media)
+					else:
+						print(f"{red}Unable to convert {media}{no_color}")
+						sound-play-fail &
+
+	sound-play-success &
+else:
+	print(f"{red}No files selected...{no_color}")
+	sound-play-fail &
 
 print(u'\u2500' * os.get_terminal_size().columns)
-
-sound-play-success &
