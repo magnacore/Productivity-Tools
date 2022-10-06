@@ -6,7 +6,6 @@ no_color	= '\x1b[0m'
 # TODO : If there is a : in the file name the splitting will not work
 
 import os
-import sys
 import datetime
 import math
 from tqdm import tqdm
@@ -25,7 +24,7 @@ elif len(sys.argv) > 1:
 	selection = True
 
 if selection:
-	
+
 	allFiles = sys.argv[2:]
 	split_duration = sys.argv[1]
 	allFiles.sort()
@@ -37,29 +36,29 @@ if selection:
 	for file in allFiles:
 		mimestart = get_mime(file)
 
-		if mimestart != None:		
+		if mimestart != None:
 			if mimestart in ['audio', 'video']:
 
 				duration = get_duration(file)
-				
+
 				if duration > float(threshold_seconds):
 					print(f"{cyan}Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
 					to_split = True
 					break
 
 	if to_split == True:
-		
+
 		for file in tqdm(allFiles):
 
 			mimestart = get_mime(file)
 
 			if mimestart != None:
-				
+
 				if mimestart in ['audio', 'video']:
 
 					duration = get_duration(file)
 					split_duration = float(split_duration)
-					
+
 					parts=int(duration//split_duration)
 
 					filename, extension = get_filename_extension(file)
@@ -68,7 +67,7 @@ if selection:
 						extension = ".mka"
 					elif mimestart == 'video':
 						extension = ".mkv"
-					
+
 					if (parts != 0):
 						remaining = duration%split_duration
 						excess = math.ceil(remaining/parts)
@@ -83,12 +82,12 @@ if selection:
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
 
 					trash-put @(file)
-				
+
 				else:
 					print(f"Skipping {file}")
-		
+
 		sound-play-success &
-	
+
 	else:
 		print(f"{red}Nothing to split...exiting.{no_color}")
 		sound-play-fail &
