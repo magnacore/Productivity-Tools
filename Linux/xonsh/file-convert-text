@@ -1,7 +1,6 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 import os
 
-from rich import print
 from rich.progress import track
 from rich.console import Console
 from rich.markdown import Markdown
@@ -20,7 +19,7 @@ elif len(sys.argv) > 1:
 if selection:
 	console = Console()
 
-	console.print(Markdown("# Converting filenames to text..."))
+	console.rule("[bold green]Converting filenames to text...") # No need to add [/bold grees] because we dont want to end the color
 
 	allFiles = sys.argv[1:]
 	allFiles.sort()
