@@ -1,10 +1,10 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
-
 import os
-from tqdm import tqdm
+
+from rich import print
+from rich.progress import track
+from rich.console import Console
+from rich.markdown import Markdown
 
 import sys
 sys.path.append("/home/manuj/Bin")
@@ -18,11 +18,14 @@ elif len(sys.argv) > 1:
 	selection = True
 
 if selection:
-	print(f"{cyan}Converting filenames to text...{no_color}")
+	console = Console()
+
+	console.print(Markdown("# Converting filenames to text..."))
+
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	for file in tqdm(allFiles):
+	for file in track(allFiles, description="[bold cyan]Converting : [/bold cyan]"):
 
 		new_filename, _ = get_filename_extension(file)
 		new_filename = new_filename + "_" + get_timestamp() + '.md'
@@ -32,7 +35,7 @@ if selection:
 
 	sound-play-success &
 else:
-	print(f"{red}No file selected!{no_color}")
+	console.print(f"[bold red]No file selected![/bold red]")
 	sound-play-fail &
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.print(Markdown("---"))
