@@ -1,13 +1,14 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 import os
 import sys
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
-	print("No file moved...") # If no file is selected, the highlighted file is sent as the %s
+	# If no file is selected, the highlighted file is sent as the %s
 	selection = False
 elif len(sys.argv) > 1:
 	selection = True
@@ -22,6 +23,9 @@ if selection:
 
 	~/anaconda3/envs/util/bin/pymv -gip @(allFiles) @(target_dir)
 
-print(u'\u2500' * os.get_terminal_size().columns)
+	sound-play-success &
+else:
+	sound-play-fail &
+	print(f"{red}No file selected!{no_color}")
 
-sound-play-success &
+print(u'\u2500' * os.get_terminal_size().columns)
