@@ -35,7 +35,7 @@ if selection:
 
 	sound-play-success &
 else:
-	console.print(f"[bold red]No file selected![/bold red]")
+	console.print("No file selected!", style="bold red")
 	sound-play-fail &
 
 console.print(Markdown("---"))
