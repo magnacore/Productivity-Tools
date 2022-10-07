@@ -1,15 +1,15 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 import os
 import sys
 from tqdm import tqdm
 
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+if len(sys.argv) > 3:
 	selection = True
 
 if selection:
@@ -27,6 +27,9 @@ if selection:
 		os.rename(file, new_filename)
 		start_number += 1
 
-print(u'\u2500' * os.get_terminal_size().columns)
+	sound-play-success &
+else:
+	sound-play-fail &
+	print(f"{red}No file selected!{no_color}")
 
-sound-play-success &
+print(u'\u2500' * os.get_terminal_size().columns)
