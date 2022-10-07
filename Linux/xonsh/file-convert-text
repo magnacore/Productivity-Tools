@@ -1,4 +1,7 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+cyan		= '\x1b[1;36m'
+red			= '\033[0;31m'
+no_color	= '\x1b[0m'
 
 import os
 from tqdm import tqdm
@@ -15,18 +18,21 @@ elif len(sys.argv) > 1:
 	selection = True
 
 if selection:
-
+	print(f"{cyan}Converting filenames to text...{no_color}")
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
 	for file in tqdm(allFiles):
-		
+
 		new_filename, _ = get_filename_extension(file)
-		new_filename = new_filename + '.video'
+		new_filename = new_filename + '.md'
 
 		touch @(new_filename)
 		echo @(file) > @(new_filename)
 
-print(u'\u2500' * os.get_terminal_size().columns)
+	sound-play-success &
+else:
+	print(f"{red}No file selected!{no_color}")
+	sound-play-fail &
 
-sound-play-success &
+print(u'\u2500' * os.get_terminal_size().columns)
