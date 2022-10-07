@@ -11,9 +11,8 @@ sys.path.append("/home/manuj/Bin")
 from utilities import get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+if len(sys.argv) > 2:
 	selection = True
 
 if selection:
@@ -30,7 +29,9 @@ if selection:
 
 		pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)
 
+	sound-play-success &
+else:
+	print(f"{cyan}Converting document to .{extension}{no_color}")
+	sound-play-fail &
 
 print(u'\u2500' * os.get_terminal_size().columns)
-
-sound-play-success &
