@@ -1,10 +1,9 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
-
 import os
-from tqdm import tqdm
+
+from rich.progress import track
+from rich.console import Console
+from rich.markdown import Markdown
 
 import sys
 sys.path.append("/home/manuj/Bin")
@@ -18,19 +17,21 @@ if len(sys.argv) >= 3:
 	selection = True
 	resize_dimension = int(sys.argv[1])
 
-if selection:	
-	allMediaFiles = sys.argv[2:]	
+if selection:
+	allMediaFiles = sys.argv[2:]
 	allMediaFiles.sort()
 
-	if resize_dimension > 0:
-		print(f"{cyan}Changing image dimension to {resize_dimension}p...{no_color}")
-	else:
-		print(f"{cyan}Converting image to webp format...{no_color}")
+	console = Console()
 
-	for media in tqdm(allMediaFiles):
+	if resize_dimension > 0:
+		console.rule(f"[bold cyan]Changing image(s) dimension to {resize_dimension}p...", style="cyan")
+	else:
+		console.rule("[bold cyan]Converting image(s) to webp format....", style="cyan")
+
+	for media in track(allMediaFiles, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(media)
 
-		if mimestart != None:			
+		if mimestart != None:
 			if mimestart in ['image']:
 				file_name, extension = get_filename_extension(media)
 				extension = extension.lower().strip()
@@ -44,18 +45,18 @@ if selection:
 					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
 						trash-put @(media)
 					else:
-						print(f"{red}Unable to convert {media}{no_color}")
+						console.print(f"Unable to convert {media}", style="bold red")
 						sound-play-fail &
-				else:					
+				else:
 					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
 						trash-put @(media)
 					else:
-						print(f"{red}Unable to convert {media}{no_color}")
+						console.print(f"Unable to convert {media}", style="bold red")
 						sound-play-fail &
 
 	sound-play-success &
 else:
-	print(f"{red}No files selected...{no_color}")
+	console.print("No files selected!", style="bold red")
 	sound-play-fail &
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
