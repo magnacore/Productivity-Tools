@@ -1,8 +1,3 @@
-import os
-
-import mimetypes
-mimetypes.init()
-
 def generateKey(string, key):
 	key = list(key)
 	if len(string) == len(key):
@@ -29,6 +24,9 @@ def originalText(cipher_text, key, ascii_min=32, ascii_max=126):
 
 # get_mime cannot detect mime for mka files - this is a linux problem?
 def get_mime(file, part=0):
+	import mimetypes
+	mimetypes.init()
+	
 	mimestart = mimetypes.guess_type(file)[0]
 
 	if mimestart != None:
@@ -47,6 +45,7 @@ def get_duration(file):
 	return float(duration)
 
 def get_filename_extension(file):
+	import os
 	filename = os.path.splitext(file)[0]
 	extension = os.path.splitext(file)[1]
 
