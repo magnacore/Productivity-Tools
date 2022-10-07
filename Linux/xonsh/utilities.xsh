@@ -26,7 +26,7 @@ def originalText(cipher_text, key, ascii_min=32, ascii_max=126):
 def get_mime(file, part=0):
 	import mimetypes
 	mimetypes.init()
-	
+
 	mimestart = mimetypes.guess_type(file)[0]
 
 	if mimestart != None:
@@ -50,3 +50,10 @@ def get_filename_extension(file):
 	extension = os.path.splitext(file)[1]
 
 	return filename, extension
+
+def get_timestamp():
+	from datetime import datetime
+
+	date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+	return date_time
