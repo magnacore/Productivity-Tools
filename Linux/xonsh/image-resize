@@ -44,7 +44,7 @@ if selection:
 
 				new_filename = file_name
 
-				if resize_dimension > 0:
+				if resize_dimension > 0 and extension != ".gif":
 					new_filename = new_filename + f"_{resize_dimension}p"
 
 				if extension == ".webp":
@@ -58,6 +58,12 @@ if selection:
 
 				if extension == ".jpg" or extension == ".jpeg":
 					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
+						trash-put @(image)
+					else:
+						print(f"[bold red]Unable to convert {image}[/bold red]")
+						sound-play-fail &
+				elif extension == ".gif":
+					if !(gif2webp -metadata all -quiet @(image) -o @(new_filename)):
 						trash-put @(image)
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
