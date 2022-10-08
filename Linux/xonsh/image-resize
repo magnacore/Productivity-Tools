@@ -19,50 +19,54 @@ if len(sys.argv) >= 3:
 	resize_dimension = int(sys.argv[1])
 
 if selection:
-	allMediaFiles = sys.argv[2:]
-	allMediaFiles.sort()
+	allFiles = sys.argv[2:]
+	allFiles.sort()
 
 	console = Console()
 
 	if resize_dimension > 0:
-		console.rule(f"[bold cyan]Changing image(s) dimension to {resize_dimension}p...", style="cyan")
+		console.rule(f"[bold cyan]Changing images dimension to {resize_dimension}p...", style="cyan")
 	else:
-		console.rule("[bold cyan]Converting image(s) to webp format....", style="cyan")
+		console.rule("[bold cyan]Converting images to webp format....", style="cyan")
 
-	clean_file_names = $(file-rename-valid @(allMediaFiles))
+	clean_file_names = $(file-rename-valid @(allFiles))
 
+	# Convert string representation of a list to a real list
 	clean_file_names = ast.literal_eval(clean_file_names)
 
-	for media in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
-		mimestart = get_mime(media)
+	for image in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
+		mimestart = get_mime(image)
 
 		if mimestart != None:
 			if mimestart in ['image']:
-				file_name, extension = get_filename_extension(media)
+				file_name, extension = get_filename_extension(image)
 				extension = extension.lower().strip()
 
 				new_filename = file_name
 
 				if resize_dimension > 0:
 					new_filename = new_filename + f"_{resize_dimension}p"
+
 				if extension == ".webp":
 					new_filename = new_filename + "_converted"
 
 				new_filename = new_filename + ".webp"
 
-				print(new_filename)
+				# unlike console, print scrolls above the progress bar
+				# and does not obstruct it
+				print(f"[green]{new_filename}")
 
 				if extension == ".jpg" or extension == ".jpeg":
-					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
-						trash-put @(media)
+					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
+						trash-put @(image)
 					else:
-						print(f"[bold red]Unable to convert {media}[/bold red]")
+						print(f"[bold red]Unable to convert {image}[/bold red]")
 						sound-play-fail &
 				else:
-					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
-						trash-put @(media)
+					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
+						trash-put @(image)
 					else:
-						print(f"[bold red]Unable to convert {media}[/bold red]")
+						print(f"[bold red]Unable to convert {image}[/bold red]")
 						sound-play-fail &
 
 	sound-play-success &

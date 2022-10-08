@@ -1,4 +1,8 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+# This script should not output anything other than
+# a list of file names. The output of this script
+# will become the input of the other script
+
 import os
 
 import sys
@@ -24,7 +28,7 @@ if selection:
 		valid_file_name = get_valid_filename(file_name)
 		valid_extension = get_valid_filename(extension)
 
-		clean_file_name = f"{valid_file_name}.{valid_extension}"		
+		clean_file_name = f"{valid_file_name}.{valid_extension}"
 
 		file_list.append(clean_file_name)
 
