@@ -35,10 +35,14 @@ if selection:
 				file_name, extension = get_filename_extension(media)
 				extension = extension.lower().strip()
 
+				new_filename = file_name
+
 				if resize_dimension > 0:
-					new_filename = f"{file_name}_{resize_dimension}p.webp"
-				else:
-					new_filename = f"{file_name}.webp"
+					new_filename = new_filename + f"_{resize_dimension}p"
+				if extension == ".webp":
+					new_filename = new_filename + "_converted"
+
+				new_filename = new_filename + ".webp"
 
 				if extension == ".jpg" or extension == ".jpeg":
 					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
