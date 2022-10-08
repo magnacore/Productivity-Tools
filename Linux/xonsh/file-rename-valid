@@ -1,9 +1,6 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 import os
 
-from rich.progress import track
-from rich.console import Console
-
 import sys
 sys.path.append("/home/manuj/Bin")
 
@@ -19,16 +16,18 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	console = Console()
+	file_list = []
 
-	for file in track(allFiles, description="[bold cyan]Renaming : [/bold cyan]"):
+	for file in allFiles:
 		file_name, extension = get_filename_extension(file)
 
 		valid_file_name = get_valid_filename(file_name)
 		valid_extension = get_valid_filename(extension)
 
-		os.rename(file, f"{valid_file_name}.{valid_extension}")
-		
-else:
-	console.print("No files selected!", style="bold red")
-	sound-play-fail &
+		clean_file_name = f"{valid_file_name}.{valid_extension}"		
+
+		file_list.append(clean_file_name)
+
+		os.rename(file, clean_file_name)
+
+	print(file_list)

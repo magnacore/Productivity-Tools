@@ -1,8 +1,10 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 import os
+import ast
 
 from rich.progress import track
 from rich.console import Console
+from rich import print
 
 import sys
 sys.path.append("/home/manuj/Bin")
@@ -27,7 +29,11 @@ if selection:
 	else:
 		console.rule("[bold cyan]Converting image(s) to webp format....", style="cyan")
 
-	for media in track(allMediaFiles, description="[bold cyan]Converting : [/bold cyan]"):
+	clean_file_names = $(file-rename-valid @(allMediaFiles))
+
+	clean_file_names = ast.literal_eval(clean_file_names)
+
+	for media in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(media)
 
 		if mimestart != None:
@@ -44,17 +50,19 @@ if selection:
 
 				new_filename = new_filename + ".webp"
 
+				print(new_filename)
+
 				if extension == ".jpg" or extension == ".jpeg":
 					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
 						trash-put @(media)
 					else:
-						console.print(f"Unable to convert {media}", style="bold red")
+						print(f"[bold red]Unable to convert {media}[/bold red]")
 						sound-play-fail &
 				else:
 					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(media) -o @(new_filename)):
 						trash-put @(media)
 					else:
-						console.print(f"Unable to convert {media}", style="bold red")
+						print(f"[bold red]Unable to convert {media}[/bold red]")
 						sound-play-fail &
 
 	sound-play-success &
