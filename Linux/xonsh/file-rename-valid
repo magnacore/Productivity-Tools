@@ -1,0 +1,34 @@
+#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+import os
+
+from rich.progress import track
+from rich.console import Console
+
+import sys
+sys.path.append("/home/manuj/Bin")
+
+from utilities import get_valid_filename, get_filename_extension
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	console = Console()
+
+	for file in track(allFiles, description="[bold cyan]Renaming : [/bold cyan]"):
+		file_name, extension = get_filename_extension(file)
+
+		valid_file_name = get_valid_filename(file_name)
+		valid_extension = get_valid_filename(extension)
+
+		os.rename(file, f"{valid_file_name}.{valid_extension}")
+		
+else:
+	console.print("No files selected!", style="bold red")
+	sound-play-fail &

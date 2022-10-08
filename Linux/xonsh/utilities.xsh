@@ -79,5 +79,7 @@ def get_valid_filename(value, allow_unicode=False):
 			.encode("ascii", "ignore")
 			.decode("ascii")
 		)
+
+	# use value.lower() below to convert all characters to lowercase
 	value = re.sub(r"[^\w\s-]", "", value)
 	return re.sub(r"[-\s]+", "-", value).strip("-_")
