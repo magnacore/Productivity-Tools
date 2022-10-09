@@ -1,11 +1,15 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
-import os
+from rich.console import Console
+
+console = Console()
+
+console.rule("[bold cyan]Backing up backup drive....", style="cyan")
 
 rsync --delete --progress -vahi /run/media/$USER/BACKUP_01_A/ /run/media/$USER/BACKUP_01_B/
 
 date > ~/Software/logs/backup-backup.txt
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
