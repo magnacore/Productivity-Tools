@@ -13,14 +13,15 @@
 # -q7 	224 kbit/s
 # -q8 	256 kbit/s
 # -q9 	320 kbit/s
-# -q10 	500 kbit/s 
+# -q10 	500 kbit/s
 
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+
 
 import os
 import glob
-from tqdm import tqdm
+from rich.progress import track
+from rich.console import Console
+from rich import print
 
 import sys
 sys.path.append("/home/manuj/Bin")
@@ -28,11 +29,9 @@ sys.path.append("/home/manuj/Bin")
 from utilities import get_mime, get_filename_extension
 
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False	
-elif len(sys.argv) == 2:
-	selection = False
-elif len(sys.argv) >= 3:
+selection = False
+
+if len(sys.argv) > 3:
 	selection = True
 
 if selection:
@@ -40,24 +39,29 @@ if selection:
 	bitrate = int(sys.argv[1])
 	allFiles.sort()
 
-	print(f"{cyan}Converting audio to ogg...{no_color}")
+	console = Console()
 
-	mkdir ogg_converted
+	console.rule(f"[bold cyan]Converting audio to {bitrate}kbps variable bitrate ogg...", style="cyan")
 
-	for file in tqdm(allFiles):
+	for file in track(allFiles, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(file)
-		
-		if mimestart != None:		
+
+		if mimestart != None:
 			if mimestart in ['audio']:
 				filename, _ = get_filename_extension(file)
 				filename = filename +'.ogg'
 
-				if !(ffmpeg -i @(file) -c:a libvorbis -b:a @(bitrate)k -vn f"./ogg_converted/{filename}"):
+				print(f"[green]{filename}")
+
+				if !(ffmpeg -i @(file) -c:a libvorbis -b:a @(bitrate)k -vn f"{filename}"):
 					None
 				else:
-					print(f"Could not convert {file}")
+					print(f"[bold red]Unable to convert {file}[/bold red]")
 					sound-play-fail &
 
-	print(u'\u2500' * os.get_terminal_size().columns)
-
 	sound-play-success &
+else:
+	console.print("No files selected!", style="bold red")
+	sound-play-fail &
+
+console.rule(style="cyan")
