@@ -68,9 +68,9 @@ def get_valid_filename(value, allow_unicode=False):
 	"""
 	import unicodedata
 	import re
-		
+
 	value = str(value)
-	
+
 	if allow_unicode:
 		value = unicodedata.normalize("NFKC", value)
 	else:
