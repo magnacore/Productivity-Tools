@@ -27,18 +27,18 @@ sys.path.append("/home/manuj/Bin")
 
 from utilities import get_mime, get_filename_extension, set_valid_file_names
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
 selection = False
 
-if len(sys.argv) > 3:
+if len(sys.argv) >= 3:
 	selection = True
 
 if selection:
 	allFiles = sys.argv[2:]
 	bitrate = int(sys.argv[1])
-	allFiles.sort()
-
-	console = Console()
+	allFiles.sort()	
 
 	console.rule(f"[bold cyan]Converting audio to {bitrate}kbps variable bitrate ogg...", style="cyan")
 
@@ -50,7 +50,7 @@ if selection:
 		if mimestart != None:
 			if mimestart in ['audio']:
 				filename, _ = get_filename_extension(file)
-				filename = filename +'.ogg'
+				filename = filename +'.oga'
 
 				print(f"[green]{filename}")
 
