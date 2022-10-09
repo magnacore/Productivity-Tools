@@ -14,8 +14,8 @@
 # -q8 	256 kbit/s
 # -q9 	320 kbit/s
 # -q10 	500 kbit/s
-
-
+# https://en.wikipedia.org/wiki/Ogg
+# https://en.wikipedia.org/wiki/Opus_(audio_format)
 
 import os
 from rich.progress import track
@@ -38,7 +38,7 @@ if len(sys.argv) >= 3:
 if selection:
 	allFiles = sys.argv[2:]
 	bitrate = int(sys.argv[1])
-	allFiles.sort()	
+	allFiles.sort()
 
 	console.rule(f"[bold cyan]Converting audio to {bitrate}kbps variable bitrate ogg...", style="cyan")
 
@@ -54,7 +54,7 @@ if selection:
 
 				print(f"[green]{filename}")
 
-				if !(ffmpeg -i @(file) -c:a libvorbis -b:a @(bitrate)k -vn f"{filename}"):
+				if !(ffmpeg -i @(file) -c:a libopus -b:a @(bitrate)k -vn f"{filename}"):
 					None
 				else:
 					print(f"[bold red]Unable to convert {file}[/bold red]")
