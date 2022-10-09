@@ -88,4 +88,4 @@ def set_valid_file_names(filenames):
 	import ast
 
 	clean_file_names = $(file-rename-valid @(filenames))
-	return ast.literal_eval(clean_file_names)
+	return ast.literal_eval(clean_file_names) # Convert string representation of a list to a real list

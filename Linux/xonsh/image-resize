@@ -1,6 +1,5 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 import os
-import ast
 
 from rich.progress import track
 from rich.console import Console
@@ -9,7 +8,7 @@ from rich import print
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_mime, get_filename_extension
+from utilities import get_mime, get_filename_extension, set_valid_file_names
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
@@ -29,10 +28,7 @@ if selection:
 	else:
 		console.rule("[bold cyan]Converting images to webp format....", style="cyan")
 
-	clean_file_names = $(file-rename-valid @(allFiles))
-
-	# Convert string representation of a list to a real list
-	clean_file_names = ast.literal_eval(clean_file_names)
+	clean_file_names = set_valid_file_names(allFiles)
 
 	for image in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(image)
