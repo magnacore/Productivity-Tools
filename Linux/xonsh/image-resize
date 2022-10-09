@@ -10,6 +10,8 @@ sys.path.append("/home/manuj/Bin")
 
 from utilities import get_mime, get_filename_extension, set_valid_file_names
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
 selection = False
 
@@ -19,9 +21,7 @@ if len(sys.argv) >= 3:
 
 if selection:
 	allFiles = sys.argv[2:]
-	allFiles.sort()
-
-	console = Console()
+	allFiles.sort()	
 
 	if resize_dimension > 0:
 		console.rule(f"[bold cyan]Changing images dimension to {resize_dimension}p...", style="cyan")
