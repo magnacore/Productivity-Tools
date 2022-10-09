@@ -16,6 +16,7 @@
 # -q10 	500 kbit/s
 # https://en.wikipedia.org/wiki/Ogg
 # https://en.wikipedia.org/wiki/Opus_(audio_format)
+# https://ffmpeg.org/ffmpeg-codecs.html#libopus-1
 
 import os
 from rich.progress import track
@@ -54,7 +55,7 @@ if selection:
 
 				print(f"[green]{filename}")
 
-				if !(ffmpeg -i @(file) -c:a libopus -b:a @(bitrate)k -vn f"{filename}"):
+				if !(ffmpeg -i @(file) -c:a libopus -b:a @(bitrate)k -vn -vbr on f"{filename}"):
 					None
 				else:
 					print(f"[bold red]Unable to convert {file}[/bold red]")
