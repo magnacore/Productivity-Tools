@@ -18,7 +18,7 @@
 
 
 import os
-import glob
+import ast
 from rich.progress import track
 from rich.console import Console
 from rich import print
@@ -43,7 +43,10 @@ if selection:
 
 	console.rule(f"[bold cyan]Converting audio to {bitrate}kbps variable bitrate ogg...", style="cyan")
 
-	for file in track(allFiles, description="[bold cyan]Converting : [/bold cyan]"):
+	clean_file_names = $(file-rename-valid @(allFiles))
+	clean_file_names = ast.literal_eval(clean_file_names)
+
+	for file in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(file)
 
 		if mimestart != None:
