@@ -69,11 +69,12 @@ if selection:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
 						sound-play-fail &
 				else:
-					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
-						trash-put @(image)
-					else:
-						print(f"[bold red]Unable to convert {image}[/bold red]")
-						sound-play-fail &
+					if extension != ".webp":
+						if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
+							trash-put @(image)
+						else:
+							print(f"[bold red]Unable to convert {image}[/bold red]")
+							sound-play-fail &
 
 	sound-play-success &
 else:
