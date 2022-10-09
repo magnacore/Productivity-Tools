@@ -1,4 +1,6 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+# mka container is used because not every video
+# has opus audio. ogg container only supports opus
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
