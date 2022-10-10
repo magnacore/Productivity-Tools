@@ -2,21 +2,17 @@
 
 # Usage: audio-convert-ogg 128 *
 # Converts all audio files in a folder to 128kbps ogg
-# Quality Guide
-# -q0 	64 kbit/s
-# -q1 	80 kbit/s
-# -q2 	96 kbit/s
-# -q3 	112 kbit/s
-# -q4 	128 kbit/s
-# -q5 	160 kbit/s
-# -q6 	192 kbit/s
-# -q7 	224 kbit/s
-# -q8 	256 kbit/s
-# -q9 	320 kbit/s
-# -q10 	500 kbit/s
 # https://en.wikipedia.org/wiki/Ogg
 # https://en.wikipedia.org/wiki/Opus_(audio_format)
 # https://ffmpeg.org/ffmpeg-codecs.html#libopus-1
+# https://opus-codec.org/
+#
+# OPUS Features :
+# Bitrates from 6 kb/s to 510 kb/s
+# Sampling rates from 8 kHz (narrowband) to 48 kHz (fullband)
+# Support for both constant bitrate (CBR) and variable bitrate (VBR)
+# Support for speech and music
+# Support for mono and stereo
 
 import os
 from rich.progress import track
