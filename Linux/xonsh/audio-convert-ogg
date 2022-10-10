@@ -2,11 +2,14 @@
 
 # Usage: audio-convert-ogg 128 *
 # Converts all audio files in a folder to 128kbps ogg
+
 # https://en.wikipedia.org/wiki/Ogg
 # https://en.wikipedia.org/wiki/Opus_(audio_format)
 # https://ffmpeg.org/ffmpeg-codecs.html#libopus-1
 # https://opus-codec.org/
-#
+# https://superuser.com/questions/1536755/what-bitrate-should-i-use-when-extracting-channel-from-mp2-to-flac-with-ffmpeg
+# https://xiph.org/flac/faq.html#general__lowest_bitrate
+
 # OPUS Features :
 # Bitrates from 6 kb/s to 510 kb/s
 # Sampling rates from 8 kHz (narrowband) to 48 kHz (fullband)
@@ -22,9 +25,11 @@ from rich import print
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_mime, get_filename_extension, set_valid_file_names
+from utilities import get_mime, get_filename_extension, set_valid_file_names, get_user_selection
 
 console = Console()
+
+convert_to = ['opus', 'vorbis', 'flac']
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
@@ -37,7 +42,12 @@ if selection:
 	bitrate = int(sys.argv[1])
 	allFiles.sort()
 
-	console.rule(f"[bold cyan]Converting audio to {bitrate}kbps variable bitrate ogg...", style="cyan")
+	choice = get_user_selection(convert_to)
+
+	if choice != 'flac':
+		console.rule(f"[bold cyan]Converting audio to variable {bitrate}kbps {choice}...", style="cyan")
+	else:
+		console.rule(f"[bold cyan]Converting audio to lossless {choice}...", style="cyan")
 
 	clean_file_names = set_valid_file_names(allFiles)
 
@@ -46,16 +56,31 @@ if selection:
 
 		if mimestart != None:
 			if mimestart in ['audio']:
-				filename, _ = get_filename_extension(file)
-				filename = filename +'.oga'
+				filename, extension = get_filename_extension(file)
+				extension = extension.lower().strip()		
+
+				codec = "libopus"
+				new_extension = ".oga"
+
+				if choice == "vorbis":
+					codec = "libvorbis"
+					new_extension = ".ogg"
+				elif choice == "flac":
+					codec = "flac"
+					new_extension = ".flac"
+
+				filename = filename + new_extension
 
 				print(f"[green]{filename}")
 
-				if !(ffmpeg -i @(file) -c:a libopus -b:a @(bitrate)k -vn -vbr on f"{filename}"):
-					None
-				else:
-					print(f"[bold red]Unable to convert {file}[/bold red]")
-					sound-play-fail &
+				if choice == "flac" and extension == ".flac":
+					print(f"[bold red]Skipping converting flac to flac : {file}[/bold red]")
+				else:		
+					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -vbr on f"{filename}"):
+						None
+					else:
+						print(f"[bold red]Unable to convert {file}[/bold red]")
+						sound-play-fail &
 
 	sound-play-success &
 else:
