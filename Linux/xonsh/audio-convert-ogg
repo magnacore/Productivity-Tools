@@ -57,10 +57,10 @@ if selection:
 		if mimestart != None:
 			if mimestart in ['audio']:
 				filename, extension = get_filename_extension(file)
-				extension = extension.lower().strip()		
+				extension = extension.lower().strip()
 
 				codec = "libopus"
-				new_extension = ".oga"
+				new_extension = ".opus"
 
 				if choice == "vorbis":
 					codec = "libvorbis"
@@ -75,7 +75,12 @@ if selection:
 
 				if choice == "flac" and extension == ".flac":
 					print(f"[bold red]Skipping converting flac to flac : {file}[/bold red]")
-				else:		
+				else:
+					if bitrate < 6:
+						bitrate = 6
+					elif bitrate > 510:
+						bitrate = 510
+
 					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -vbr on f"{filename}"):
 						None
 					else:
