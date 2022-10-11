@@ -81,7 +81,8 @@ def get_valid_filename(value, allow_unicode=False):
 		)
 
 	# use value.lower() below to convert all characters to lowercase
-	value = re.sub(r"[^\w\s-]", "", value)
+	# because Windoze is case insensitive. This is to prevent file overwrite.
+	value = re.sub(r"[^\w\s-]", "", value.lower())
 	return re.sub(r"[-\s]+", "-", value).strip("-_")
 
 def set_valid_file_names(filenames):
