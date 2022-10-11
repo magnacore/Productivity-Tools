@@ -30,6 +30,9 @@ if selection:
 
 		clean_file_name = f"{valid_file_name}.{valid_extension}"
 
+		if extension == "":
+			clean_file_name = valid_file_name
+
 		file_list.append(clean_file_name)
 
 		os.rename(file, clean_file_name)
