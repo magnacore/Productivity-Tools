@@ -9,31 +9,14 @@ from datetime import datetime
 import pyperclip as pc
 from playsound import playsound
 
+import sys
+sys.path.append("/home/manuj/Bin")
 
-def slugify(value, allow_unicode=False):
-    """
-    Taken from https://github.com/django/django/blob/master/django/utils/text.py
-    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
-    dashes to single dashes. Remove characters that aren't alphanumerics,
-    underscores, or hyphens. Convert to lowercase. Also strip leading and
-    trailing whitespace, dashes, and underscores.
-    """
-    value = str(value)
-    if allow_unicode:
-        value = unicodedata.normalize("NFKC", value)
-    else:
-        value = (
-            unicodedata.normalize("NFKD", value)
-            .encode("ascii", "ignore")
-            .decode("ascii")
-        )
-    value = re.sub(r"[^\w\s-]", "", value.lower())
-    return re.sub(r"[-\s]+", "-", value).strip("-_")
-
+from utilities import get_valid_filename
 
 clipboard_content = pc.paste()
 
-file_name = slugify(clipboard_content[:35])
+file_name = get_valid_filename(clipboard_content[:35])
 
 if file_name:
     date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
