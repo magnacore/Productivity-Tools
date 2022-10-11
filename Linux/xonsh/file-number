@@ -1,28 +1,28 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
-
 import os
 import sys
-from tqdm import tqdm
+
+from rich.progress import track
+from rich.console import Console
+
+console = Console()
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
+
 if len(sys.argv) > 3:
 	selection = True
 
 if selection:
-
 	allFiles = sys.argv[3:]
 	start_number = int(sys.argv[1])
 	padding = int(sys.argv[2])
 
 	allFiles.sort()
 
-	print(f"{cyan}Start numbering from {start_number} with a padding of {padding}...{no_color}")
+	console.rule(f"[bold cyan]Start numbering from {start_number} with a padding of {padding}...", style="cyan")
 
-	for file in tqdm(allFiles):
+	for file in track(allFiles, description="[bold cyan]Numbering : [/bold cyan]"):
 		new_filename = str(start_number).zfill(padding) + " " + file
 		os.rename(file, new_filename)
 		start_number += 1
@@ -30,6 +30,6 @@ if selection:
 	sound-play-success &
 else:
 	sound-play-fail &
-	print(f"{red}No file selected!{no_color}")
+	console.print(f"[bold red]No file selected!")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
