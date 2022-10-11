@@ -1,24 +1,26 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import datetime
+from rich.console import Console
 
-print(f"{cyan}Delete old files in trash...{no_color}")
+console = Console()
+
+console.rule(f"[bold cyan]Updating Fedora...", style="cyan")
+
+console.print(f"[bold cyan]Delete old files in trash...[/bold cyan]")
 trash-empty 3
 
-# print(f"{cyan}Deleting None files...{no_color}")
+# console.print(f"[bold cyan]Deleting None files...[/bold cyan]")
 # find $HOME/ -type f -name "None" -delete
 
-print(f"{cyan}Moving Files...{no_color}")
+console.print(f"[bold cyan]Moving Files...[/bold cyan]")
 mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Productivity_System/02 POOL/01 CREATION ACTIVE/02 RELAX ACTIVE MATERIAL/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
-print(f"{cyan}Update repositories...{no_color}")
+console.print(f"[bold cyan]Update repositories...[/bold cyan]")
 sudo dnf check-update -y
 
-print(f"{cyan}Upgrade software...{no_color}")
+console.print(f"[bold cyan]Upgrade software...[/bold cyan]")
 sudo dnf upgrade -y
 flatpak update -y
 
@@ -27,47 +29,47 @@ day_of_week = datetime.datetime.today().weekday()
 this_month = datetime.datetime.today().month
 
 if(day_of_week == 5 and (this_month % 2 == 0)):
-    print(f"{cyan}Clean software cache...{no_color}")
+    console.print(f"[bold cyan]Clean software cache...[/bold cyan]")
     sudo dnf autoremove -y
     sudo dnf clean all -y
 
-    print(f"{cyan}Clean flatpaks...{no_color}")
+    console.print(f"[bold cyan]Clean flatpaks...[/bold cyan]")
     flatpak update --appstream
     flatpak uninstall --unused -y
 
-    print(f"{cyan}Deleting unsued conda packages...{no_color}")
+    console.print(f"[bold cyan]Deleting unsued conda packages...[/bold cyan]")
     conda clean --all -y
 
-    print(f"{cyan}Deleting journalctl history...{no_color}")
+    console.print(f"[bold cyan]Deleting journalctl history...[/bold cyan]")
     sudo journalctl --vacuum-time=4weeks
 
-    print(f"{cyan}Clean cache...{no_color}")
+    console.print(f"[bold cyan]Clean cache...[/bold cyan]")
     rm -rf @(p"~/.cache")/*
 
-    print(f"{cyan}Clean Xonsh history...{no_color}")
+    console.print(f"[bold cyan]Clean Xonsh history...[/bold cyan]")
     rm -rf @(p"~/.local/share/xonsh/history_json")/*
 
-    print(f"{cyan}Deleting .DS_Store files...{no_color}")
+    console.print(f"[bold cyan]Deleting .DS_Store files...[/bold cyan]")
     find $HOME/ -type f -iname ".DS_Store" -delete
 
-    print(f"{cyan}Deleting desktop.ini files...{no_color}")
+    console.print(f"[bold cyan]Deleting desktop.ini files...[/bold cyan]")
     find $HOME/ -type f -iname "desktop.ini" -delete
 
-    print(f"{cyan}Deleting .ipynb_checkpoints directories...{no_color}")
+    console.print(f"[bold cyan]Deleting .ipynb_checkpoints directories...[/bold cyan]")
     find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
 
-    print(f"{cyan}Deleting __pycache__ directories...{no_color}")
+    console.print(f"[bold cyan]Deleting __pycache__ directories...[/bold cyan]")
     find $HOME/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
 
-    print(f"{cyan}Deleting __MACOSX directories...{no_color}")
+    console.print(f"[bold cyan]Deleting __MACOSX directories...[/bold cyan]")
     find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
 
     sound-play-trash &
 
 else:
-    print(f"{cyan}Skipping cleanup.{no_color}")
+    console.print(f"[bold green]Skipping cleanup.[/bold green]")
 
-print(f"{cyan}Update locate database...{no_color}")
+console.print(f"[bold cyan]Update locate database...[/bold cyan]")
 sudo updatedb
 
 hdd-size
