@@ -1,37 +1,42 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
 
 import os
-from tqdm import tqdm
+from rich.progress import track
+from rich.console import Console
+from rich import print
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
 from utilities import get_filename_extension
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
 selection = False
+
 if len(sys.argv) > 2:
 	selection = True
 
 if selection:
-
 	allFiles = sys.argv[2:]
 	extension = sys.argv[1]
 	allFiles.sort()
 
-	print(f"{cyan}Converting document to .{extension}{no_color}")
+	console.rule(f"[bold cyan]Converting document to .{extension}...", style="cyan")
 
-	for file in tqdm(allFiles):
+	for file in track(allFiles, description="[bold cyan]Converting : [/bold cyan]"):
 
 		file_name, _ = get_filename_extension(file)
 
-		pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)
+		if !(pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)):
+			None
+		else:
+			print(f"Could not convert [bold red]{file}[/bold red] to {extension}")
 
 	sound-play-success &
 else:
-	print(f"{cyan}Converting document to .{extension}{no_color}")
+	console.print(f"[bold red]No file selected![/bold red]")
 	sound-play-fail &
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
