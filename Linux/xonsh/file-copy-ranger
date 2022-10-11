@@ -1,16 +1,15 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
-
 import os
 import sys
+from rich.console import Console
+
+console = Console()
 
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
+selection = False
+
+if len(sys.argv) >1:
 	# If no file is selected, the highlighted file is sent as the %s
-	selection = False
-elif len(sys.argv) > 1:
 	selection = True
 
 if selection:
@@ -21,11 +20,13 @@ if selection:
 
 	target_dir = sys.argv[-1]
 
+	console.rule(f"[bold cyan]Copying files...", style="cyan")
+
 	~/anaconda3/envs/util/bin/pycp -gip @(allFiles) @(target_dir)
 
 	sound-play-success &
 else:
 	sound-play-fail &
-	print(f"{red}No file selected!{no_color}")
+	console.print(f"[bold red]No file selected!")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
