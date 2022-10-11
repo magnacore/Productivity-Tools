@@ -9,16 +9,18 @@ sys.path.append("/home/manuj/Bin")
 
 from utilities import get_filename_extension, get_timestamp
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+
+if len(sys.argv) > 1:
 	selection = True
 
 if selection:
-	console = Console()
-
-	console.rule("[bold cyan]Converting filenames to text...", style="cyan") # No need to add [/bold grees] because we dont want to end the color
+	# No need to add [/bold cyan] because we dont want to end the color
+	# style is for line color
+	console.rule("[bold cyan]Converting filenames to text...", style="cyan")
 
 	allFiles = sys.argv[1:]
 	allFiles.sort()
