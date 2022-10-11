@@ -12,7 +12,7 @@ from playsound import playsound
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_valid_filename
+from py_utilities import get_valid_filename
 
 clipboard_content = pc.paste()
 
