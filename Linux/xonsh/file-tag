@@ -1,34 +1,33 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
-from tqdm import tqdm
+
+from rich.progress import track
+from rich.console import Console
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
 from utilities import get_filename_extension
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+
+if len(sys.argv) > 1: # No arguments passed
 	selection = True
 
-if selection:
-	
+if selection:	
 	allFiles = sys.argv[2:]
 	tag = sys.argv[1]
 	allFiles.sort()
 
-	print(f"{cyan}Adding tag #{tag}{no_color}")
+	console.rule(f"[bold cyan]Adding tag #{tag}...", style="cyan")
 
-	for file in tqdm(allFiles):
-
+	for file in track(allFiles, description="[bold cyan]Tagging : [/bold cyan]"):
 		file_name, extension = get_filename_extension(file)
 
-		new_filename = file_name + f' #{tag}' + extension
+		new_filename = file_name + f" #{tag}" + extension
 		os.rename(file, new_filename)
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
