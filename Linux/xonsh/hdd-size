@@ -1,32 +1,35 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
 
-print(f"{cyan}Used Disk Space: {no_color}")
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Space used: ", style="cyan")
+
+console.print(f"[bold cyan]Used Disk Space: [/bold cyan]")
 subprocess_output = $(df -h /home | grep /dev)
 
 total_space = subprocess_output.split()[1]
 
 used_space = subprocess_output.split()[2]
 used_percentage = int(subprocess_output.split()[4][:-1])
-print(f"{used_space} of {total_space} or {used_percentage}% of disk is used.\n")
+console.print(f"{used_space} of {total_space} or {used_percentage}% of disk is used.\n")
 
-print(f"{cyan}Free Disk Space: {no_color}")
+console.print(f"[bold cyan]Free Disk Space: [/bold cyan]")
 free_space = subprocess_output.split()[3]
-print(f"{free_space} of {total_space} or {100-used_percentage}% of disk is free.\n")
+console.print(f"{free_space} of {total_space} or {100-used_percentage}% of disk is free.\n")
 
 df -h
-print("\n")
+console.print("\n")
 
-print(f"{cyan}Used RAM Space: {no_color}")
+console.print(f"[bold cyan]Used RAM Space: [/bold cyan]")
 free -h
 
-print(f"\n{cyan}Used ZRAM Space: {no_color}")
+console.print(f"\n[bold cyan]Used ZRAM Space: [/bold cyan]")
 zramctl
 
-print(f"\n{cyan}Used Trash Space: {no_color}")
+console.print(f"\n[bold cyan]Used Trash Space: [/bold cyan]")
 du -hs ~/.local/share/Trash
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
