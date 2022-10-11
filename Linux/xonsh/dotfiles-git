@@ -1,59 +1,61 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Synchronizing dot files...", style="cyan")
 
 dotfiles_path = p"~/Projects/Productivity-Tools/Linux/dotFiles/"
 config_path = p"~/Projects/Productivity-Tools/Linux/config/"
 
-print(f"{cyan}Syncing .bashrc...{no_color}")
+console.print(f"[bold cyan]Syncing .bashrc...[/bold cyan]")
 rsync --delete --progress -vahi ~/.bashrc @(dotfiles_path)
 
-print(f"{cyan}Syncing .bashrc_aliases...{no_color}")
+console.print(f"[bold cyan]Syncing .bashrc_aliases...[/bold cyan]")
 rsync --delete --progress -vahi ~/.bash_aliases @(dotfiles_path)
 
-print(f"{cyan}Syncing .xonshrc...{no_color}")
+console.print(f"[bold cyan]Syncing .xonshrc...[/bold cyan]")
 rsync --delete --progress -vahi ~/.xonshrc @(dotfiles_path)
 
-print(f"{cyan}Syncing .alacritty.yml...{no_color}")
+console.print(f"[bold cyan]Syncing .alacritty.yml...[/bold cyan]")
 rsync --delete --progress -vahi ~/.alacritty.yml @(dotfiles_path)
 
-print(f"{cyan}Syncing .vimrc...{no_color}")
+console.print(f"[bold cyan]Syncing .vimrc...[/bold cyan]")
 rsync --delete --progress -vahi ~/.vimrc @(dotfiles_path)
 
-print(f"{cyan}Syncing mpv.conf...{no_color}")
+console.print(f"[bold cyan]Syncing mpv.conf...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/mpv/mpv.conf @(config_path)
 
-print(f"{cyan}Syncing .Xresources...{no_color}")
+console.print(f"[bold cyan]Syncing .Xresources...[/bold cyan]")
 rsync --delete --progress -vahi ~/.Xresources @(dotfiles_path)
 
-print(f"{cyan}Syncing zathurarc...{no_color}")
+console.print(f"[bold cyan]Syncing zathurarc...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
 
-print(f"{cyan}Syncing Greenclip Config...{no_color}")
+console.print(f"[bold cyan]Syncing Greenclip Config...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/greenclip.toml @(config_path)
 
-print(f"{cyan}Syncing Gromit-mpx.cfg...{no_color}")
+console.print(f"[bold cyan]Syncing Gromit-mpx.cfg...[/bold cyan]")
 rsync --delete --progress -vahi ~/.var/app/net.christianbeier.Gromit-MPX/config/gromit-mpx.cfg @(config_path)
 
-print(f"{cyan}Syncing Sxiv Config...{no_color}")
+console.print(f"[bold cyan]Syncing Sxiv Config...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/sxiv/exec/image-info @(config_path)
 
-print(f"{cyan}Syncing Xonsh scripts...{no_color}")
+console.print(f"[bold cyan]Syncing Xonsh scripts...[/bold cyan]")
 rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
 
-print(f"{cyan}Syncing Ranger scripts...{no_color}")
+console.print(f"[bold cyan]Syncing Ranger scripts...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/Linux/config/ranger/
 
-print(f"{cyan}Syncing Rofi...{no_color}")
+console.print(f"[bold cyan]Syncing Rofi...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/rofi/ ~/Projects/Productivity-Tools/Linux/config/rofi/
 
-print(f"{cyan}Syncing Qtile scripts...{no_color}")
+console.print(f"[bold cyan]Syncing Qtile scripts...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/qtile/ ~/Projects/Productivity-Tools/Linux/config/qtile/
 
-print(f"{cyan}Done.{no_color}")
+console.print(f"[bold cyan]Done.[/bold cyan]")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
