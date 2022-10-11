@@ -1,14 +1,17 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
 
 import os
 import pyperclip as pc
+
+from rich.console import Console
+console = Console()
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
 from utilities import generateKey, originalText
+
+console.rule(f"[bold cyan]Decrypting clipboard using Vigenere Cipher...", style="cyan")
 
 with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
     lines = f.readlines()
@@ -25,8 +28,8 @@ plain_text = originalText(clipboard_content,key)
 
 pc.copy(plain_text)
 
-print(f"Copied: Vigenere decryption of {cyan}{clipboard_content}{no_color} is {cyan}{plain_text}{no_color}")
+console.print(f"Copied: Vigenere decryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{plain_text}[/bold green]")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &

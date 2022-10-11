@@ -1,15 +1,17 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
 
 import os
 import pyperclip as pc
+
+from rich.console import Console
+console = Console()
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
 from utilities import generateKey, cipherText, originalText
+
+console.rule(f"[bold cyan]Encrypting clipboard using Vigenere Cipher...", style="cyan")
 
 with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
     lines = f.readlines()
@@ -31,18 +33,18 @@ clipboard_content_check = pc.paste()
 plain_text = originalText(clipboard_content_check, key)
 
 if plain_text == clipboard_content:
-	print(f"Copied: Vigenere encryption of {cyan}{clipboard_content}{no_color} is {cyan}{cipher_text}{no_color}")
+	console.print(f"Copied: Vigenere encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
 
 	warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
 
 	if cipher_text[0] == " ":
-		print(f"{red}Warning: Ciphertext contains a leading space! {warning_cipher_text}{no_color}")
+		console.print(f"[bold red]Warning: Ciphertext contains a leading space! {warning_cipher_text}")
 	elif cipher_text[-1] == " ":
-		print(f"{red}Warning: Ciphertext contains a trailing space! {warning_cipher_text}{no_color}")
+		console.print(f"[bold red]Warning: Ciphertext contains a trailing space! {warning_cipher_text}")
 
 	sound-play-success &
 else:
-	print('ERROR!')
+	console.print('ERROR!')
 	sound-play-fail &
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
