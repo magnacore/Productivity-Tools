@@ -29,5 +29,8 @@ if selection:
 
 		new_filename = file_name + f" #{tag}" + extension
 		os.rename(file, new_filename)
+else:
+	console.print("No files selected!", style="bold red")
+	sound-play-fail &
 
 console.rule(style="cyan")
