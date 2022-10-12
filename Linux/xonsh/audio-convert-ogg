@@ -69,9 +69,7 @@ if selection:
 					codec = "flac"
 					new_extension = ".flac"
 
-				filename = filename + new_extension
-
-				print(f"[green]{filename}")
+				filename = filename + new_extension				
 
 				if choice == "flac" and extension == ".flac":
 					print(f"[bold red]Skipping converting flac to flac : {file}[/bold red]")
@@ -82,7 +80,7 @@ if selection:
 						bitrate = 510
 
 					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -vbr on f"{filename}"):
-						None
+						print(f"[green]Converted {file} to {filename}")
 					else:
 						print(f"[bold red]Unable to convert {file}[/bold red]")
 						sound-play-fail &
