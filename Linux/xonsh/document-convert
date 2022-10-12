@@ -30,9 +30,9 @@ if selection:
 		file_name, _ = get_filename_extension(file)
 
 		if !(pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)):
-			None
+			print(f"[green]Converted {file} to {extension}")
 		else:
-			print(f"Could not convert [bold red]{file}[/bold red] to {extension}")
+			print(f"[bold red]Could not convert {file} to {extension}")
 
 	sound-play-success &
 else:
