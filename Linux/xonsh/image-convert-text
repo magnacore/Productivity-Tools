@@ -32,9 +32,9 @@ if selection:
 			if mimestart in ['image']:
 				output_filename, _ = get_filename_extension(file)
 				if !(tesseract @(file) @(output_filename)):
-					print(f"[green] Converted {file}")
+					print(f"[green]Converted {file}")
 				else:
-					print(f"[bold red] Could not convert {file}")
+					print(f"[bold red]Could not convert {file}")
 	
 	sound-play-success &
 else:
