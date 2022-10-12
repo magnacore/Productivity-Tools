@@ -1,26 +1,36 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
-import glob
+import sys
 
-allMediaFiles = glob.glob("*.m*")
-allMediaFiles.sort()
+from rich.console import Console
+console = Console()
 
-print(f"{cyan}Combining media...{no_color}")
+console.rule(f"[bold cyan]Combining Media...", style="cyan")
 
-temp_filename = 'video_list_temp.txt'
+# sys.argv[0] is the name of the script which will always be there
+selection = False
 
-echo @([f"file \'{filename}\'\n" for filename in allMediaFiles]) > @(temp_filename)
+if len(sys.argv) > 1:
+    selection = True
 
-ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy output.mkv
+if selection:
+    allFiles = sys.argv[1:]
+    allFiles.sort()
 
-os.remove(temp_filename)
+    temp_filename = 'video_list_temp.txt'
 
-# https://github.com/xonsh/xonsh/issues/1307
-# ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
+    echo @([f"file \'{filename}\'\n" for filename in allFiles]) > @(temp_filename)
 
-print(u'\u2500' * os.get_terminal_size().columns)
+    ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy combined.mkv
 
-sound-play-success &
+    os.remove(temp_filename)
+
+    # https://github.com/xonsh/xonsh/issues/1307
+    # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
+
+    sound-play-success &
+else:
+    console.print("No files selected!", style="bold red")
+    sound-play-fail &
+
+console.rule(style="cyan")

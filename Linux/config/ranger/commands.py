@@ -837,3 +837,15 @@ class pdf_split(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class media_combine(Command):
+    """:Combine similar media files"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell media-combine %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################
