@@ -1,5 +1,4 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-import os
 import sys
 from rich.console import Console
 

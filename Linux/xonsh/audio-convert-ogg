@@ -17,7 +17,6 @@
 # Support for speech and music
 # Support for mono and stereo
 
-import os
 from rich.progress import track
 from rich.console import Console
 from rich import print

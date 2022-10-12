@@ -1,6 +1,5 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
-import os
 import pyperclip as pc
 
 from rich.console import Console

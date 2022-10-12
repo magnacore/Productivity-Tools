@@ -1,6 +1,4 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-import os
-
 from rich.progress import track
 from rich.console import Console
 from rich import print
