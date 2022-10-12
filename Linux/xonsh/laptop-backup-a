@@ -1,14 +1,17 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
+
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Laptop Backup A...", style="cyan")
 
 rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
 
 date > ~/Software/logs/laptop-backup-a.txt
 date > /media/veracrypt1/SYSTEM_BACKUP/backup_date.txt
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
