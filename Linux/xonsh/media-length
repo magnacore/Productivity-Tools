@@ -1,44 +1,53 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-light_green = '\x1b[1;32m'
-no_color = '\x1b[0m'
-
-import os
 import glob
 import datetime
-from tqdm import tqdm
-from tabulate import tabulate
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
+from rich.console import Console
+from rich.table import Table
+from rich.progress import track
+from rich import print
+from rich.text import Text
+from rich import box
+
 from utilities import get_mime, get_duration
+
+console = Console()
+
+console.rule(f"[bold cyan]Summing media duration", style="cyan")
 
 allFiles = glob.glob("*.*")
 allFiles.sort()
 
 total_duration = 0.0
 
-media_list = []
-header = ["Name", "Duration"]
+# https://rich.readthedocs.io/en/latest/appendix/box.html#appendix-box
+table = Table(title="Media Duration", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
 
-for file in tqdm(allFiles):
+table.add_column("File name", justify="left")
+table.add_column("Duration", justify="right", style="green")
+
+for file in track(allFiles, description="[bold cyan]Adding : [/bold cyan]"):
 	mimestart = get_mime(file)
 	if mimestart != None:
 		if mimestart in ['audio', 'video']:
 			duration = get_duration(file)
 			total_duration += duration
-			media_list.append([file, datetime.timedelta(seconds = round(duration,0))])
+			table.add_row(file, str(datetime.timedelta(seconds = round(duration,0))))
 		else:
-			print(f"Skipping {file}")
+			print(f"[yellow]Skipping {file}[/yellow]")
 
-media_list.append([f"{light_green}Total media duration{no_color}",				f"{light_green}{datetime.timedelta(seconds = round(total_duration,0))}{no_color}"])
-media_list.append([f"{light_green}Total media duration @1.5x speed{no_color}", 	f"{light_green}{datetime.timedelta(seconds = round(total_duration/1.5,0))}{no_color}"])
-media_list.append([f"{light_green}Total media duration @1.65x speed{no_color}",	f"{light_green}{datetime.timedelta(seconds = round(total_duration/1.65,0))}{no_color}"])
-media_list.append([f"{light_green}Total media duration @1.82x speed{no_color}",	f"{light_green}{datetime.timedelta(seconds = round(total_duration/1.82,0))}{no_color}"])
-media_list.append([f"{light_green}Total media duration @2x speed{no_color}",	f"{light_green}{datetime.timedelta(seconds = round(total_duration/2,0))}{no_color}"])
+# table.add_row(Markdown("---"), Markdown("---"))
+table.add_row(Text.from_markup("[bold green]Total media duration", justify="right"),		f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}")
+table.add_row(Text.from_markup("[bold green]Total media duration @1.5x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}")
+table.add_row(Text.from_markup("[bold green]Total media duration @1.65x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}")
+table.add_row(Text.from_markup("[bold green]Total media duration @1.82x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.82,0))}")
+table.add_row(Text.from_markup("[bold green]Total media duration @2x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/2,0))}")
 
-print(tabulate(media_list, headers=header, tablefmt="fancy_grid"))
+console.print(table)
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
