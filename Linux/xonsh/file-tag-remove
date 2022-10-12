@@ -24,5 +24,8 @@ if selection:
 		new_filename = file.replace(f" #{tag}", "")
 		new_filename = new_filename.strip()
 		os.rename(file, new_filename)
+else:
+	console.print("No files selected!", style="bold red")
+	sound-play-fail &
 
 console.rule(style="cyan")
