@@ -1,16 +1,19 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
 
-print(f"{cyan}Deleting previous snapshot...{no_color}")
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Laptop Backup C...", style="cyan")
+
+console.print(f"[bold cyan]Deleting previous snapshot...")
 sudo btrfs subvolume delete /run/media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@previous
 
-print(f"{cyan}Creating a new read only snapshot...{no_color}")
+console.print(f"[bold cyan]Creating a new read only snapshot...")
 sudo btrfs subvolume snapshot -r /run/media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/ /run/media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@previous
 
-print(f"{cyan}Synchronizing...{no_color}")
+console.print(f"[bold cyan]Synchronizing...")
 rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt -vahi $HOME/ /run/media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/
 
 date > ~/Software/logs/laptop-backup-c.txt
@@ -18,6 +21,6 @@ date > /run/media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/backup_date.txt
 
 sudo btrfs filesystem show
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
