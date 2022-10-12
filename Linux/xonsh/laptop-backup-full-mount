@@ -1,26 +1,34 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
 import time
 
-print(f"{cyan}Open the container...{no_color}")
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Laptop Backup Mount...", style="cyan")
+
+console.print(f"[bold cyan]Open the container...")
 sudo cryptsetup luksOpen /dev/sdb luks-laptop-backup-full
 
-print(f"{cyan}Mount the container...{no_color}")
+console.print(f"[bold cyan]Mount the container...")
 sudo mkdir /media/$USER/laptop_backup_full
 
 # Change the owner
 sudo chown $USER:$USER /media/$USER/laptop_backup_full
 
 # Give some time to /dev/vg-laptop-backup-full/raid1-1 to become available
-print(f"{cyan}Waiting for 5 seconds before mounting...{no_color}")
+console.print(f"[bold cyan]Waiting for 5 seconds before mounting...")
 time.sleep( 5 )
 
 # mount the directory
-sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_backup_full"
+if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_backup_full"):
+    sudo btrfs filesystem show
+    
+    sound-play-success &
 
-print(u'\u2500' * os.get_terminal_size().columns)
+else:
+    console.print(f"[bold red]Something went wrong. Could not mount.")
+    sound-play-fail &
 
-sound-play-success &
+console.rule(style="cyan")

@@ -1,32 +1,35 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
-
 import os
 import time
 
-print(f"{cyan}Unmounting...{no_color}")
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Eject Laptop Backup Full...", style="cyan")
+
+console.print(f"[bold cyan]Unmounting...")
 sudo umount /media/$USER/laptop_backup_full
 time.sleep(3)
 
-print(f"{cyan}Deleting Mountpoint...{no_color}")
+console.print(f"[bold cyan]Deleting Mountpoint...")
 sudo rm -r /media/$USER/laptop_backup_full
 time.sleep(3)
 
-print(f"{cyan}Unmounting logical volumes...{no_color}")
+console.print(f"[bold cyan]Unmounting logical volumes...")
 sudo lvchange -an vg-laptop-backup-full
 time.sleep(3)
 
-print(f"{cyan}Closing encrypted LUKS container...{no_color}")
+console.print(f"[bold cyan]Closing encrypted LUKS container...")
 sudo cryptsetup luksClose luks-laptop-backup-full
 
-print(f"{cyan}Waiting for 3 seconds before turning off...{no_color}")
+console.print(f"[bold cyan]Waiting for 3 seconds before turning off...")
 time.sleep(3)
-print(f"{cyan}Powering off...{no_color}")
+console.print(f"[bold cyan]Powering off...")
 udisksctl power-off -b /dev/sdb
 
 lsblk
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
