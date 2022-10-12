@@ -1,7 +1,6 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
 from_path = "/media/manuj/laptop_backup_full/@current/" # end with /
-# echo @(from_path + ".fonts/")
 
 # If there is a space in the destination path enclose in quotes
 rsync --delete --progress -vahi @(from_path + ".fonts/") /home/manuj/.fonts/
