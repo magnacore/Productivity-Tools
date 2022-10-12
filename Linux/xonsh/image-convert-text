@@ -1,34 +1,44 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
 
 import os
-import sys
-from tqdm import tqdm
+
+from rich.progress import track
+from rich.console import Console
+from rich import print
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
 from utilities import get_mime, get_filename_extension
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+
+if len(sys.argv) > 1: # No arguments passed
 	selection = True
 
 if selection:
-
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	for file in tqdm(allFiles):
+	console.rule(f"[bold cyan]Optical Character Recognition...", style="cyan")
 
+	for file in track(allFiles, description="[bold cyan]OCR : [/bold cyan]"):
 		mimestart = get_mime(file)
 
 		if mimestart != None:
 			if mimestart in ['image']:
 				output_filename, _ = get_filename_extension(file)
-				tesseract @(file) @(output_filename)
+				if !(tesseract @(file) @(output_filename)):
+					print(f"[green] Converted {file}")
+				else:
+					print(f"[bold red] Could not convert {file}")
+	
+	sound-play-success &
+else:
+	console.print("No files selected!", style="bold red")
+	sound-play-fail &
 
-print(u'\u2500' * os.get_terminal_size().columns)
-
-sound-play-success &
+console.rule(style="cyan")
