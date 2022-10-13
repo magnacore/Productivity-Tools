@@ -49,6 +49,7 @@ if selection:
 					break
 
 	if to_split == True:
+		console.print(f"[bold cyan]Delete Original Media?")
 		delete_choice = get_user_selection(delete_original)
 
 		for file in track(clean_file_names, description="[bold cyan]Splitting : [/bold cyan]"):
@@ -84,6 +85,9 @@ if selection:
 
 					if delete_choice == "Yes":
 						trash-put @(file)
+					else:
+						mkdir -p ./Original_Media
+						mv @(file) ./Original_Media/
 
 				else:
 					print(f"[yellow]Skipping {file}")
