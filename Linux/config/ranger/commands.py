@@ -850,3 +850,17 @@ class media_combine(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class file_rename_valid(Command):
+    """:Set valid filenames"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-rename-valid %s")
+
+        self.fm.change_mode("normal")
+
+        self.fm.notify("Files renamed.")
+
+###############################################################################
