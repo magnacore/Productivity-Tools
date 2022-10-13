@@ -92,9 +92,9 @@ def set_valid_file_names(filenames):
 	clean_file_names = $(file-rename-valid @(filenames))
 	return ast.literal_eval(clean_file_names) # Convert string representation of a list to a real list
 
-def get_user_selection(options):
+def get_user_selection(options, title = "Make a choice: "):
 	from simple_term_menu import TerminalMenu
 
-	terminal_menu = TerminalMenu(options)
+	terminal_menu = TerminalMenu(options, title=title)
 	menu_entry_index = terminal_menu.show()
 	return options[menu_entry_index]
