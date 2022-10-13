@@ -47,10 +47,6 @@ if selection:
 	codec = "libopus"
 	new_extension = ".opus"
 
-	# if choice == "vorbis":
-	# 	codec = "libvorbis"
-	# 	new_extension = ".ogg"
-	
 	if choice == 'VoIP':
 		bitrate = 24
 	elif choice == 'Audiobooks/Podcasts':
@@ -62,7 +58,7 @@ if selection:
 	elif choice == 'Music Storage 7.1 Surround':
 		bitrate = 450
 	elif choice == 'Custom':
-		bitrate = int(input("Enter bitrate: "))					
+		bitrate = int(input("Enter bitrate: "))
 		if bitrate < 6:
 			bitrate = 6
 		elif bitrate > 510:
@@ -86,7 +82,7 @@ if selection:
 				filename, extension = get_filename_extension(file)
 				extension = extension.lower().strip()
 
-				filename = filename + new_extension				
+				filename = filename + new_extension
 
 				if choice == "Lossless" and extension == ".flac":
 					print(f"[bold red]Skipping converting {file} to .flac[/bold red]")
