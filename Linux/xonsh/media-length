@@ -26,8 +26,8 @@ total_duration = 0.0
 # https://rich.readthedocs.io/en/latest/appendix/box.html#appendix-box
 table = Table(title="Media Duration", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
 
-table.add_column("File name", justify="left")
 table.add_column("Duration", justify="right", style="green")
+table.add_column("File name", justify="left")
 
 for file in track(allFiles, description="[bold cyan]Adding : [/bold cyan]"):
 	mimestart = get_mime(file)
@@ -35,16 +35,16 @@ for file in track(allFiles, description="[bold cyan]Adding : [/bold cyan]"):
 		if mimestart in ['audio', 'video']:
 			duration = get_duration(file)
 			total_duration += duration
-			table.add_row(file, str(datetime.timedelta(seconds = round(duration,0))))
+			table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
 		else:
 			print(f"[yellow]Skipping {file}[/yellow]")
 
 # table.add_row(Markdown("---"), Markdown("---"))
-table.add_row(Text.from_markup("[bold green]Total media duration", justify="right"),		f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}")
-table.add_row(Text.from_markup("[bold green]Total media duration @1.5x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}")
-table.add_row(Text.from_markup("[bold green]Total media duration @1.65x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}")
-table.add_row(Text.from_markup("[bold green]Total media duration @1.82x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.82,0))}")
-table.add_row(Text.from_markup("[bold green]Total media duration @2x", justify="right"),	f"[bold green]{datetime.timedelta(seconds = round(total_duration/2,0))}")
+table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
+table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}",	Text.from_markup("[bold green]Total media duration @1.5x", justify="left"))
+table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}",	Text.from_markup("[bold green]Total media duration @1.65x", justify="left"))
+table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.82,0))}",	Text.from_markup("[bold green]Total media duration @1.82x", justify="left"))
+table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/2,0))}",		Text.from_markup("[bold green]Total media duration @2x", justify="left"))
 
 console.print(table)
 
