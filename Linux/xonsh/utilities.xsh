@@ -36,10 +36,11 @@ def get_mime(file, part=0):
 		return None
 
 def get_duration(file):
+	from rich import print
 	duration = $(ffprobe -v quiet -of csv=p=0 -show_entries format=duration @(file))
 
 	if duration == '':
-		print(f"{file} is not returning a valid duration.")
+		print(f"[bold red]{file} is not returning a valid duration.")
 		duration = '0'
 
 	return float(duration)

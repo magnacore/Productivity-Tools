@@ -669,23 +669,24 @@ class file_convert_text(Command):
 ###############################################################################
 
 
-class media_split_equal_in_place(Command):
+class media_split_equal(Command):
     """
-    :media_split_equal_in_place 300
-    Splits media in place and deletes the original media
+    :media_split_equal_in_place <split_duration_seconds> <threshold_seconds>
+    Splits media
     """
 
     def execute(self):
         # self.arg(1) is the first (space-separated) argument to the function.
         # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1):
-            # self.rest(1) contains self.arg(1) and everything that follows
-            duration = self.rest(1)
+        if self.arg(1) and self.arg(2):
+            duration = self.arg(1)
+            threshold = self.arg(2)
         else:
             duration = 300
+            threshold = 600
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell media-split-equal-in-place {duration} %s")
+        self.fm.execute_console(f"shell media-split-equal {duration} {threshold} %s")
 
         self.fm.change_mode("normal")
 

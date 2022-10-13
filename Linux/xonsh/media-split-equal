@@ -1,93 +1,97 @@
 #!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
-
-# TODO : If there is a : in the file name the splitting will not work
-
-import os
-import glob
-import sys
 import datetime
 import math
-from tqdm import tqdm
+
+from rich.console import Console
+from rich.progress import track
+from rich import print
+
+console = Console()
 
 import sys
 sys.path.append("/home/manuj/Bin")
 
-from utilities import get_mime, get_duration, get_filename_extension
+from utilities import get_mime, get_duration, get_filename_extension, set_valid_file_names, get_user_selection
 
-if len(sys.argv) == 1:
-	split_duration = '300'
-	threshold_seconds = '600'
-elif len(sys.argv) == 2:
-	split_duration = sys.argv[1]
-	threshold_seconds = '600'
-else:
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 3:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[3:]
+	allFiles.sort()
+
 	split_duration = sys.argv[1]
 	threshold_seconds = sys.argv[2]
 
-allFiles = glob.glob("*.*")
-allFiles.sort()
+	clean_file_names = set_valid_file_names(allFiles)
 
-to_split = False
+	to_split = False
 
-print(f"{cyan}Looking for media longer than threshold of {int(threshold_seconds)//60} minutes...{no_color}")
+	console.rule(f"[bold cyan]Splitting media...", style="cyan")
+	console.print(f"[bold cyan]Looking for media longer than threshold of {int(threshold_seconds)//60} minutes...")
 
-for file in allFiles:
-	mimestart = get_mime(file)
+	delete_original = ["No", "Yes"]
 
-	if mimestart != None:		
-		if mimestart in ['audio', 'video']:
-
-			duration = get_duration(file)
-			
-			if duration > float(threshold_seconds):
-				print(f"{cyan}Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...{no_color}")
-				to_split = True
-				break
-
-if to_split == True:
-	
-	for file in tqdm(allFiles):
-
+	for file in clean_file_names:
 		mimestart = get_mime(file)
 
 		if mimestart != None:
-			
 			if mimestart in ['audio', 'video']:
 
 				duration = get_duration(file)
-				split_duration = float(split_duration)
-				
-				parts=int(duration//split_duration)
 
-				filename, extension = get_filename_extension(file)
+				if duration > float(threshold_seconds):
+					console.print(f"[bold green]Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...")
+					to_split = True					
+					break
 
-				if (mimestart == 'audio') or (extension == ".mka"):
-					extension = ".mka"
-				elif mimestart == 'video':
-					extension = ".mkv"
-				
-				if (parts != 0):
-					remaining = duration%split_duration
-					excess = math.ceil(remaining/parts)
-					split_duration_individual = int(split_duration + excess)
+	if to_split == True:
+		delete_choice = get_user_selection(delete_original)
 
-					#print(f"{cyan}Splitting for {split_duration_individual} seconds...{no_color}")
+		for file in track(clean_file_names, description="[bold cyan]Splitting : [/bold cyan]"):
 
-					new_filename = filename + f'_SPLIT_EQUAL' + extension
-					mkvmerge -q -o SPLIT/@(new_filename) @(file) --split duration:@(str(split_duration_individual)+'s')
+			mimestart = get_mime(file)
+
+			if mimestart != None:
+
+				if mimestart in ['audio', 'video']:
+
+					duration = get_duration(file)
+					split_duration = float(split_duration)
+
+					parts=int(duration//split_duration)
+
+					filename, extension = get_filename_extension(file)
+
+					if (mimestart == 'audio') or (extension == ".mka"):
+						extension = ".mka"
+					elif mimestart == 'video':
+						extension = ".mkv"
+
+					if (parts != 0):
+						remaining = duration%split_duration
+						excess = math.ceil(remaining/parts)
+						split_duration_individual = int(split_duration + excess)
+
+						new_filename = filename + f'_SPLIT_EQUAL' + extension
+						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_individual)+'s')
+					else:
+						new_filename = filename + f'_SPLIT_EQUAL' + extension
+						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
+
+					if delete_choice == "Yes":
+						trash-put @(file)
+
 				else:
-					new_filename = filename + f'_SPLIT_EQUAL' + extension
-					mkvmerge -q -o SPLIT/@(new_filename) @(file) --split duration:@(str(split_duration)+'s')
-			
-			else:
-				print(f"Skipping {file}")
-				
-	sound-play-success &
-else:
-	print(f"{red}Nothing to split...exiting.{no_color}")
-	sound-play-fail &
+					print(f"[yellow]Skipping {file}")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+		sound-play-success &
+
+	else:
+		console.print(f"[green]Nothing to split...exiting.")
+		sound-play-fail &
+
+console.rule(style="cyan")
