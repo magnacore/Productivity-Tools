@@ -42,7 +42,7 @@ if selection:
 	bitrate = int(sys.argv[1])
 	allFiles.sort()
 
-	choice = get_user_selection(convert_to)
+	choice = get_user_selection(convert_to, "Select a use case: ")
 
 	codec = "libopus"
 	new_extension = ".opus"
