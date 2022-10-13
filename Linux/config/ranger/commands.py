@@ -788,8 +788,8 @@ class paste_ext(Command):
 
 ###############################################################################
 
-class audio_convert_ogg(Command):
-    """:Convert common audio formats to ogg"""
+class audio_convert_foss(Command):
+    """:Convert common audio formats to foss"""
 
     def execute(self):
         # self.arg(1) is the first (space-separated) argument to the function.
@@ -801,7 +801,7 @@ class audio_convert_ogg(Command):
             bitrate = 128
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell audio-convert-ogg {bitrate} %s")
+        self.fm.execute_console(f"shell audio-convert-foss {bitrate} %s")
 
         self.fm.change_mode("normal")
 

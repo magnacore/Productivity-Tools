@@ -9,6 +9,7 @@
 # https://opus-codec.org/
 # https://superuser.com/questions/1536755/what-bitrate-should-i-use-when-extracting-channel-from-mp2-to-flac-with-ffmpeg
 # https://xiph.org/flac/faq.html#general__lowest_bitrate
+# https://wiki.xiph.org/Opus_Recommended_Settings
 
 # OPUS Features :
 # Bitrates from 6 kb/s to 510 kb/s
@@ -28,7 +29,7 @@ from utilities import get_mime, get_filename_extension, set_valid_file_names, ge
 
 console = Console()
 
-convert_to = ['opus', 'vorbis', 'flac']
+convert_to = ['VoIP', 'Audiobooks/Podcasts', 'Music Storage 2 Channels', 'Music Storage 5.1 Surround', 'Music Storage 7.1 Surround', 'Lossless', 'Custom']
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
@@ -43,10 +44,37 @@ if selection:
 
 	choice = get_user_selection(convert_to)
 
-	if choice != 'flac':
+	codec = "libopus"
+	new_extension = ".opus"
+
+	# if choice == "vorbis":
+	# 	codec = "libvorbis"
+	# 	new_extension = ".ogg"
+	
+	if choice == 'VoIP':
+		bitrate = 24
+	elif choice == 'Audiobooks/Podcasts':
+		bitrate = 32
+	elif choice == 'Music Storage 2 Channels':
+		bitrate = 128
+	elif choice == 'Music Storage 5.1 Surround':
+		bitrate = 256
+	elif choice == 'Music Storage 7.1 Surround':
+		bitrate = 450
+	elif choice == 'Custom':
+		bitrate = int(input("Enter bitrate: "))					
+		if bitrate < 6:
+			bitrate = 6
+		elif bitrate > 510:
+			bitrate = 510
+	elif choice == "Lossless":
+		codec = "flac"
+		new_extension = ".flac"
+
+	if choice != 'Lossless':
 		console.rule(f"[bold cyan]Converting audio to variable {bitrate}kbps {choice}...", style="cyan")
 	else:
-		console.rule(f"[bold cyan]Converting audio to lossless {choice}...", style="cyan")
+		console.rule(f"[bold cyan]Converting audio to FLAC {choice}...", style="cyan")
 
 	clean_file_names = set_valid_file_names(allFiles)
 
@@ -58,26 +86,11 @@ if selection:
 				filename, extension = get_filename_extension(file)
 				extension = extension.lower().strip()
 
-				codec = "libopus"
-				new_extension = ".opus"
-
-				if choice == "vorbis":
-					codec = "libvorbis"
-					new_extension = ".ogg"
-				elif choice == "flac":
-					codec = "flac"
-					new_extension = ".flac"
-
 				filename = filename + new_extension				
 
-				if choice == "flac" and extension == ".flac":
-					print(f"[bold red]Skipping converting flac to flac : {file}[/bold red]")
+				if choice == "Lossless" and extension == ".flac":
+					print(f"[bold red]Skipping converting {file} to .flac[/bold red]")
 				else:
-					if bitrate < 6:
-						bitrate = 6
-					elif bitrate > 510:
-						bitrate = 510
-
 					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -vbr on f"{filename}"):
 						print(f"[green]Converted {file} to {filename}")
 					else:
