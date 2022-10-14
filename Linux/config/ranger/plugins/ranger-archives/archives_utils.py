@@ -184,7 +184,7 @@ def get_compression_command(
     elif search(r"\.rar$", archive_name) is not None:
         bins = ["rar"]
         binary, binary_path = find_binaries(bins)
-        flags_mod = flags + ["r"]  # enable recursion into subdirs
+        flags_mod = flags
         if binary:
             command = [binary_path, "a", *flags_mod, archive_name, *files]
             return command
@@ -247,7 +247,7 @@ def get_decompression_command(
     tar_short = r"\.t(a|b|g|l|x)z2*"
 
     if to_dir:
-        makedirs(quote(to_dir), exist_ok=True)
+        makedirs(to_dir, exist_ok=True)
 
     if search(tar_full, archive_name) is not None or\
             search(tar_short, archive_name) is not None:
@@ -257,7 +257,7 @@ def get_decompression_command(
 
         if binary:
             if to_dir:
-                flags += ['-C', quote(to_dir)]
+                flags += ['-C', to_dir]
             command = [binary_path, "-xf", archive_name, *flags]
             return command
 
@@ -266,17 +266,23 @@ def get_decompression_command(
         binary, binary_path = find_binaries(bins)
         if binary:
             if to_dir:
-                flags += ['-o{}'.format(quote(to_dir))]
+                flags += ['-o{}'.format(to_dir)]
             command = [binary, "x", *flags, archive_name]
             return command
 
     elif search(r"\.rar$", archive_name) is not None:
-        bins = ["rar"]
+        bins = ["7z", "unrar", "rar"]
         binary, binary_path = find_binaries(bins)
-        if binary:
+        
+        if binary == 'rar' or binary == 'unrar':
             command = [binary_path, "x", *flags, archive_name]
             if to_dir:
-                command += [quote(to_dir)]
+                command += [to_dir]
+            return command
+        elif binary == '7z':
+            if to_dir:
+                flags += ['-o{}'.format(to_dir)]
+            command = [binary_path, "x", *flags, archive_name]
             return command
 
     elif search(r"\.zip$", archive_name) is not None:
@@ -286,11 +292,11 @@ def get_decompression_command(
         if binary == 'unzip':
             command = [binary_path, *flags, archive_name]
             if to_dir:
-                command += ['-d', quote(to_dir)]
+                command += ['-d', to_dir]
             return command
         elif binary == '7z':
             if to_dir:
-                flags += ['-o{}'.format(quote(to_dir))]
+                flags += ['-o{}'.format(to_dir)]
             command = [binary_path, "x", *flags, archive_name]
             return command
 
@@ -311,7 +317,7 @@ def get_decompression_command(
 
         if binary:
             if to_dir:
-                flags += ['w={}'.format(quote(to_dir))]
+                flags += ['w={}'.format(to_dir)]
             command = [binary_path, "x", *flags, archive_name]
             return command
 
@@ -321,15 +327,15 @@ def get_decompression_command(
 
         if binary == "tar":
             if to_dir:
-                flags += ['-C', quote(to_dir)]
+                flags += ['-C', to_dir]
             command = [binary_path, "-xf", *flags, archive_name]
             return command
         elif binary == "7z":
             if to_dir:
-                flags += ['-o{}'.format(quote(to_dir))]
+                flags += ['-o{}'.format(to_dir)]
             command = [binary_path, "x", *flags, archive_name]
             return command
 
     fallback_command = ["7z", "x", archive_name] +\
-        (['-o{}'.format(quote(to_dir))] if to_dir else [])
+        (['-o{}'.format(to_dir)] if to_dir else [])
     return fallback_command
