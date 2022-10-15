@@ -300,7 +300,7 @@ def start_once():
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh".split(),
-        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e {myhome}/Bin/ranger-open".split(),
+        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open".split(),
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
         f"{myhome}/.local/bin/greenclip daemon".split(),
