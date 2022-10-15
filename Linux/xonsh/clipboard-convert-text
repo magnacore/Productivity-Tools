@@ -20,12 +20,12 @@ file_name = get_valid_filename(clipboard_content[:35])
 
 if file_name:
     date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    file_name = f"/home/manuj/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name}_{date_time}.md"
+    file_name = f"{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name}_{date_time}.md"
 
     # open file
     with open(file_name, "a+") as f:
         f.write(clipboard_content + "\n")
 
-    playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)
+    playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)
 else:
-    playsound("/home/manuj/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg", block=False)
+    playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg", block=False)
