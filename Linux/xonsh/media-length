@@ -1,4 +1,4 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+#!/usr/bin/env xonsh
 import glob
 import datetime
 

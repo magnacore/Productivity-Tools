@@ -1,4 +1,4 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+#!/usr/bin/env xonsh
 
 from rich.progress import track
 from rich.console import Console

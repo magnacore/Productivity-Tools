@@ -1,4 +1,4 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+#!/usr/bin/env xonsh
 import time
 
 from rich.console import Console

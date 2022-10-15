@@ -1,4 +1,4 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+#!/usr/bin/env xonsh
 
 # Usage: audio-convert-ogg 128 *
 # Converts all audio files in a folder to 128kbps ogg

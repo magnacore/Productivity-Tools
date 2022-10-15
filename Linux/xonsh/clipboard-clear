@@ -1,5 +1,4 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
-
+#!/usr/bin/env xonsh
 clear
 greenclip clear
 # trash-put /home/manuj/.cache/greenclip.history

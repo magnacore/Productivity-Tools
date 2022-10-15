@@ -1,4 +1,4 @@
-#!xonsh
+#!/usr/bin/env xonsh
 
 import os
 

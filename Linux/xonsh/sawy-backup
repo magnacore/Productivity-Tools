@@ -1,4 +1,4 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+#!/usr/bin/env xonsh
 cyan = '\x1b[1;36m'
 no_color = '\x1b[0m'
 
