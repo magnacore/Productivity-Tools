@@ -10,6 +10,7 @@ from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 # from libqtile.utils import guess_terminal
 
+myhome = os.path.expanduser('~')
 
 mod = "mod4"
 alt = "mod1"
@@ -62,18 +63,18 @@ keys = [
 	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
 	
 	# My shortcuts
-	Key([mod], "t", lazy.spawn(myTerm+" -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
-    Key([mod, "shift"], "v", lazy.spawn(myTerm+" -e /home/manuj/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
-    Key([mod], "Return", lazy.spawn(myTerm+" -e /home/manuj/Bin/ranger-open"), desc="Launch Ranger"),
+	Key([mod], "t", lazy.spawn(myTerm+f" -e {myhome}/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
+    Key([mod, "shift"], "v", lazy.spawn(myTerm+f" -e {myhome}/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" -e {myhome}/Bin/ranger-open"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
-    Key([mod], "d", lazy.spawn("/home/manuj/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
-    Key([mod, "shift"], "m", lazy.spawn(myTerm+" -e /home/manuj/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
+    Key([mod], "d", lazy.spawn(f"{myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
+    Key([mod, "shift"], "m", lazy.spawn(myTerm+f" -e {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
 
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
     Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
-    Key([mod], "e", lazy.spawn("/home/manuj/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
+    Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
     Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}'"), desc='Run Greenclip in Rofi'),
 	
     ## Volume
@@ -82,8 +83,8 @@ keys = [
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
 
     ## Scratchpads
-    Key([mod2, mod3], "a", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
-    Key([mod2, mod3], "y", lazy.spawn(myTerm+" -e sh -c 'sleep 0.1 && nvim /home/manuj/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
+    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
+    Key([mod2, mod3], "y", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
 ]
 
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
@@ -298,11 +299,11 @@ def start_once():
         [myBrowser],
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
-        f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e /home/manuj/anaconda3/envs/xonsh/bin/xonsh".split(),
-        f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e /home/manuj/Bin/ranger-open".split(),
+        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh".split(),
+        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e {myhome}/Bin/ranger-open".split(),
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
-        f"/home/manuj/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
-        "/home/manuj/.local/bin/greenclip daemon".split(),
+        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
+        f"{myhome}/.local/bin/greenclip daemon".split(),
     ]
 
     for p in processes:
