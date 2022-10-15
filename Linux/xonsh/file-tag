@@ -1,11 +1,11 @@
 #!/usr/bin/env xonsh
-import os
-
 from rich.progress import track
 from rich.console import Console
 
 import sys
-sys.path.append("/home/manuj/Bin")
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_filename_extension
 

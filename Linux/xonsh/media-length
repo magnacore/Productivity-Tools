@@ -3,7 +3,9 @@ import glob
 import datetime
 
 import sys
-sys.path.append("/home/manuj/Bin")
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
 from rich.console import Console
 from rich.table import Table

@@ -9,7 +9,9 @@ import glob
 from tqdm import tqdm
 
 import sys
-sys.path.append("/home/manuj/Bin")
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_mime, get_filename_extension
 

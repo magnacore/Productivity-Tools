@@ -5,7 +5,9 @@ from rich.console import Console
 from rich import print
 
 import sys
-sys.path.append("/home/manuj/Bin")
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_filename_extension
 

@@ -3,10 +3,10 @@
 # a list of file names. The output of this script
 # will become the input of the other script
 
-import os
-
 import sys
-sys.path.append("/home/manuj/Bin")
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_valid_filename, get_filename_extension
 

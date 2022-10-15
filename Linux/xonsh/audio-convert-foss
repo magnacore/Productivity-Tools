@@ -23,7 +23,9 @@ from rich.console import Console
 from rich import print
 
 import sys
-sys.path.append("/home/manuj/Bin")
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_mime, get_filename_extension, set_valid_file_names, get_user_selection
 
