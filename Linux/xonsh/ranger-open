@@ -1,7 +1,7 @@
-#!/home/manuj/anaconda3/envs/xonsh/bin/xonsh
+#!/usr/bin/env xonsh
 
 source ~/.xonshrc
 
-# /home/$USER/anaconda3/envs/ranger/bin/ranger
+~/Software/ranger-master/ranger.py
 
-/home/$USER/Software/ranger-master/ranger.py
+# $USER can be used to get the username
