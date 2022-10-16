@@ -153,6 +153,7 @@ file_node_extensions = {
     'o'        : '',
     'ogg'      : '',
     'opus'     : '',
+    'mka'      : '',
     'part'     : '',
     'pdf'      : '',
     'php'      : '',
