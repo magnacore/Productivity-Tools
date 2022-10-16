@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Since we are importing python3 from util environment, pyperclip should be installed in util environment too
-# /home/manuj/anaconda3/envs/util/bin/pip install pyperclip
+# /home/<username>/anaconda3/envs/util/bin/pip install pyperclip
 # Installing pyobjects in utils venv will cause this script to fail. Only install pyobjects in xonsh venv
 #!/usr/bin/env conda run -n util python3
 
