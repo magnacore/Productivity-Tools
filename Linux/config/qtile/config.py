@@ -68,7 +68,7 @@ keys = [
     Key([mod], "Return", lazy.spawn(myTerm+f" -e {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
-    Key([mod], "d", lazy.spawn(f"{myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
+    Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
     Key([mod, "shift"], "m", lazy.spawn(myTerm+f" -e {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
 
     ## Rofi
