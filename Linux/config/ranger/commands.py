@@ -864,3 +864,15 @@ class file_rename_valid(Command):
         self.fm.notify("Files renamed.")
 
 ###############################################################################
+
+class pdf_combine(Command):
+    """:Combine pdf files"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell pdf-combine %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################

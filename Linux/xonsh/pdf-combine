@@ -1,7 +1,46 @@
 #!/usr/bin/env xonsh
 
+import sys
 import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
 
-gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Slides.pdf *.pdf
+from rich.progress import track
+from rich.console import Console
+from PyPDF2 import PdfFileReader, PdfFileMerger
 
-print(u'\u2500' * os.get_terminal_size().columns)
+from utilities import get_mime, get_timestamp
+
+console = Console()
+console.rule("[bold cyan]Combining pdf....", style="cyan")
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	merger = PdfFileMerger()
+
+	for filename in track(allFiles, description="[bold cyan]Merging : [/bold cyan]"):
+
+		mimestart = get_mime(filename, 1)
+
+		if mimestart != None:			
+			if mimestart in ['pdf']:
+				merger.append(PdfFileReader(open(filename, 'rb')))
+
+	output_filename = "combined" + "_" + get_timestamp() + ".pdf"
+	merger.write(output_filename)
+
+	sound-play-success &
+
+else:
+	console.print(f"[bold red]No file selected...exiting.")
+	sound-play-fail &
+
+console.rule(style="cyan")
