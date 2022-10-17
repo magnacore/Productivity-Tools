@@ -21,7 +21,7 @@ for root, dirs, files in os.walk(root_dir):
     for name in files:    
         abs_path = os.path.abspath(os.path.join(root, name))
 
-        abs_path = abs_path.replace("/home/manuj/.password-store/otp/", "")
+        abs_path = abs_path.replace(f"{myhome}/.password-store/otp/", "")
         abs_path = abs_path.replace(".gpg", "")
 
         search_result.append(abs_path)
