@@ -1,7 +1,16 @@
 #!/usr/bin/env xonsh
 
+import sys
 import os
-from simple_term_menu import TerminalMenu
+from rich.console import Console
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+console = Console()
+
+from utilities import get_user_selection
+
 import pyperclip as pc
 
 root_dir = p"~/.password-store/otp/"
@@ -19,17 +28,14 @@ for root, dirs, files in os.walk(root_dir):
 
 search_result.sort()
 
-terminal_menu = TerminalMenu(search_result)
-menu_entry_index = terminal_menu.show()
-
-selection = search_result[menu_entry_index]
+selection = get_user_selection(search_result, "Which TOTP to copy?")
 
 topt = $(pass otp @(f"otp/{selection}"))
 
 pc.copy(topt)
 
-figlet -c -f banner @(f"{topt[:3]} {topt[3:]}")
+figlet -c -f big @(f"{topt[:3]} {topt[3:]}")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
