@@ -1,6 +1,5 @@
 #!/usr/bin/env xonsh
 
-from rich.progress import track
 from rich.console import Console
 from rich.progress import Progress
 from PyPDF2 import PdfFileReader, PdfFileWriter
