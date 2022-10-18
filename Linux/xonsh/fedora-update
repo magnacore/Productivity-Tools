@@ -64,6 +64,9 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     console.print(f"[bold cyan]Deleting __MACOSX directories...[/bold cyan]")
     find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
 
+    console.print(f"[bold cyan]Deleting .thumbnails directories...[/bold cyan]")
+    find $HOME/ -type d -iname ".thumbnails" -prune -exec rm -rf '{}' ';'
+
     sound-play-trash &
 
 else:
