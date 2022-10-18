@@ -1,11 +1,9 @@
 #!/usr/bin/env xonsh
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
 
-import os
+from rich.progress import track
+from rich.console import Console
+from rich.progress import Progress
 from PyPDF2 import PdfFileReader, PdfFileWriter
-from tqdm import tqdm
 
 import sys
 import os
@@ -14,12 +12,12 @@ sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_mime, get_filename_extension
 
+console = Console()
+
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False	
-elif len(sys.argv) == 2:
-	selection = False
-elif len(sys.argv) >= 3:
+selection = False
+
+if len(sys.argv) >= 3:
 	selection = True
 
 if selection:
@@ -27,45 +25,60 @@ if selection:
 	split_page = int(sys.argv[1])
 	allFiles.sort()
 
-	print(f"{cyan}Splitting PDFs to {split_page} pages each...{no_color}")
+	console.rule(f"[bold cyan]Splitting PDFs to {split_page} pages each...")
 
-	for fname in tqdm(allFiles):
 
-		mimestart = get_mime(fname, 1)
+	with Progress() as progress:
 
-		if mimestart != None:
-			
-			if mimestart in ['pdf']:
+		overall_progress = progress.add_task(f"[bold cyan]Splitting {len(allFiles)} PDF(s)...", total=len(allFiles))
 
-				file_name, _ = get_filename_extension(fname)
+		while not progress.finished:
 
-				pdf = PdfFileReader(fname)
+			for fname in allFiles:				
 
-				pdf_writer = PdfFileWriter()
+				mimestart = get_mime(fname, 1)
 
-				part = 1
+				if mimestart != None:
+					
+					if mimestart in ['pdf']:
 
-				total_pages = pdf.getNumPages()
+						file_name, _ = get_filename_extension(fname)
 
-				for page in tqdm(range(total_pages)):
-					pdf_writer.addPage(pdf.getPage(page))
-
-					# if pdf_writer contains split_page pages OR we are on the last page
-					if (pdf_writer.getNumPages() == split_page) or (page+1 == total_pages):
-
-						page_percent = int(((page + 1) / total_pages) * 100)
-
-						output_filename = f"{file_name}_part_{str(part).zfill(4)}_{str(page_percent).zfill(3)}pc.pdf"
-
-						with open(output_filename, 'wb') as out:
-							pdf_writer.write(out)
-							part += 1
+						pdf = PdfFileReader(fname)
 
 						pdf_writer = PdfFileWriter()
 
-	print(u'\u2500' * os.get_terminal_size().columns)
+						part = 1
+
+						total_pages = pdf.getNumPages()
+
+						individual_progress = progress.add_task(f"[bold cyan]Splitting {fname}: [/bold cyan]", total=total_pages)
+
+						for page in range(total_pages):
+							pdf_writer.addPage(pdf.getPage(page))
+							progress.update(individual_progress, advance=1)
+
+							# if pdf_writer contains split_page pages OR we are on the last page
+							if (pdf_writer.getNumPages() == split_page) or (page+1 == total_pages):
+
+								page_percent = int(((page + 1) / total_pages) * 100)
+
+								output_filename = f"{file_name}_part_{str(part).zfill(4)}_{str(page_percent).zfill(3)}pc.pdf"
+
+								with open(output_filename, 'wb') as out:
+									pdf_writer.write(out)
+									part += 1
+
+								pdf_writer = PdfFileWriter()
+						
+						progress.remove_task(individual_progress)
+
+				progress.update(overall_progress, advance=1)
+
 	sound-play-success &
 
 else:
-	print(f"{red}No file selected...exiting.{no_color}")
+	console.print(f"[bold red]No file selected...exiting.")
 	sound-play-fail &
+
+console.rule(style="cyan")
