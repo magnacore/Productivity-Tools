@@ -45,7 +45,7 @@ if selection:
 		mimestart = get_mime(fname)
 
 		if mimestart != None:
-			
+
 			if mimestart in ['text']:
 
 				file_contents = open(fname, "r").read()
@@ -53,17 +53,17 @@ if selection:
 
 				file_name, _ = get_filename_extension(fname)
 
-				part = 1				
+				part = 1
 
 				sent_text = nltk.sent_tokenize(file_contents) # this gives us a list of sentences
-				
+
 				buffer = ""
 
 				# now loop over each sentence
 				for sentence in sent_text:
 					buffer += sentence
 					buffer_size_kb = sys.getsizeof(buffer) / 1024.0
-					
+
 					if buffer_size_kb > split_after_kb:
 						new_filename = file_name + "_" + str(part).zfill(4) + ".txt"
 						output_file = open(new_filename, 'w')
