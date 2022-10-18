@@ -1,0 +1,81 @@
+#!/usr/bin/env xonsh
+
+from rich.progress import track
+from rich.console import Console
+import nltk
+import unicodedata
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_filename_extension, get_user_selection
+
+console = Console()
+
+split_choice = ['10', 'Custom']
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) >= 3:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[2:]
+	split_after_kb = int(sys.argv[1])
+	allFiles.sort()
+
+	choice = get_user_selection(split_choice, "Each part will contain how many kilobytes?")
+
+	if choice == '10':
+		split_after_kb = 10
+	elif choice == 'Custom':
+		split_after_kb = int(input("Each part will contain how many kilobytes? "))
+		if split_after_kb < 1:
+			split_after_kb = 10
+
+	console.rule(f"[bold cyan]Splitting Text to {split_after_kb} kbs each...")
+
+	nltk.download('punkt', download_dir=f"{myhome}/anaconda3/envs/xonsh/share/nltk_data")
+
+	for fname in track(allFiles, description="[bold cyan]Splitting : [/bold cyan]"):
+
+		mimestart = get_mime(fname)
+
+		if mimestart != None:
+			
+			if mimestart in ['text']:
+
+				file_contents = open(fname, "r").read()
+				file_contents = unicodedata.normalize('NFKD', file_contents).encode('ascii', 'ignore').decode("utf-8")
+
+				file_name, _ = get_filename_extension(fname)
+
+				part = 1				
+
+				sent_text = nltk.sent_tokenize(file_contents) # this gives us a list of sentences
+				
+				buffer = ""
+
+				# now loop over each sentence
+				for sentence in sent_text:
+					buffer += sentence
+					buffer_size_kb = sys.getsizeof(buffer) / 1024.0
+					
+					if buffer_size_kb > split_after_kb:
+						new_filename = file_name + "_" + str(part).zfill(4) + ".txt"
+						output_file = open(new_filename, 'w')
+						output_file.write(buffer)
+						output_file.close()
+						buffer = ""
+						part += 1
+
+	sound-play-success &
+
+else:
+	console.print(f"[bold red]No file selected...exiting.")
+	sound-play-fail &
+
+console.rule(style="cyan")

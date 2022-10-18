@@ -876,3 +876,22 @@ class pdf_combine(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class text_split(Command):
+    """:Text Split"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            split_after = self.rest(1)
+        else:
+            split_after = 10
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell text-split {split_after} %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################
