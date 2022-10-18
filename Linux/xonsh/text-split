@@ -64,7 +64,8 @@ if selection:
 					buffer += sentence
 					buffer_size_kb = sys.getsizeof(buffer) / 1024.0
 
-					if buffer_size_kb > split_after_kb:
+					# if buffer size is greater than write threashold or we are on the last sentense
+					if (buffer_size_kb > split_after_kb) or (sentence == sent_text[-1]):
 						new_filename = file_name + "_" + str(part).zfill(4) + ".txt"
 						output_file = open(new_filename, 'w')
 						output_file.write(buffer)
