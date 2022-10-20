@@ -5,10 +5,11 @@ from rich.console import Console
 console = Console()
 
 source = p"~/Backups/youtube.txt"
+destination = p"~/Downloads"
 
 console.rule(f"[bold cyan]Downloading Online Videos from {source}", style="cyan")
 
-$HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
+$HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
 
 console.rule(style="cyan")
 
