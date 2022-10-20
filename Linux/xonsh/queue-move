@@ -1,49 +1,49 @@
 #!/usr/bin/env xonsh
 
-import os
+from rich.console import Console
+console = Console()
 
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
+console.rule(f"[bold cyan]Queue Move...")
 
-print(f"{cyan}Moving Relax Passive Assorted...{no_color}")
+console.print(f"[bold cyan]Moving Relax Passive Assorted...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/A-RELAX PASSIVE ASSORTED")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE ASSORTED/")
 
-print(f"{cyan}Moving Audio Books...{no_color}")
+console.print(f"[bold cyan]Moving Audio Books...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE AUDIO BOOK")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE AUDIO BOOK/")
 
-print(f"{cyan}Moving Trading...{no_color}")
+console.print(f"[bold cyan]Moving Trading...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/C-STUDY PASSIVE TRADING")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE TRADING/")
 
-print(f"{cyan}Moving Data Science...{no_color}")
+console.print(f"[bold cyan]Moving Data Science...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/D-STUDY PASSIVE DATA SCIENCE")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE DATA SCIENCE/")
 
-print(f"{cyan}Moving Movies...{no_color}")
+console.print(f"[bold cyan]Moving Movies...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/E-RELAX PASSIVE MOVIES")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE MOVIES/")
 
-print(f"{cyan}Moving Games...{no_color}")
+console.print(f"[bold cyan]Moving Games...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/G-RELAX PASSIVE GAMES")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE GAMES/")
 
-print(f"{cyan}Moving Money...{no_color}")
+console.print(f"[bold cyan]Moving Money...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/M-RELAX PASSIVE LEARNING 01 MONEY FI")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/01 MONEY/")
 
-print(f"{cyan}Moving Learning Others...{no_color}")
+console.print(f"[bold cyan]Moving Learning Others...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/O-RELAX PASSIVE LEARNING 04 OTHERS")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/04 OTHERS/")
 
-print(f"{cyan}Moving Study Passive Assorted...{no_color}")
+console.print(f"[bold cyan]Moving Study Passive Assorted...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/P-STUDY PASSIVE ASSORTED")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE ASSORTED/")
 
-print(f"{cyan}Moving AR...{no_color}")
+console.print(f"[bold cyan]Moving AR...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/R-RELAX PASSIVE LEARNING 03 AR")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/03 AR/")
 
-print(f"{cyan}Moving Sports...{no_color}")
+console.print(f"[bold cyan]Moving Sports...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/U-RELAX PASSIVE SPORTS")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE SPORTS/")
 
-print(f"{cyan}Moving Health...{no_color}")
+console.print(f"[bold cyan]Moving Health...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/V-RELAX PASSIVE LEARNING 02 HEALTH VEGAN LE")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/02 HEALTH VEGAN LE/")
 
-print(f"{cyan}Moving Crypto...{no_color}")
+console.print(f"[bold cyan]Moving Crypto...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/K-STUDY PASSIVE CRYPTO")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE CRYPTO/")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
