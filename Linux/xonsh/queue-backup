@@ -1,11 +1,14 @@
 #!/usr/bin/env xonsh
 
-import os
+from rich.console import Console
+console = Console()
+
+console.rule(f"[bold cyan]Backing up queue...")
 
 rsync --delete --progress -vahi /run/media/$USER/QUEUE/QUEUE/ /run/media/$USER/Q_BACKUP/QUEUE_BACKUP/
 
 date > ~/Software/logs/queue-backup.txt
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
