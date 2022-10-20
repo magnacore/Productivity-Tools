@@ -3,5 +3,3 @@
 source ~/.xonshrc
 
 ~/Software/ranger-master/ranger.py
-
-# $USER can be used to get the username
