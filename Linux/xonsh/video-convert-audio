@@ -1,19 +1,22 @@
 #!/usr/bin/env xonsh
+
 # mka container is used because not every video
 # has opus audio. ogg container only supports opus
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
 
-import os
-import glob
-from tqdm import tqdm
+from rich.console import Console
+from rich.progress import track
+from rich import print
 
 import sys
 import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension
+from utilities import get_mime, get_filename_extension, get_user_selection
+
+console = Console()
+
+console.rule(f"[bold cyan]Extracting audio form video...", style="cyan")
 
 # sys.argv[0] is the name of the script which will always be there
 if len(sys.argv) == 1: # No arguments passed
@@ -25,17 +28,32 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	print(f"{cyan}Extracting audio form video...{no_color}")
+	delete_original = ["No", "Yes"]
 
-	for file in tqdm(allFiles):
+	console.print(f"[bold cyan]Delete Original Media?")
+	delete_choice = get_user_selection(delete_original)
+
+	for file in track(allFiles, description="[bold cyan]Extracting : [/bold cyan]"):
 		mimestart = get_mime(file)
 
 		if mimestart != None:
 			if mimestart in ['video']:
 				filename, _ = get_filename_extension(file)
 				filename = filename +'.mka'
-				ffmpeg -i @(file) -n -vn -hide_banner -loglevel error -acodec copy @(filename)
-
-	print(u'\u2500' * os.get_terminal_size().columns)
+				if !(ffmpeg -i @(file) -n -vn -hide_banner -loglevel error -acodec copy @(filename)):
+					print(f"[bold green] Extracted: {file}")
+					
+					if delete_choice == "Yes":
+						trash-put @(file)
+					else:
+						mkdir -p ./Original_Media
+						mv @(file) ./Original_Media/
+				else:
+					print(f"[bold red] Unable to extract: {file}")
 
 	sound-play-success &
+else:
+	console.print("No files selected!", style="bold red")
+	sound-play-fail &
+
+console.rule(style="cyan")
