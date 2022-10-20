@@ -1,20 +1,21 @@
 #!/usr/bin/env xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
 
-import os
+from rich.console import Console
+console = Console()
 
-print(f"{cyan}Deleting previous snapshot...{no_color}")
+console.rule(f"[bold cyan]Backup Sawy Drive...")
+
+console.print(f"[bold cyan]Deleting previous snapshot...")
 sudo btrfs subvolume delete /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
 
-print(f"{cyan}Creating a new read only snapshot...{no_color}")
+console.print(f"[bold cyan]Creating a new read only snapshot...")
 sudo btrfs subvolume snapshot -r /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
 
-print(f"{cyan}Synchronizing...{no_color}")
+console.print(f"[bold cyan]Synchronizing...")
 rsync --delete --progress -vahi /run/media/$USER/SAWY_01_A/SAWY/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
 
 date > ~/Software/logs/sawy-backup.txt
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
