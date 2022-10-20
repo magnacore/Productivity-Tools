@@ -28,9 +28,9 @@ if selection:
     # https://github.com/xonsh/xonsh/issues/1307
     # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
 
-    sound-play-success &
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
     console.print("No files selected!", style="bold red")
-    sound-play-fail &
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 console.rule(style="cyan")

@@ -57,13 +57,13 @@ if selection:
 						trash-put @(image)
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
-						sound-play-fail &
+						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 				elif extension == ".gif":
 					if !(gif2webp -metadata all -quiet @(image) -o @(new_filename)):
 						trash-put @(image)
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
-						sound-play-fail &
+						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 				elif extension == ".webp" and resize_dimension == 0:
 						print(f"[bold red]Skipping converting webp to webp with no change in dimension.[/bold red]")
 				else:
@@ -71,11 +71,11 @@ if selection:
 						trash-put @(image)
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
-						sound-play-fail &
+						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
-	sound-play-success &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
 	console.print("No files selected!", style="bold red")
-	sound-play-fail &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 console.rule(style="cyan")

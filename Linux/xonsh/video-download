@@ -13,4 +13,4 @@ $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvide
 
 console.rule(style="cyan")
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

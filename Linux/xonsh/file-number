@@ -27,9 +27,9 @@ if selection:
 		os.rename(file, new_filename)
 		start_number += 1
 
-	sound-play-success &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
-	sound-play-fail &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 	console.print(f"[bold red]No file selected!")
 
 console.rule(style="cyan")

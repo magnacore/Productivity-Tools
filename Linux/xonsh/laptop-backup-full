@@ -36,10 +36,10 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
 
     sudo btrfs filesystem show
     
-    sound-play-success &
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 
 else:
     console.print(f"[bold red]Something went wrong. Could not mount.")
-    sound-play-fail &
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 console.rule(style="cyan")

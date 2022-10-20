@@ -37,4 +37,4 @@ rm ffmpeg2pass-0.log
 
 print(u'\u2500' * os.get_terminal_size().columns)
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

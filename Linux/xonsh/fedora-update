@@ -67,7 +67,7 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     console.print(f"[bold cyan]Deleting .thumbnails directories...[/bold cyan]")
     find $HOME/ -type d -iname ".thumbnails" -prune -exec rm -rf '{}' ';'
 
-    sound-play-trash &
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Emptied.ogg &
 
 else:
     console.print(f"[bold green]Skipping cleanup.[/bold green]")
@@ -79,4 +79,4 @@ hdd-size
 
 date > ~/Software/logs/system-update.txt
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

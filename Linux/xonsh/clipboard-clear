@@ -2,4 +2,4 @@
 clear
 greenclip clear
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

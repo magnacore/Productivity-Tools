@@ -18,4 +18,4 @@ date > ~/Software/logs/sawy-backup.txt
 
 console.rule(style="cyan")
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

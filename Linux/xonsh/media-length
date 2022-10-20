@@ -52,4 +52,4 @@ console.print(table)
 
 console.rule(style="cyan")
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

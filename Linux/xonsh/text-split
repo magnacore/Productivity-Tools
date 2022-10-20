@@ -75,10 +75,10 @@ if selection:
 						buffer = ""
 						part += 1
 
-	sound-play-success &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 
 else:
 	console.print(f"[bold red]No file selected...exiting.")
-	sound-play-fail &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 console.rule(style="cyan")

@@ -1,5 +1,0 @@
-#!/usr/bin/env xonsh
-
-from playsound import playsound
-
-playsound(p"~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")

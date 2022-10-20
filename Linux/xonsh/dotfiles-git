@@ -57,4 +57,4 @@ console.print(f"[bold cyan]Done.[/bold cyan]")
 
 console.rule(style="cyan")
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

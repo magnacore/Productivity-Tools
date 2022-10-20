@@ -23,9 +23,9 @@ if selection:
 
 	~/anaconda3/envs/util/bin/pycp -gip @(allFiles) @(target_dir)
 
-	sound-play-success &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
-	sound-play-fail &
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 	console.print(f"[bold red]No file selected!")
 
 console.rule(style="cyan")

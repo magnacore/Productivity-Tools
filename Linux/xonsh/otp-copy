@@ -38,4 +38,4 @@ figlet -c -f big @(f"{topt[:3]} {topt[3:]}")
 
 console.rule(style="cyan")
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

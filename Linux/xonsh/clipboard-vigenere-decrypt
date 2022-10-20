@@ -33,4 +33,4 @@ console.print(f"Copied: Vigenere decryption of [bold cyan]{clipboard_content}[/b
 
 console.rule(style="cyan")
 
-sound-play-success &
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
