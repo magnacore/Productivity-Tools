@@ -16,14 +16,12 @@ def walklevel(some_dir, level=1):
             del dirs[:]
 
 for root, subdirs, files in walklevel(walk_dir):
-
 	for subdir in subdirs:
 		if(subdir[0].isdigit() and not subdir[1].isdigit()):
 			new_directory_name = "00" + subdir
 			source = os.path.join(root, subdir)
 			destination = os.path.join(root, new_directory_name)
 			os.rename(source, destination)
-
 
 		if(subdir[0].isdigit() and subdir[1].isdigit()):
 			new_directory_name = "0" + subdir
@@ -46,5 +44,3 @@ for root, subdirs, files in walklevel(walk_dir):
 		os.rename(source, destination)
 
 	i += 1
-
-#!/home/manuj/anaconda3/bin/python3
