@@ -1,23 +1,30 @@
 #!/usr/bin/env xonsh
-cyan = '\x1b[1;36m'
-no_color = '\x1b[0m'
 
-import os
 import glob
-from tqdm import tqdm
 
-# target_path = p"~/NA/*.*"
+import sys
+import os
+myhome = os.path.expanduser('~')
 
-allFiles = glob.glob("/home/manuj/NA/*.*")
+from rich.console import Console
+from rich.progress import track
 
-print(f"{cyan}Renaming Files...{no_color}")
-for file in tqdm(allFiles):
+console = Console()
+
+console.rule(f"[bold cyan]Moving videos...", style="cyan")
+
+move_from_path = f"{myhome}/Downloads/NA"
+
+allFiles = glob.glob(f"{move_from_path}/*")
+
+console.print(f"[bold cyan]Renaming Files...")
+for file in track(allFiles, description="[bold cyan]Renaming : [/bold cyan]"):
 	new_filename = file.replace("NA - ", "")
 	os.rename(file,new_filename)
 
-print(f"{cyan}Moving Files...{no_color}")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/NA")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+console.print(f"[bold cyan]Moving Files...")
+~/anaconda3/envs/util/bin/pymv -gip @(move_from_path)/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
