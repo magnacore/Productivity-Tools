@@ -44,7 +44,8 @@ if selection:
 	bitrate = int(sys.argv[1])
 	allFiles.sort()
 
-	choice = get_user_selection(convert_to, "Select a use case: ")
+	console.print(f"[bold cyan]Select a use case: ")
+	choice = get_user_selection(convert_to)
 
 	codec = "libopus"
 	new_extension = ".opus"
@@ -76,6 +77,11 @@ if selection:
 
 	clean_file_names = set_valid_file_names(allFiles)
 
+	delete_original = ["No", "Yes"]
+
+	console.print(f"[bold cyan]Delete Original Media?")
+	delete_choice = get_user_selection(delete_original)
+
 	for file in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(file)
 
@@ -91,6 +97,13 @@ if selection:
 				else:
 					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -vbr on f"{filename}"):
 						print(f"[green]Converted {file} to {filename}")
+						
+						if delete_choice == "Yes":
+							trash-put @(file)
+						else:
+							mkdir -p ./Original_Media
+							mv @(file) ./Original_Media/
+
 					else:
 						print(f"[bold red]Unable to convert {file}[/bold red]")
 						sound-play-fail &
