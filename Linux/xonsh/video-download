@@ -1,9 +1,15 @@
 #!/usr/bin/env xonsh
 
-import os
+from rich.console import Console
 
-$HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a ~/Backups/youtube.txt
+console = Console()
 
-print(u'\u2500' * os.get_terminal_size().columns)
+source = p"~/Backups/youtube.txt"
+
+console.rule(f"[bold cyan]Downloading Online Videos from {source}", style="cyan")
+
+$HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
+
+console.rule(style="cyan")
 
 sound-play-success &
