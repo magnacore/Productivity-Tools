@@ -1,11 +1,14 @@
 #!/usr/bin/env xonsh
 
-import os
+from rich.console import Console
+console = Console()
+
+console.rule(f"[bold cyan]Backup Tutorials...")
 
 rsync --delete --progress -vahi /run/media/$USER/LEARNING/ /run/media/$USER/TutsBackup/BACKUP/
 
 date > ~/Software/logs/tutorials-backup.txt
 
-print(u'\u2500' * os.get_terminal_size().columns)
+console.rule(style="cyan")
 
 sound-play-success &
