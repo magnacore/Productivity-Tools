@@ -304,6 +304,7 @@ def start_once():
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
         f"{myhome}/.local/bin/greenclip daemon".split(),
+        f"{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 
     for p in processes:
