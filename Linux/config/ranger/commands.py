@@ -895,3 +895,15 @@ class text_split(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class image_combine_pdf(Command):
+    """:Combine images into pdf files"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell image-combine-pdf %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################

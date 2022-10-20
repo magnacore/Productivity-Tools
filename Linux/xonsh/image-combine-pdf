@@ -1,0 +1,52 @@
+#!/usr/bin/env xonsh
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from rich.progress import track
+from rich.console import Console
+from PIL import Image
+
+from utilities import get_mime, get_timestamp
+
+console = Console()
+console.rule("[bold cyan]Combining images to pdf....", style="cyan")
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	#merger = PdfFileMerger()
+	#pdf_writer = PdfFileWriter()
+
+	image_list = []
+
+	for filename in track(allFiles, description="[bold cyan]Converting : [/bold cyan]"):
+
+		mimestart = get_mime(filename)
+
+		if mimestart != None:			
+			if mimestart in ['image']:
+				# opening image
+				image = Image.open(filename).convert('RGB')
+
+				image_list.append(image)
+
+	output_filename = "combined" + "_" + get_timestamp() + ".pdf"
+	image_list[0].save(output_filename, save_all=True, append_images=image_list[1:])
+
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+
+else:
+	console.print(f"[bold red]No file selected...exiting.")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
