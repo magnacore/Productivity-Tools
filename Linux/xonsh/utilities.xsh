@@ -61,7 +61,6 @@ def get_timestamp():
 
 def get_valid_filename(value, allow_unicode=False):
 	"""
-	Taken from https://github.com/django/django/blob/master/django/utils/text.py
 	Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
 	dashes to single dashes. Remove characters that aren't alphanumerics,
 	underscores, or hyphens. Convert to lowercase. Also strip leading and
@@ -69,6 +68,7 @@ def get_valid_filename(value, allow_unicode=False):
 	"""
 	import unicodedata
 	import re
+	import time
 
 	value = str(value)
 
@@ -84,7 +84,17 @@ def get_valid_filename(value, allow_unicode=False):
 	# use value.lower() below to convert all characters to lowercase
 	# because Windoze is case insensitive. This is to prevent file overwrite.
 	value = re.sub(r"[^\w\s-]", "", value.lower())
-	return re.sub(r"[-\s]+", "-", value).strip("-_")
+	clean_filename = re.sub(r"[-\s]+", "-", value).strip("-_")
+
+	filename, extension = get_filename_extension(clean_filename)
+
+	if filename == "":
+		filename = get_timestamp()
+		clean_filename = filename + extension
+		time.sleep(1)
+		return clean_filename
+	else:
+		return clean_filename
 
 def set_valid_file_names(filenames):
 	import ast
