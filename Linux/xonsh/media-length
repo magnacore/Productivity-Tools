@@ -13,6 +13,7 @@ from rich.progress import track
 from rich import print
 from rich.text import Text
 from rich import box
+from rich.markdown import Markdown
 
 from utilities import get_mime, get_duration
 
@@ -41,7 +42,7 @@ for file in track(allFiles, description="[bold cyan]Adding : [/bold cyan]"):
 		else:
 			print(f"[yellow]Skipping {file}[/yellow]")
 
-# table.add_row(Markdown("---"), Markdown("---"))
+table.add_row(u'\u2500' * 8, Markdown("---"))
 table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
 table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}",	Text.from_markup("[bold green]Total media duration @1.5x", justify="left"))
 table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}",	Text.from_markup("[bold green]Total media duration @1.65x", justify="left"))
