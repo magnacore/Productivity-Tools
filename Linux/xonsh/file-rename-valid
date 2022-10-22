@@ -31,16 +31,16 @@ if selection:
 
 		clean_file_name = ""
 
-		# We are dealing with folder if extention is null
+		# We are dealing with folder if extension is null
 		if extension == "":
-			if valid_file_name == "":			
+			if valid_file_name == "":
 				time_stamp = get_timestamp()
 				clean_file_name = time_stamp
 				time.sleep(1)
 			else:
 				clean_file_name = valid_file_name
 		else: # We are dealing with files
-			if valid_file_name == "":			
+			if valid_file_name == "":
 				time_stamp = get_timestamp()
 				clean_file_name = f"{time_stamp}.{valid_extension}"
 				time.sleep(1)
@@ -50,7 +50,7 @@ if selection:
 				time.sleep(1)
 			else:
 				clean_file_name = f"{valid_file_name}.{valid_extension}"
-			
+
 			clean_file_name = clean_file_name.replace("tar.", ".tar.")
 
 		file_list.append(clean_file_name)
