@@ -1,6 +1,12 @@
 #!/usr/bin/env xonsh
 
 from rich.console import Console
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_user_selection
 
 console = Console()
 
@@ -9,7 +15,14 @@ destination = p"~/Downloads"
 
 console.rule(f"[bold cyan]Downloading Online Videos from {source}", style="cyan")
 
-$HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
+download_from = ['YouTube', 'Other']
+
+choice = get_user_selection(download_from)
+
+if choice == 'YouTube':
+    $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
+else:
+    $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite -a @(source)
 
 console.rule(style="cyan")
 
