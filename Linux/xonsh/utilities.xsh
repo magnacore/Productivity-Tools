@@ -68,7 +68,6 @@ def get_valid_filename(value, allow_unicode=False):
 	"""
 	import unicodedata
 	import re
-	import time
 
 	value = str(value)
 
@@ -84,17 +83,7 @@ def get_valid_filename(value, allow_unicode=False):
 	# use value.lower() below to convert all characters to lowercase
 	# because Windoze is case insensitive. This is to prevent file overwrite.
 	value = re.sub(r"[^\w\s-]", "", value.lower())
-	clean_filename = re.sub(r"[-\s]+", "-", value).strip("-_")
-
-	filename, extension = get_filename_extension(clean_filename)
-
-	if filename == "":
-		filename = get_timestamp()
-		clean_filename = filename + extension
-		time.sleep(1)
-		return clean_filename
-	else:
-		return clean_filename
+	return re.sub(r"[-\s]+", "-", value).strip("-_")
 
 def set_valid_file_names(filenames):
 	import ast
