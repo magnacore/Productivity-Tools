@@ -151,12 +151,14 @@ conda install -c conda-forge go
 =====================================================================
 
 Go to respective environments and install
-pip install qtile
 
-There was an error in installing qtile, it was solved using:
+QTILE:
 The pip cache is cleared (remove ~/.cache/pip, if it exists)
-pip uninstall cairocffi
-pip install --no-cache-dir cairocffi[xcb]
+pip install --no-cache-dir xcffib
+pip install --no-cache-dir cairocffi
+pip install --no-cache-dir qtile
+
+https://github.com/qtile/qtile/issues/994
 
 ===
 
