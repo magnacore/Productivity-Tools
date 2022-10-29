@@ -18,6 +18,7 @@ mod2 = "control"
 mod3 = "shift"
 
 # terminal = guess_terminal()
+# myTerm = "xfce4-terminal"	# My terminal of choice
 myTerm = "alacritty"	# My terminal of choice
 myBrowser = "firefox"	# My browser of choice
 
