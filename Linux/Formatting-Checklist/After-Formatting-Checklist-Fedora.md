@@ -246,6 +246,7 @@ sudo dnf install figlet
 sudo dnf install vagrant
 sudo dnf install cpu-x
 sudo dnf install lzip
+sudo dnf install tango-icon-theme tango-icon-theme-extras
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
