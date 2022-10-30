@@ -35,8 +35,15 @@ class ChoosePartition:
 
     def _read_partitions(self):
         r = subprocess.check_output(['lsblk', '--all', '--json', '-O'])
-        self.blkinfo = json.loads(r)
+        r = r.decode().replace('0B,', '\"0B\",')
+        self.blkinfo = json.loads(r.encode())
         partn = 0
+        # filter for devices with children, none other are used by this script
+        # (this is not entirely correct, but goes beyond these lines)
+        self.blkinfo['blockdevices'] = [
+            bd
+            for bd in self.blkinfo['blockdevices']
+                if 'children' in bd]
         for bd in self.blkinfo['blockdevices']:
             if 'children' not in bd:
                 continue
@@ -154,7 +161,7 @@ class ChoosePartition:
         if blk is None:
             return
         for part in blk['children']:
-            self.unmount(part['path'])
+            self.unmount(part)
 
     def select(self):
         sel = None
@@ -179,15 +186,15 @@ class ChoosePartition:
             elif x == ord('m'):
                 sel = self._get_part_by_partn()
                 if sel is not None:
-                    self.mount(sel['path'])
+                    self.mount(sel)
             elif x == ord('u'):
                 sel = self._get_part_by_partn()
                 if sel is not None:
-                    self.unmount(sel['path'])
+                    self.unmount(sel)
             elif x == ord('p'):
                 sel_drive = self._get_drive_by_partn()
                 if sel_drive is not None:
-                    self.poweroff(sel_drive['path'])
+                    self.poweroff(sel_drive)
             elif x == ord('g') or x == ord('r'):
                 self._read_partitions()
         curses.endwin()
@@ -207,14 +214,22 @@ class ChoosePartition:
             self.message = cmd + " error: " + r + str(e)
         self._read_partitions()
 
+    def get_drive_path(self, drive):
+        if 'path' not in drive:
+            drive['path'] = '/dev/' + drive['kname']
+        return drive['path']
+
     def unmount(self, dev):
-        self._udisk_mount_unmount("unmount", dev)
+        p = self.get_drive_path(dev)
+        self._udisk_mount_unmount("unmount", p)
 
     def poweroff(self, dev):
-        self._udisk_mount_unmount("power-off", dev)
+        p = self.get_drive_path(dev)
+        self._udisk_mount_unmount("power-off", p)
 
     def mount(self, dev):
-        self._udisk_mount_unmount("mount", dev)
+        p = self.get_drive_path(dev)
+        self._udisk_mount_unmount("mount", p)
 
 
 if __name__ == "__main__":
