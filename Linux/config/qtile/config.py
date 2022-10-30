@@ -99,7 +99,6 @@ groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "Ghb"
           Group("8", layout='bsp'),
           Group("9", layout='bsp'),
           Group("0", layout='floating')]
-# groups = [Group(i) for i in "123456789"]
 
 for i in groups:
     keys.extend([
