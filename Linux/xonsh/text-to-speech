@@ -1,0 +1,76 @@
+#!/usr/bin/env xonsh
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from google.cloud import texttospeech as tts
+
+from utilities import get_mime, get_filename_extension, get_user_selection
+
+from rich.console import Console
+from rich import print
+from rich.progress import track
+
+console = Console()
+
+private_key = f"{myhome}/Documents/SENSITIVE DATA/text-to-speech-367207-50e24eed4df0.json"
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
+
+def text_to_audio(voice_name: str, text: str):
+    language_code = "-".join(voice_name.split("-")[:2])
+    text_input = tts.SynthesisInput(text=text)
+    voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
+    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS)
+
+    client = tts.TextToSpeechClient()
+    response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+
+    return response.audio_content
+
+
+# https://cloud.google.com/text-to-speech/docs/voices
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1: # No arguments passed
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	console.rule(f"[bold cyan]Converting text to speech...", style="cyan")
+
+	choice = get_user_selection(["Female", "Male"])
+	voice = "en-US-Wavenet-F"
+
+	if choice == "Male":
+		voice = "en-US-Wavenet-D"
+
+	for file in track(allFiles, description="[bold cyan]TTS : [/bold cyan]"):
+		mimestart = get_mime(file)
+
+		if mimestart != None:
+			if mimestart in ['text']:
+				filename, _ = get_filename_extension(file)
+                output_filename = f"{filename}.opus"
+
+                # open the file
+                contents = open(file,"r")
+               
+                with open(output_filename, "wb") as out:
+                    out.write(text_to_audio(voice, contents.read()))
+                    print(f"[bold green]{output_filename} created.")
+
+                contents.close()
+	
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+	console.print("No files selected!", style="bold red")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")

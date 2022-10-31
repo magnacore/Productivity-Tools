@@ -907,3 +907,23 @@ class image_combine_pdf(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class text_to_speech(Command):
+    """
+    :text_to_speech
+    Converts text to speech using Google
+    If only one file is highlighted, it will be treated as a single selection
+    """
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+        else:
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell text-to-speech %s")
+            self.fm.change_mode("normal")
+
+###############################################################################
