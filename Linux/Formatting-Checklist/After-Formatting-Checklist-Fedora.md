@@ -224,10 +224,12 @@ sudo dnf install obs-studio
 sudo dnf install calibre (ranger will use this so we do not use flatpak)
 sudo dnf install ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
 sudo dnf install rofi
-sudo dnf install eosrei-emojione-fonts xdotool xsel
+sudo dnf install eosrei-emojione-fonts (optional)
+sudo dnf install xdotool xsel
 sudo dnf install cmus
 sudo dnf install sxiv
-sudo dnf install zathura zathura-pdf-mupdf zathura-pdf-poppler zathura-djvu
+sudo dnf install zathura zathura-pdf-poppler zathura-djvu
+sudo dnf install zathura-pdf-mupdf (optional)
 sudo dnf install neovim
 sudo dnf install calcurse
 sudo dnf install git
