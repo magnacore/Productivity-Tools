@@ -63,9 +63,9 @@ keys = [
 	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
 	
 	# My shortcuts
-	Key([mod], "t", lazy.spawn(myTerm+f" -e {myhome}/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
+	Key([mod], "t", lazy.spawn(myTerm+f" --initial-title 'xfce4-terminal' -e {myhome}/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
     Key([mod, "shift"], "v", lazy.spawn(f"bash {myhome}/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
-    Key([mod], "Return", lazy.spawn(myTerm+f" -e '{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open'"), desc="Launch Ranger"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open'"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
