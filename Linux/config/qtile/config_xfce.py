@@ -99,17 +99,24 @@ groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "Ghb"
           Group("9", layout='bsp'),
           Group("0", layout='floating')]
 
+def toscreen(qtile, group_name):
+    if group_name  == qtile.current_screen.group.name:
+        qtile.current_screen.set_group(qtile.current_screen.previous_group)
+    else:
+        for i in range(len(qtile.groups)):
+            if group_name == qtile.groups[i].name:
+                qtile.current_screen.set_group(qtile.groups[i])
+                break
+
 for i in groups:
     keys.extend([
         # mod1 + letter of group = switch to group
-        Key([mod], i.name, lazy.group[i.name].toscreen(), desc="Switch to group {}".format(i.name)),
+        #Key([mod], i.name, lazy.group[i.name].toscreen()),
+        # switch to group with ability to go to prevous group if pressed again
+        Key([mod], i.name, lazy.function(toscreen, i.name)),
 
         # mod1 + shift + letter of group = switch to & move focused window to group
-        Key([mod, "shift"], i.name, lazy.window.togroup(i.name, switch_group=True), desc="Switch to & move focused window to group {}".format(i.name)),
-        # Or, use below if you prefer not to switch to that group.
-        # # mod1 + shift + letter of group = move focused window to group
-        # Key([mod, "shift"], i.name, lazy.window.togroup(i.name),
-        #     desc="move focused window to group {}".format(i.name)),
+        Key([mod, "shift"], i.name, lazy.window.togroup(i.name)),
     ])
 
 layout_theme = {"border_width": 2, # Window lighlight width
