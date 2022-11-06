@@ -97,3 +97,12 @@ def get_user_selection(options, title = "Make a choice: "):
 	terminal_menu = TerminalMenu(options, title=title)
 	menu_entry_index = terminal_menu.show()
 	return options[menu_entry_index]
+
+def get_password_entropy(password_length, pool_size = 92):
+	import math
+
+	entropy = math.log(pool_size ** password_length, 2)
+
+	brute_force_attempts = 2**(entropy-1)
+
+	return entropy, brute_force_attempts
