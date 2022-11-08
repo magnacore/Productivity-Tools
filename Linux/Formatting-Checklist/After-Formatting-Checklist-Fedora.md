@@ -370,6 +370,8 @@ conda install -c conda-forge pyperclip
 
 conda install -c conda-forge libwebp
 
+/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
+
 ===
 
 # qtile
