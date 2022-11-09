@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 import argparse
 import math
-import sys
-
-try:
-    from terminaltables import AsciiTable
-except:
-    print("You need the terminaltables module to run this script. Install with pip:")
-    print("pip install terminaltables")
-    sys.exit()
-
 
 def seconds_to_printable(seconds):
     seconds = math.floor(seconds)
@@ -69,28 +60,17 @@ def main():
     print("")
 
     # Build the passphrase strength table
-    row_num_words = ["Number of words"]
-    row_entropy = ["Entropy"]
-    row_time = ["Average time"]
     for num_words in range(1, passphrase_size + 1):
         if num_words == passphrase_size:
             entropy = num_words * entropy_per_word
             total_keyspace = wordlist_size ** num_words
             time_seconds = total_keyspace / total_aws_guesses_per_second
-            avg_time_seconds = (
-                time_seconds / 2
-            )  # attacks have to search half the keyspace on average
+            # attacks have to search half the keyspace on average
+            avg_time_seconds = (time_seconds / 2)
 
-            row_num_words.append("{0}".format(num_words))
-            row_entropy.append("{0:.1f}".format(num_words * entropy_per_word))
-            row_time.append(seconds_to_printable(avg_time_seconds))
-
-    table_data = [row_num_words, row_entropy, row_time]
-    table = AsciiTable(table_data)
-
-    print("Passphrase strength table:")
-    print(table.table)
-
+            print("Number of words: {0}".format(num_words))
+            print("Entropy: {0:.1f}".format(num_words * entropy_per_word))
+            print(f"Average time: {seconds_to_printable(avg_time_seconds)}")
 
 if __name__ == "__main__":
     main()
