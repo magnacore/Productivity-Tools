@@ -48,29 +48,21 @@ def main():
     total_aws_guesses_per_second = (aws_guesses_per_second_per_instance * total_aws_instances)
 
     # Display these details
-    print("Number of words: {}".format(wordlist_size))
-    print("Entropy per word: {}".format(entropy_per_word))
-    print(
-        "Each AWS instance has this many guesses per second: {}".format(
-            aws_guesses_per_second_per_instance
-        )
-    )
-    print("Attacker can afford this many AWS instances: {}".format(total_aws_instances))
-    print("Attacker's total guesses per second: {}".format(total_aws_guesses_per_second))
+    print(f"Number of words: {wordlist_size}")
+    print(f"Entropy per word: {entropy_per_word}")
+    print(f"Each AWS instance has these many guesses per second: {aws_guesses_per_second_per_instance}")
+    print(f"Attacker can afford this many AWS instances: {total_aws_instances}")
+    print(f"Attacker's total guesses per second: {total_aws_guesses_per_second}")
     print("")
 
-    # Build the passphrase strength table
-    for num_words in range(1, passphrase_size + 1):
-        if num_words == passphrase_size:
-            entropy = num_words * entropy_per_word
-            total_keyspace = wordlist_size ** num_words
-            time_seconds = total_keyspace / total_aws_guesses_per_second
-            # attacks have to search half the keyspace on average
-            avg_time_seconds = (time_seconds / 2)
+    total_keyspace = wordlist_size ** passphrase_size
+    time_seconds = total_keyspace / total_aws_guesses_per_second
+    # attacks have to search half the keyspace on average
+    avg_time_seconds = (time_seconds / 2)
 
-            print("Number of words: {0}".format(num_words))
-            print("Entropy: {0:.1f}".format(num_words * entropy_per_word))
-            print(f"Average time: {seconds_to_printable(avg_time_seconds)}")
+    print(f"Number of words: {passphrase_size}")
+    print(f"Entropy: {round(passphrase_size * entropy_per_word, 1)}")
+    print(f"Average time to brute force: {seconds_to_printable(avg_time_seconds)}")
 
 if __name__ == "__main__":
     main()
