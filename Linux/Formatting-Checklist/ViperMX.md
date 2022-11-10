@@ -97,6 +97,9 @@ nms and dragon need to be recompiled
 /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by ./nms)` for nms and dragon
 ueberzug, which was installed using "make install"
 
+zoxide version is too old
+greenclip demon is hardcoded to manuj
+
 =====================================================================
 
 # APT
