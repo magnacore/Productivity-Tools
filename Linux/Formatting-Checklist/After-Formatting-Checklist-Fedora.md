@@ -397,7 +397,7 @@ pip install isort
 /home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate
 /home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
 /home/manuj/anaconda3/envs/xonsh/bin/pip install nltk
-pip install terminaltables
+num2words
 
 =====================================================================
 

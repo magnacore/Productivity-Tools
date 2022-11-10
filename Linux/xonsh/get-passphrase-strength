@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import math
+from num2words import num2words
 
 def seconds_to_printable(seconds):
     seconds = math.floor(seconds)
@@ -11,23 +12,15 @@ def seconds_to_printable(seconds):
     years = days // 365
 
     if years == 0 and days == 0 and hours == 0 and minutes == 0:
-        return "{0} s".format(seconds)
+        return f"{num2words(seconds)} seconds"
     elif years == 0 and days == 0 and hours == 0:
-        return "{0} m".format(minutes)
+        return f"{num2words(minutes)} minutes"
     elif years == 0 and days == 0:
-        return "{0} h".format(hours)
+        return f"{num2words(hours)} hours"
     elif years == 0:
-        return "{0} d".format(days)
-    elif years < 1000:
-        return "{0} y".format(years)
-    elif years < 1000000:
-        return "{0:.1f}k y".format(years / 1000)
-    elif years < 1000000000:
-        return "{0}M y".format(math.floor(years / 1000000))
-    elif years < 1000000000000:
-        return "{0}B y".format(math.floor(years / 1000000000))
+        return f"{num2words(days)} days"
     else:
-        return "{0:.2e} y".format(years)
+        return f"{num2words(years)} years"
 
 
 def main():
@@ -50,9 +43,9 @@ def main():
     # Display these details
     print(f"Number of words: {wordlist_size}")
     print(f"Entropy per word: {entropy_per_word}")
-    print(f"Each AWS instance has these many guesses per second: {aws_guesses_per_second_per_instance}")
-    print(f"Attacker can afford this many AWS instances: {total_aws_instances}")
-    print(f"Attacker's total guesses per second: {total_aws_guesses_per_second}")
+    print(f"Each AWS instance has these many guesses per second: {num2words(aws_guesses_per_second_per_instance)}")
+    print(f"Attacker can afford this many AWS instances: {num2words(total_aws_instances)}")
+    print(f"Attacker's total guesses per second: {num2words(total_aws_guesses_per_second)}")
     print("")
 
     total_keyspace = wordlist_size ** passphrase_size
