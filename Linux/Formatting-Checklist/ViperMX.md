@@ -98,7 +98,6 @@ nms and dragon need to be recompiled
 ueberzug, which was installed using "make install"
 
 zoxide version is too old
-greenclip demon is hardcoded to manuj
 
 =====================================================================
 
