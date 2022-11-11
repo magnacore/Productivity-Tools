@@ -356,3 +356,16 @@ disable hidden files in thunar config
 - create a script that will move all the files to the right folder
 - set the correct permissions automatically
 - Cleanup everything after install
+
+
+
+======
+
+TODO:
+
+Python simlink
+Zoxode conda with simlink in user local bin???
+Psutil
+why audio is not playing? it was playing earler system sounds were playing - try youtube
+rofi emoji not working - maybe its not installed
+when i deleted a file in ranger, it gave an error
