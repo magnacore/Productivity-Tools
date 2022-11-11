@@ -376,7 +376,7 @@ conda install -c conda-forge libwebp
 
 # qtile
 For qtile memory module
-/home/manuj/anaconda3/envs/qtile/bin/pip install psutil
+conda install -c conda-forge psutil
 
 ===
 
@@ -398,6 +398,9 @@ pip install isort
 /home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
 /home/manuj/anaconda3/envs/xonsh/bin/pip install nltk
 num2words
+
+playsound was installedd in both util and xonsh
+/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobjects
 
 =====================================================================
 

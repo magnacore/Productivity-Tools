@@ -140,6 +140,9 @@ sudo apt install lzip
 sudo apt install build-essential
 sudo apt install zoxide
 sudo apt install trash-cli
+sudo apt install libx11-dev
+sudo apt install libxext-dev
+sudo apt install veracrypt
 
 VS Code:
 installed using mx package manager popular applications
@@ -225,11 +228,7 @@ copy all configs to their respective folders
 
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
 
-Note: for scripts which are using python like pdf-split-1, we are importing a path like this:
-#!/home/manuj/anaconda3/envs/util/bin/python3
-The imports must be installed in the same environment from which we are importing python, in this case util
 conda install -c conda-forge pypdf2
-conda install -c conda-forge tqdm
 
 /home/manuj/anaconda3/envs/util/bin/pip install rofimoji
 
@@ -250,7 +249,7 @@ conda install -c conda-forge libwebp
 
 # qtile
 For qtile memory module
-/home/manuj/anaconda3/envs/qtile/bin/pip install psutil
+conda install -c conda-forge psutil
 
 ===
 
@@ -268,23 +267,14 @@ pip install isort
 ===
 
 # xonsh
-/home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate
 /home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
 /home/manuj/anaconda3/envs/xonsh/bin/pip install nltk
 num2words
+/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobjects
 
 =====================================================================
 
 # RPM
-
-greenclip was downloaded using the https://github.com/erebe/greenclip/releases and put in ~/.local/bin
-Qtile config is already modified to use it
-
-sudo dnf install code did not work, install as per instructions on fedora on VSCode website
-
-Fredi was installed using rpm download
-
-VeraCrypt was installed by downloading rpm
 
 App image launcher was installed using rpm downloaded from github then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
 
@@ -293,12 +283,9 @@ sudo rpm -i sample_file.rpm
 
 We can also download the IPFS Desktop appimage from github. Make is executable. run it ./<name>. AppImage launcher will ask for integration. Approve it and it will automatically move the appimage to ~/Applications. After that we can launch IPFS from rofi.
 
-firefox login
-
 transmission was already installed
 
 Move binaries from ~/Software/bin to ~/.local/bin
-Update the binaries by downloading them from GitHub
 
 =====================================================================
 
@@ -310,31 +297,10 @@ ImageMosaic
 
 Hugo : Download the binary from github page and put it in ~/.local/bin
 
-# As Needed
-Avidemux
-jdk by redhat
-CMap
-Recoll
-
 ===
 
-Gnome:
-cipboard https://extensions.gnome.org/extension/779/clipboard-indicator/
-Gnome sushi sudo apt-get install gnome-sushi
-gnome tweak, enable weekdays
-
-===
-
-Debian:
-rofi:
-sudo apt install fonts-emojione rofi xdotool xsel
-
-sudo apt-get install texlive-xetex texlive-fonts-recommended texlive-plain-generic
-sudo apt install tig
-
-===
-
-pip install ranger-fm
+copy ranger-master to ~/Software
+duplicate the python3 simlink in /usr/bin/ and rename it python
 
 Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
@@ -357,15 +323,8 @@ disable hidden files in thunar config
 - set the correct permissions automatically
 - Cleanup everything after install
 
-
-
 ======
 
 TODO:
 
-Python simlink
 Zoxode conda with simlink in user local bin???
-Psutil
-why audio is not playing? it was playing earler system sounds were playing - try youtube
-rofi emoji not working - maybe its not installed
-when i deleted a file in ranger, it gave an error
