@@ -92,15 +92,6 @@ move bin to local bin and skel
 
 =====================================================================
 
-Just run `make` to compile dragon and get an executable you can run immediately or put where you like. To install, run `make install`, which will put it into ~/.local/bin by default.
-nms and dragon need to be recompiled
-/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by ./nms)` for nms and dragon
-ueberzug, which was installed using "make install"
-
-zoxide version is too old
-
-=====================================================================
-
 # APT
 
 sudo apt install ffmpeg
@@ -297,8 +288,6 @@ ImageMosaic
 
 Hugo : Download the binary from github page and put it in ~/.local/bin
 
-===
-
 copy ranger-master to ~/Software
 duplicate the python3 simlink in /usr/bin/ and rename it python
 
@@ -323,8 +312,29 @@ disable hidden files in thunar config
 - set the correct permissions automatically
 - Cleanup everything after install
 
-======
+=====================================================================
 
 TODO:
 
 Zoxode conda with simlink in user local bin???
+delete clipman startup
+
+nms and dragon need to be recompiled
+
+zoxide version is too old
+
+======
+
+Anaconda
+Bin
+Software
+fonts
+qtile
+ranger
+rofi
+sxiv
+xfce4
+zathura
+greenclip
+
+======

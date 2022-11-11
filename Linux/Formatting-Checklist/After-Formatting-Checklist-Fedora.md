@@ -191,7 +191,6 @@ copy all configs to their respective folders
 
 # DNF
 
-for dragon and ueberzug, which was installed using "make install"
 sudo dnf install gtk3-devel
 If the above does not work try also
 sudo dnf groupinstall "Development Tools" "Development Libraries"
