@@ -2,7 +2,7 @@ from typing import List  # noqa: F401
 
 import os
 import re
-import socket
+# import socket
 import subprocess
 
 from libqtile import bar, layout, widget, hook, qtile
@@ -63,9 +63,9 @@ keys = [
 	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
 	
 	# My shortcuts
-	Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e {myhome}/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
+	Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
     Key([mod, "shift"], "v", lazy.spawn(f"bash {myhome}/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
-    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open'"), desc="Launch Ranger"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open'"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
@@ -305,12 +305,12 @@ def start_once():
         [myBrowser],
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
-        f"{myhome}/anaconda3/envs/qtile/bin/python {myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} --disable-server -e {myhome}/anaconda3/envs/xonsh/bin/xonsh".split(),
-        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"],
+        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
+        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         f"{myhome}/.local/bin/greenclip daemon".split(),
-        f"{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
+        f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 
     for p in processes:

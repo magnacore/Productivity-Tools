@@ -316,12 +316,11 @@ disable hidden files in thunar config
 
 TODO:
 
-Zoxode conda with simlink in user local bin???
 delete clipman startup
 
 nms and dragon need to be recompiled
 
-zoxide version is too old
+zoxide version is too old : Zoxode conda with simlink in user local bin???
 
 ======
 
@@ -336,5 +335,9 @@ sxiv
 xfce4
 zathura
 greenclip
+
+xonshrc
+vimrc
+xresources
 
 ======
