@@ -1,9 +1,20 @@
+TODO:
+
+delete clipman startup
+
+nms and dragon need to be recompiled
+
+zoxide version is too old : Zoxode conda with simlink in user local bin???
+
+gpg folder structure setup
+
+=====================================================================
+
 - Install MX
 compress=zstd,noatime,space_cache=v2,ssd,discard=async
 
 sudo apt update
 sudo apt upgrade
-flatpak update (flatpak is preinstalled - no need to activate it)
 
 MX Tweak > Config Options > disable single click
 Appearance Theme Arc Dark, icons tango
@@ -34,6 +45,41 @@ sudo apt install neovim
 
 sudo nvim /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml
 
+To make the change on a global scope for all users which do not have this setting already in there private xfce configuration, alter
+This is the xfce4-session.xml that does not start the panel, desktop and wm. 3 lines each were deleted for each of them.
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-session" version="1.0">
+  <property name="general" type="empty">
+    <property name="FailsafeSessionName" type="string" value="Failsafe"/>
+    <property name="LockCommand" type="string" value=""/>
+  </property>
+  <property name="sessions" type="empty">
+    <property name="Failsafe" type="empty">
+      <property name="IsFailsafe" type="bool" value="true"/>
+      <property name="Count" type="int" value="5"/>
+      <property name="Client0_Priority" type="int" value="15"/>
+      <property name="Client0_PerScreen" type="bool" value="false"/>
+      <property name="Client1_Command" type="array">
+        <value type="string" value="xfsettingsd"/>
+      </property>
+      <property name="Client1_Priority" type="int" value="20"/>
+      <property name="Client1_PerScreen" type="bool" value="false"/>
+      <property name="Client2_Priority" type="int" value="25"/>
+      <property name="Client2_PerScreen" type="bool" value="false"/>
+      <property name="Client3_Command" type="array">
+        <value type="string" value="Thunar"/>
+        <value type="string" value="--daemon"/>
+      </property>
+      <property name="Client3_Priority" type="int" value="30"/>
+      <property name="Client3_PerScreen" type="bool" value="false"/>
+      <property name="Client4_Priority" type="int" value="35"/>
+      <property name="Client4_PerScreen" type="bool" value="false"/>
+    </property>
+  </property>
+</channel>
+
 copy qtile to
 /home/mankind/anaconda3/envs/qtile/bin/
 
@@ -41,9 +87,12 @@ copy qtile-launch to
 /usr/local/bin/
 chmod 744 qtile-launch
 
-QTile.desktop file was moved to
+QTile.desktop file (created once using Application startup GUI) was moved to
 etc/xgd/autostart/
 chmod 644 QTile.desktop
+
+Flow:
+qtile.desktop starts qtile-launch which is in /usr/local/bin and this in turn starts qtile. Make sure the permissions are correct else scripts will not launch
 
 =====================================================================
 
@@ -52,15 +101,8 @@ session and startup : lock screen before sleep
 Application autostart : disable clipman to start automatically
 
 Copy terminal settings to home .config
-copy
-/home/mankind/.config/xfce4
-to skel
 
-copy .fonts to skel
-
-anaconda3 to skel
-
-set thunar to list view and copy .config/thunar to skel
+copy .fonts
 
 =====================================================================
 
@@ -69,18 +111,16 @@ Conda one time init
 copy conda to
 /home/$USER/anaconda3/bin/
 
-copy .firstlogin to
-/etc/skel/.firstlogin
-and home
-
 copy conda-init to /usr/local/bin
 chmod 755 conda-init
+
+Conda.desktop - put in /etc/xgd/autostart - same place where we started qtile
 
 =====================================================================
 
 conda install -c conda-forge xonsh
 
-Do not make Xonsh the default shell. Flatpak apps will not appear in rofi, alacritty terminal will not read colors from alacritty.yaml and zramctl command will fail.
+Do not make Xonsh the default shell.
 
 =====================================================================
 
@@ -88,92 +128,25 @@ copy wallpapers
 
 copy software folder
 
-move bin to local bin and skel
+Copy software
+Move binaries from ~/Software/bin to ~/.local/bin
 
 =====================================================================
 
 # APT
 
-sudo apt install ffmpeg
-sudo apt install fzf
-sudo apt install caca-utils highlight atool w3m w3m-img poppler-utils mediainfo
-sudo apt install mkvtoolnix mkvtoolnix-gui
-sudo apt install fd-find
-sudo apt install mlocate
-sudo apt install imagemagick libimage-magick-perl
-sudo apt install mpv
-sudo apt install syncthing
-sudo apt install ncdu
-sudo apt install bpytop
-sudo apt install virtualbox
-sudo apt install stacer
-sudo apt install obs-studio
-sudo apt install calibre
-sudo apt install ffmpegthumbnailer
-sudo apt install rofi
-sudo apt install xdotool xsel
-sudo apt install cmus
-sudo apt install sxiv
-sudo apt install zathura zathura-pdf-poppler zathura-djvu zathura-ps
-sudo apt install calcurse
-sudo apt install git
-sudo apt install bleachbit
-sudo apt install simplescreenrecorder
-sudo apt install feh
-sudo apt install pass pass-extension-otp zbar-tools
-sudo apt install pandoc
-sudo apt install tesseract-ocr
-sudo apt install ufw
-sudo apt install figlet
-sudo apt install vagrant
-sudo apt install cpu-x
-sudo apt install lzip
-sudo apt install build-essential
-sudo apt install zoxide
-sudo apt install trash-cli
-sudo apt install libx11-dev
-sudo apt install libxext-dev
-sudo apt install veracrypt
+sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt -y
 
 VS Code:
 installed using mx package manager popular applications
+https://linuxize.com/post/how-to-install-visual-studio-code-on-debian-10/
 
 =====================================================================
 
 # FLATPAK
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-flatpak install flathub com.github.tchx84.Flatseal
-flatpak install flathub org.keepassxc.KeePassXC
-flatpak install flathub org.signal.Signal
-flatpak install flathub fr.handbrake.ghb
-flatpak install flathub com.github.Murmele.Gittyup
-flatpak install flathub org.gimp.GIMP
-flatpak install flathub us.zoom.Zoom
-flatpak install flathub com.skype.Client
-flatpak install flathub org.mozilla.Thunderbird
-flatpak install flathub com.github.xournalpp.xournalpp
-flatpak install flathub net.codeindustry.MasterPDFEditor
-flatpak install flathub org.ksnip.ksnip
-flatpak install flathub net.christianbeier.Gromit-MPX
-flatpak install flathub com.github.miguelmota.Cointop
-flatpak install flathub org.shotcut.Shotcut
-flatpak install flathub org.blender.Blender
-flatpak install flathub org.inkscape.Inkscape
-flatpak install flathub com.discordapp.Discord
-flatpak install flathub net.agalwood.Motrix
-flatpak install flathub io.lbry.lbry-app
-flatpak install flathub com.github.alexhuntley.Plots
-flatpak install flathub org.gaphor.Gaphor
-flatpak install flathub com.usebottles.bottles
-flatpak install flathub fyi.zoey.TeX-Match
-flatpak install flathub md.obsidian.Obsidian
-flatpak install flathub org.ferdium.Ferdium
-flatpak install flathub org.gnome.meld
-flatpak install flathub com.brave.Browser
-flatpak install flathub net.jami.Jami
-flatpak install flathub org.gnome.seahorse.Application
-flatpak install flathub com.valvesoftware.Steam
+flatpak install flathub com.github.tchx84.Flatseal org.keepassxc.KeePassXC org.signal.Signal fr.handbrake.ghb com.github.Murmele.Gittyup org.gimp.GIMP us.zoom.Zoom com.skype.Client org.mozilla.Thunderbird com.github.xournalpp.xournalpp net.codeindustry.MasterPDFEditor org.ksnip.ksnip net.christianbeier.Gromit-MPX com.github.miguelmota.Cointop org.shotcut.Shotcut org.blender.Blender org.inkscape.Inkscape com.discordapp.Discord net.agalwood.Motrix io.lbry.lbry-app com.github.alexhuntley.Plots org.gaphor.Gaphor com.usebottles.bottles fyi.zoey.TeX-Match md.obsidian.Obsidian org.ferdium.Ferdium org.gnome.meld com.brave.Browser net.jami.Jami org.gnome.seahorse.Application com.valvesoftware.Steam
 
 =====================================================================
 
@@ -208,6 +181,8 @@ To change the venv
 =====================================================================
 
 copy all configs to their respective folders
+
+duplicate the python3 simlink in /usr/bin/ and rename it python
 
 =====================================================================
 
@@ -265,7 +240,9 @@ num2words
 
 =====================================================================
 
-# RPM
+# Manual Software Installation
+
+Move binaries from ~/Software/bin to ~/.local/bin
 
 App image launcher was installed using rpm downloaded from github then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
 
@@ -274,22 +251,7 @@ sudo rpm -i sample_file.rpm
 
 We can also download the IPFS Desktop appimage from github. Make is executable. run it ./<name>. AppImage launcher will ask for integration. Approve it and it will automatically move the appimage to ~/Applications. After that we can launch IPFS from rofi.
 
-transmission was already installed
-
-Move binaries from ~/Software/bin to ~/.local/bin
-
-=====================================================================
-
-AppImages
-Sourcetrail
-ImageMosaic
-
-=======
-
 Hugo : Download the binary from github page and put it in ~/.local/bin
-
-copy ranger-master to ~/Software
-duplicate the python3 simlink in /usr/bin/ and rename it python
 
 Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
@@ -297,32 +259,13 @@ sudo alternatives --config java
 
 sudo apt install texlive-scheme-full???
 
-sudo apt autoremove
-sudo apt clean
-flatpak uninstall --unused
-conda clean --all
-
 setup firewall
-pgp test
+
 disable hidden files in thunar config
-
-
-- reorder the git repo as viperos folder
-- create a script that will move all the files to the right folder
-- set the correct permissions automatically
-- Cleanup everything after install
 
 =====================================================================
 
-TODO:
-
-delete clipman startup
-
-nms and dragon need to be recompiled
-
-zoxide version is too old : Zoxode conda with simlink in user local bin???
-
-======
+# Copy to Skel
 
 Anaconda
 Bin
@@ -335,9 +278,40 @@ sxiv
 xfce4
 zathura
 greenclip
-
+set thunar to list view and copy .config/thunar to skel
 xonshrc
 vimrc
 xresources
+copy .firstlogin to /etc/skel/.firstlogin
+
+=====================================================================
+
+# Before making ISO
+
+- reorder the git repo as viperos folder
+- create a script that will move all the files to the right folder
+- set the correct permissions automatically
+- Cleanup everything after install
+- flatpak update (flatpak is preinstalled - no need to activate it)
+- update software
+- clean anaconda pkgs?
+
+sudo apt update
+sudo apt upgrade
+sudo apt autoremove
+sudo apt clean
+flatpak uninstall --unused
+conda clean --all
 
 ======
+
+Wiki
+
+https://wiki.xfce.org/howto/other_window_manager
+
+~/.config/autostart (user-specific)
+/etc/xdg/autostart/ (system-wide)
+
+Things I will miss if I switch from Fedora:
+systemd-oomd (MX Does not support)
+ZRam
