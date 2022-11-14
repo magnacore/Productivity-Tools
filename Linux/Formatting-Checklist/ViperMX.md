@@ -27,6 +27,7 @@ sudo apt upgrade
 conda create --name qtile
 conda create --name xonsh
 conda create --name util
+conda create --name gcp
 
 Install pip in all environments
 conda install -c anaconda pip
@@ -85,7 +86,7 @@ copy qtile to
 
 copy qtile-launch to
 /usr/local/bin/
-chmod 744 qtile-launch
+chmod 755 qtile-launch
 
 QTile.desktop file (created once using Application startup GUI) was moved to
 etc/xgd/autostart/
@@ -103,6 +104,7 @@ Application autostart : disable clipman to start automatically
 Copy terminal settings to home .config
 
 copy .fonts
+copy wallpapers
 
 =====================================================================
 
@@ -115,6 +117,7 @@ copy conda-init to /usr/local/bin
 chmod 755 conda-init
 
 Conda.desktop - put in /etc/xgd/autostart - same place where we started qtile
+chmod 644 Conda.desktop
 
 =====================================================================
 
@@ -123,8 +126,6 @@ conda install -c conda-forge xonsh
 Do not make Xonsh the default shell.
 
 =====================================================================
-
-copy wallpapers
 
 copy software folder
 
@@ -147,37 +148,7 @@ https://linuxize.com/post/how-to-install-visual-studio-code-on-debian-10/
 # FLATPAK
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-flatpak install flathub com.github.tchx84.Flatseal org.keepassxc.KeePassXC org.signal.Signal fr.handbrake.ghb com.github.Murmele.Gittyup org.gimp.GIMP us.zoom.Zoom com.skype.Client org.mozilla.Thunderbird com.github.xournalpp.xournalpp net.codeindustry.MasterPDFEditor org.ksnip.ksnip net.christianbeier.Gromit-MPX com.github.miguelmota.Cointop org.shotcut.Shotcut org.blender.Blender org.inkscape.Inkscape com.discordapp.Discord net.agalwood.Motrix io.lbry.lbry-app com.github.alexhuntley.Plots org.gaphor.Gaphor com.usebottles.bottles fyi.zoey.TeX-Match md.obsidian.Obsidian org.ferdium.Ferdium org.gnome.meld com.brave.Browser net.jami.Jami org.gnome.seahorse.Application com.valvesoftware.Steam
-
-=====================================================================
-
-## Vim installation
-install Vim Plug
-
-sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
-       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-
-Create an empty file at /home/manuj/.config/nvim/init.vim
-.vimrc from home automatically gets copied to it once we start nvim
-:PlugInstall
-
-To install vim-hexokinase go to
-~/.vim/plugged/vim-hexokinas
-change to go env from bash shell
-make hexokinase
-
-coc installation
-cd ~/.vim/plugged/coc.nvim
-sudo npm install -g yarn
-yarn install
-yarn build
-/home/manuj/anaconda3/envs/quant/bin/pip install jedi (conda install -c conda-forge jedi)
-/home/manuj/anaconda3/envs/quant/bin/pip install pynvim (:checkhealth to see any missing error)
-from within nvim
-:CocInstall coc-python (this may not be required since we included this in the vimrc)
-
-To change the venv
-:CocCommand then fuzzy search for python.setInterpreter and choose the venv.
+flatpak install flathub com.github.tchx84.Flatseal org.keepassxc.KeePassXC org.signal.Signal fr.handbrake.ghb com.github.Murmele.Gittyup org.gimp.GIMP us.zoom.Zoom com.skype.Client org.mozilla.Thunderbird com.github.xournalpp.xournalpp net.codeindustry.MasterPDFEditor org.ksnip.ksnip net.christianbeier.Gromit-MPX com.github.miguelmota.Cointop org.shotcut.Shotcut org.blender.Blender org.inkscape.Inkscape com.discordapp.Discord net.agalwood.Motrix io.lbry.lbry-app com.github.alexhuntley.Plots org.gaphor.Gaphor com.usebottles.bottles fyi.zoey.TeX-Match md.obsidian.Obsidian org.ferdium.Ferdium org.gnome.meld com.brave.Browser net.jami.Jami org.gnome.seahorse.Application com.valvesoftware.Steam -y
 
 =====================================================================
 
@@ -239,6 +210,41 @@ pip install isort
 num2words
 /home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobjects
 
+===
+
+# gcp
+Install GCP via conda
+
+=====================================================================
+
+# Vim installation
+install Vim Plug
+
+sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+
+Create an empty file at /home/manuj/.config/nvim/init.vim
+.vimrc from home automatically gets copied to it once we start nvim
+:PlugInstall
+
+To install vim-hexokinase go to
+~/.vim/plugged/vim-hexokinas
+change to go env from bash shell
+make hexokinase
+
+coc installation
+cd ~/.vim/plugged/coc.nvim
+sudo npm install -g yarn
+yarn install
+yarn build
+/home/manuj/anaconda3/envs/quant/bin/pip install jedi (conda install -c conda-forge jedi)
+/home/manuj/anaconda3/envs/quant/bin/pip install pynvim (:checkhealth to see any missing error)
+from within nvim
+:CocInstall coc-python (this may not be required since we included this in the vimrc)
+
+To change the venv
+:CocCommand then fuzzy search for python.setInterpreter and choose the venv.
+
 =====================================================================
 
 # Manual Software Installation
@@ -268,6 +274,10 @@ disable hidden files in thunar config
 
 # Copy to Skel
 
+recopy conda in anaconda as conda init will harcode it again
+copy conda to
+/home/$USER/anaconda3/bin/
+
 Anaconda
 Bin
 Software
@@ -276,7 +286,7 @@ qtile
 ranger
 rofi
 sxiv
-xfce4
+xfce4 (with terminal)
 zathura
 greenclip
 set thunar to list view and copy .config/thunar to skel
