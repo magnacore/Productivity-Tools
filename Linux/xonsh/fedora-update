@@ -24,6 +24,9 @@ console.print(f"[bold cyan]Upgrade software...[/bold cyan]")
 sudo dnf upgrade -y
 flatpak update -y
 
+console.print(f"[bold cyan]Update Virus Definitions...[/bold cyan]")
+sudo freshclam
+
 # Monday is 0, Saturday is 5
 day_of_week = datetime.datetime.today().weekday()
 this_month = datetime.datetime.today().month
