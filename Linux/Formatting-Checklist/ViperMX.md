@@ -136,7 +136,7 @@ Move binaries from ~/Software/bin to ~/.local/bin
 
 # APT
 
-sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk -y
+sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji -y
 
 VS Code:
 installed using mx package manager popular applications
@@ -151,6 +151,8 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
 flatpak install flathub com.github.tchx84.Flatseal org.keepassxc.KeePassXC org.signal.Signal fr.handbrake.ghb com.github.Murmele.Gittyup org.gimp.GIMP us.zoom.Zoom com.skype.Client org.mozilla.Thunderbird com.github.xournalpp.xournalpp net.codeindustry.MasterPDFEditor org.ksnip.ksnip net.christianbeier.Gromit-MPX com.github.miguelmota.Cointop org.shotcut.Shotcut org.blender.Blender org.inkscape.Inkscape com.discordapp.Discord net.agalwood.Motrix io.lbry.lbry-app com.github.alexhuntley.Plots org.gaphor.Gaphor com.usebottles.bottles fyi.zoey.TeX-Match md.obsidian.Obsidian org.ferdium.Ferdium org.gnome.meld com.brave.Browser net.jami.Jami org.gnome.seahorse.Application com.valvesoftware.Steam -y
 
 =====================================================================
+
+copy xnosh to /home/goldust/anaconda3/envs/xonsh/bin/
 
 copy all configs to their respective folders
 
@@ -291,9 +293,14 @@ zathura
 greenclip
 set thunar to list view and copy .config/thunar to skel
 xonshrc
-vimrc
-xresources
+.vimrc
 copy .firstlogin to /etc/skel/.firstlogin
+.bash_aliases
+.alacritty.yml
+.xonshrc
+.Xresources
+mpv
+gromit in .var
 
 =====================================================================
 
