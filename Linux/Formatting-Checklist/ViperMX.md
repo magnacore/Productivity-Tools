@@ -148,7 +148,9 @@ https://linuxize.com/post/how-to-install-visual-studio-code-on-debian-10/
 # FLATPAK
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-flatpak install flathub com.github.tchx84.Flatseal org.keepassxc.KeePassXC org.signal.Signal fr.handbrake.ghb com.github.Murmele.Gittyup org.gimp.GIMP us.zoom.Zoom com.skype.Client org.mozilla.Thunderbird com.github.xournalpp.xournalpp net.codeindustry.MasterPDFEditor org.ksnip.ksnip net.christianbeier.Gromit-MPX com.github.miguelmota.Cointop org.shotcut.Shotcut org.blender.Blender org.inkscape.Inkscape com.discordapp.Discord net.agalwood.Motrix io.lbry.lbry-app com.github.alexhuntley.Plots org.gaphor.Gaphor com.usebottles.bottles fyi.zoey.TeX-Match md.obsidian.Obsidian org.ferdium.Ferdium org.gnome.meld com.brave.Browser net.jami.Jami org.gnome.seahorse.Application com.valvesoftware.Steam -y
+flatpak install flathub com.github.tchx84.Flatseal org.keepassxc.KeePassXC org.signal.Signal fr.handbrake.ghb com.github.Murmele.Gittyup org.gimp.GIMP us.zoom.Zoom com.skype.Client com.github.xournalpp.xournalpp net.codeindustry.MasterPDFEditor org.ksnip.ksnip net.christianbeier.Gromit-MPX com.github.miguelmota.Cointop org.shotcut.Shotcut org.blender.Blender org.inkscape.Inkscape com.discordapp.Discord net.agalwood.Motrix io.lbry.lbry-app com.github.alexhuntley.Plots org.gaphor.Gaphor com.usebottles.bottles fyi.zoey.TeX-Match md.obsidian.Obsidian org.ferdium.Ferdium org.gnome.meld com.brave.Browser net.jami.Jami org.gnome.seahorse.Application com.valvesoftware.Steam -y
+
+org.mozilla.Thunderbird is already installed as apt
 
 =====================================================================
 
@@ -272,6 +274,10 @@ setup firewall
 
 disable hidden files in thunar config
 
+Issues:
+Flatpak not taking dark theme
+2 apps in bin folder need to be rebuilt
+
 =====================================================================
 
 # Copy to Skel
@@ -309,7 +315,6 @@ gromit in .var
 - reorder the git repo as viperos folder
 - create a script that will move all the files to the right folder
 - set the correct permissions automatically
-- Cleanup everything after install
 - flatpak update (flatpak is preinstalled - no need to activate it)
 - update software
 - clean anaconda pkgs?
@@ -322,6 +327,8 @@ sudo apt autoremove
 sudo apt clean
 flatpak uninstall --unused
 conda clean --all
+
+- Cleanup everything after install
 
 ======
 
