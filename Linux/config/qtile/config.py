@@ -308,7 +308,7 @@ def start_once():
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
-        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
+        f"{myhome}/anaconda3/envs/qtile/bin/python {myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         f"{myhome}/.local/bin/greenclip daemon".split(),
         f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
