@@ -165,27 +165,20 @@ duplicate the python3 simlink in /usr/bin/ and rename it python
 # PIP/Conda Install
 
 ## util
-### YoutubeDL using pip in conda environment util:
-/home/manuj/anaconda3/envs/util/bin/pip install -U yt-dlp
+conda install -c conda-forge yt-dlp
 
+conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
-
-conda install -c conda-forge pypdf2
-
+/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
 /home/manuj/anaconda3/envs/util/bin/pip install rofimoji
-
 /home/manuj/anaconda3/envs/util/bin/pip install ueberzug
 
 conda install -c conda-forge go-ipfs
 conda install -c conda-forge pyperclip
-
-/home/manuj/anaconda3/envs/util/bin/pip install playsound
-
-/home/manuj/anaconda3/envs/util/bin/pip install qrcode
-
+conda install -c conda-forge playsound
+conda install -c conda-forge qrcode
 conda install -c conda-forge libwebp
-
-/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
+conda install -c conda-forge pypdf2
 
 ===
 
@@ -209,15 +202,19 @@ pip install isort
 ===
 
 # xonsh
+conda install -c conda-forge playsound
+conda install -c conda-forge pyobject
+conda install -c conda-forge num2words
+
+/home/manuj/anaconda3/envs/xonsh/bin/pip install nltk (check conda)
+
+No conda:
 /home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
-/home/manuj/anaconda3/envs/xonsh/bin/pip install nltk
-num2words
-/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobjects
 
 ===
 
 # gcp
-Install GCP via conda
+conda install -c conda-forge google-cloud-sdk
 
 =====================================================================
 
@@ -329,6 +326,8 @@ flatpak uninstall --unused
 conda clean --all
 
 - Cleanup everything after install
+
+pactl info | grep "Server Name"
 
 ======
 
