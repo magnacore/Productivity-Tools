@@ -205,6 +205,11 @@ pip install isort
 conda install -c conda-forge playsound
 conda install -c conda-forge pyobject
 conda install -c conda-forge num2words
+conda install -c conda-forge google-cloud-sdk
+conda install -c conda-forge google-cloud-texttospeech
+
+Force update only if installed version is not recent. Do this after running the above command:
+conda install -c conda-forge 'google-cloud-texttospeech>=2'
 
 /home/manuj/anaconda3/envs/xonsh/bin/pip install nltk (check conda)
 
