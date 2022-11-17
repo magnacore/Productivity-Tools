@@ -44,6 +44,9 @@ console.print(f"[bold cyan]Moving Health...")
 console.print(f"[bold cyan]Moving Crypto...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/K-STUDY PASSIVE CRYPTO")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE CRYPTO/")
 
+console.print(f"[bold cyan]Moving Linux...")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/L-STUDY ACTIVE LINUX")/* @(p"/run/media/manuj/QUEUE/QUEUE/STUDY ACTIVE LINUX/")
+
 console.rule(style="cyan")
 
 audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
