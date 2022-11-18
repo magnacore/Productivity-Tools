@@ -1,12 +1,24 @@
 TODO:
 
-delete clipman startup
+- fedora-update change to debian-update
+- test all productivity scripts
 
-nms and dragon need to be recompiled
+Java was already installed. Check if its working
+sudo apt install java-1.8.0-openjdk.x86_64
+sudo alternatives --config java
 
 zoxide version is too old : Zoxode conda with simlink in user local bin???
 
-gpg folder structure setup
+btrft grub
+
+zathura-pdf-mupdf (removing it did not break zathura)
+
+Issues:
+Flatpak not taking dark theme
+
+sudo apt install texlive-scheme-full???
+
+Next step # Copy to Skel
 
 =====================================================================
 
@@ -136,7 +148,7 @@ Move binaries from ~/Software/bin to ~/.local/bin
 
 # APT
 
-sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji -y
+sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji appimagelauncher libgtk-3-dev -y
 
 VS Code:
 installed using mx package manager popular applications
@@ -226,45 +238,18 @@ conda install -c conda-forge google-cloud-sdk
 # Vim installation
 install Vim Plug
 
-sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
-       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+Add to one time conda-init script in /usr/local/bin/
+sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 Create an empty file at /home/manuj/.config/nvim/init.vim
 .vimrc from home automatically gets copied to it once we start nvim
 :PlugInstall
-
-To install vim-hexokinase go to
-~/.vim/plugged/vim-hexokinas
-change to go env from bash shell
-make hexokinase
-
-coc installation
-cd ~/.vim/plugged/coc.nvim
-sudo npm install -g yarn
-yarn install
-yarn build
-/home/manuj/anaconda3/envs/quant/bin/pip install jedi (conda install -c conda-forge jedi)
-/home/manuj/anaconda3/envs/quant/bin/pip install pynvim (:checkhealth to see any missing error)
-from within nvim
-:CocInstall coc-python (this may not be required since we included this in the vimrc)
-
-To change the venv
-:CocCommand then fuzzy search for python.setInterpreter and choose the venv.
 
 =====================================================================
 
 # Manual Software Installation
 
 Move binaries from ~/Software/bin to ~/.local/bin
-
-App image launcher was installed using rpm downloaded from github then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
-
-IPFS was installed using rpm downloaded from github page, but check there is appimage also and there may be other installers as well later.
-sudo rpm -i sample_file.rpm
-
-We can also download the IPFS Desktop appimage from github. Make is executable. run it ./<name>. AppImage launcher will ask for integration. Approve it and it will automatically move the appimage to ~/Applications. After that we can launch IPFS from rofi.
-
-Hugo : Download the binary from github page and put it in ~/.local/bin
 
 Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
@@ -274,11 +259,10 @@ sudo apt install texlive-scheme-full???
 
 setup firewall
 
-disable hidden files in thunar config
+delete clipman startup /home/goldust/.config/autostart
 
-Issues:
-Flatpak not taking dark theme
-2 apps in bin folder need to be rebuilt
+Set last-show-hidden to false
+~/.config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml
 
 =====================================================================
 
@@ -287,8 +271,11 @@ Flatpak not taking dark theme
 recopy conda in anaconda as conda init will harcode it again
 copy conda to
 /home/$USER/anaconda3/bin/
+After this conda command will not work unless we give full path from python, as used in conda-init bash script. When conda init is run it will fix the path and the script will work again
 
+conda clean --all
 Anaconda
+
 Bin
 Software
 fonts
@@ -300,8 +287,7 @@ xfce4 (with terminal)
 zathura
 greenclip
 set thunar to list view and copy .config/thunar to skel
-xonshrc
-.vimrc
+.vimrc and nvim init in config
 copy .firstlogin to /etc/skel/.firstlogin
 .bash_aliases
 .alacritty.yml
@@ -309,6 +295,10 @@ copy .firstlogin to /etc/skel/.firstlogin
 .Xresources
 mpv
 gromit in .var
+nvim from .config
+~/.local/share/nvim/site/autoload/plug.vim (do we need this?)
+~/.password-store/
+~/.restore/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
 
 =====================================================================
 
@@ -317,22 +307,18 @@ gromit in .var
 - reorder the git repo as viperos folder
 - create a script that will move all the files to the right folder
 - set the correct permissions automatically
-- flatpak update (flatpak is preinstalled - no need to activate it)
-- update software
-- clean anaconda pkgs?
+
 - fedora-update change to debian-update
 - test all productivity scripts
 
 sudo apt update
 sudo apt upgrade
+flatpak update
 sudo apt autoremove
 sudo apt clean
 flatpak uninstall --unused
-conda clean --all
 
 - Cleanup everything after install
-
-pactl info | grep "Server Name"
 
 ======
 
@@ -347,8 +333,5 @@ Things I will miss if I switch from Fedora:
 systemd-oomd (MX Does not support)
 ZRam
 
-
-
-btrft grub
-
-zathura-pdf-mupdf (removing it did not break zathura)
+Are we using pulseaudio or pipewire?
+pactl info | grep "Server Name"
