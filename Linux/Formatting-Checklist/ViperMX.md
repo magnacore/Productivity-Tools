@@ -346,3 +346,9 @@ https://wiki.xfce.org/howto/other_window_manager
 Things I will miss if I switch from Fedora:
 systemd-oomd (MX Does not support)
 ZRam
+
+
+
+btrft grub
+
+zathura-pdf-mupdf (removing it did not break zathura)
