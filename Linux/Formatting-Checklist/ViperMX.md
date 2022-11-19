@@ -1,7 +1,13 @@
 TODO:
 
-- fedora-update change to debian-update
-- test all productivity scripts
+clipman is starting
+sound working but its shows M, cannot change volume using keys, startup sound did not play
+.local/bin not copied, see if its in skel and not in exception list
+rofimoji not working
+fedora-update change to debian-update
+test all productivity scripts
+check all flatpaks are working
+make backup of final scripts
 
 Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
@@ -17,8 +23,6 @@ Issues:
 Flatpak not taking dark theme
 
 sudo apt install texlive-scheme-full???
-
-Next step # Copy to Skel
 
 =====================================================================
 
