@@ -279,6 +279,7 @@ Anaconda
 Bin
 Software
 fonts
+wallpapers
 qtile
 ranger
 rofi
