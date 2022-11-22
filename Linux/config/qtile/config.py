@@ -74,7 +74,7 @@ keys = [
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
     Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
-    Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
+    Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
     Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}'"), desc='Run Greenclip in Rofi'),
 	
     ## Volume
