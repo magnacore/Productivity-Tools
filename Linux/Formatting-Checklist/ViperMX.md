@@ -19,12 +19,13 @@ Flatpak not taking dark theme
 sudo apt install texlive-scheme-full???
 
 Test:
-X sound working but its shows M, cannot change volume using keys, startup sound did not play (fixed test)
-X clipman is starting
-
-X rofimoji not working
-
-X check all flatpaks are working
+Files in thunar are hidden
+rofimoji
+all flatpaks
+all qtile app shortcuts
+vim plugins are working
+.local/bin software are working
+qtile autostart appslications have started
 
 Scripts to test:
 audio-convert-foss
@@ -161,7 +162,6 @@ qtile.desktop starts qtile-launch which is in /usr/local/bin and this in turn st
 
 in xfce keyboard, restore numlock on startup
 session and startup : lock screen before sleep
-Application autostart : disable clipman to start automatically
 
 Copy terminal settings to home .config
 
@@ -352,6 +352,8 @@ nvim from .config
 ~/.restore/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
 .local/bin
 /etc/skel/.config/autostart/xfce4-clipman-plugin-autostart.desktop delete to disable clipman
+
+update vim plugins and copy .vim/plugged
 
 =====================================================================
 
