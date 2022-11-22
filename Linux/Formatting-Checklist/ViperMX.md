@@ -19,12 +19,12 @@ Flatpak not taking dark theme
 sudo apt install texlive-scheme-full???
 
 Test:
-sound working but its shows M, cannot change volume using keys, startup sound did not play (fixed test)
-clipman is starting
+X sound working but its shows M, cannot change volume using keys, startup sound did not play (fixed test)
+X clipman is starting
 
-rofimoji not working
+X rofimoji not working
 
-check all flatpaks are working
+X check all flatpaks are working
 
 Scripts to test:
 audio-convert-foss
