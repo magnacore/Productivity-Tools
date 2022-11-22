@@ -1,19 +1,13 @@
 TODO:
 
-clipman is starting
-sound working but its shows M, cannot change volume using keys, startup sound did not play
-.local/bin not copied, see if its in skel and not in exception list
-rofimoji not working
 fedora-update change to debian-update
-test all productivity scripts
-check all flatpaks are working
-make backup of final scripts
+make backup of final scripts in skel
 
 Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
 sudo alternatives --config java
 
-zoxide version is too old : Zoxode conda with simlink in user local bin???
+zoxide version is too old : Zoxode conda with simlink in user local bin??? - disable from xonshrc
 
 btrft grub
 
@@ -23,6 +17,58 @@ Issues:
 Flatpak not taking dark theme
 
 sudo apt install texlive-scheme-full???
+
+Test:
+sound working but its shows M, cannot change volume using keys, startup sound did not play (fixed test)
+clipman is starting
+
+rofimoji not working
+
+check all flatpaks are working
+
+Scripts to test:
+audio-convert-foss
+audio-play
+clipboard-clear
+clipboard-convert-text
+clipboard-vigenere-decrypt
+clipboard-vigenere-encrypt
+directory-number
+document-convert
+fedora-update
+file-convert-text
+file-copy-ranger
+file-move-ranger
+file-number
+file-rename-valid
+file-tag
+file-tag-remove
+fontpreview-ueberzug
+get-passphrase-strength
+hdd-size
+image-combine-pdf
+image-convert-text
+image-resize
+media-combine
+media-length
+media-split-equal
+otp-copy
+password-copy
+password-generate
+password-show
+pdf-combine
+pdf-seperate
+pdf-split
+py_utilities.py
+queue-backup
+queue-move
+ranger-open
+sawy-backup
+text-split
+utilities.xsh
+video-convert-audio
+video-download
+video-process
 
 =====================================================================
 
@@ -304,6 +350,8 @@ nvim from .config
 ~/.local/share/nvim/site/autoload/plug.vim (do we need this?)
 ~/.password-store/
 ~/.restore/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
+.local/bin
+/etc/skel/.config/autostart/xfce4-clipman-plugin-autostart.desktop delete to disable clipman
 
 =====================================================================
 
