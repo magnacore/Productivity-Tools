@@ -26,6 +26,8 @@ all qtile app shortcuts
 vim plugins are working
 .local/bin software are working
 qtile autostart appslications have started
+cpu widget does it have access to psutil, is psutil it in qtile env ?
+firewall
 
 Scripts to test:
 audio-convert-foss
@@ -354,6 +356,8 @@ nvim from .config
 /etc/skel/.config/autostart/xfce4-clipman-plugin-autostart.desktop delete to disable clipman
 
 update vim plugins and copy .vim/plugged
+
+disable handbrake autostart
 
 =====================================================================
 
