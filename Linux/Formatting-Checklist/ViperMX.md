@@ -7,8 +7,6 @@ Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
 sudo alternatives --config java
 
-zoxide version is too old : Zoxode conda with simlink in user local bin??? - disable from xonshrc
-
 btrft grub
 
 zathura-pdf-mupdf (removing it did not break zathura)
@@ -92,7 +90,6 @@ sudo apt upgrade
 conda create --name qtile
 conda create --name xonsh
 conda create --name util
-conda create --name gcp
 
 Install pip in all environments
 conda install -c anaconda pip
@@ -271,19 +268,13 @@ conda install -c conda-forge pyobject
 conda install -c conda-forge num2words
 conda install -c conda-forge google-cloud-sdk
 conda install -c conda-forge google-cloud-texttospeech
+conda install -c anaconda nltk
 
 Force update only if installed version is not recent. Do this after running the above command:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'
 
-/home/manuj/anaconda3/envs/xonsh/bin/pip install nltk (check conda)
-
 No conda:
 /home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
-
-===
-
-# gcp
-conda install -c conda-forge google-cloud-sdk
 
 =====================================================================
 
@@ -309,24 +300,26 @@ sudo alternatives --config java
 
 sudo apt install texlive-scheme-full???
 
-setup firewall
+setup firewall - transmission was already open
 
 delete clipman startup /home/goldust/.config/autostart
 
 Set last-show-hidden to false
 ~/.config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml
 
+zoxide version is too old : Zoxode conda with simlink in user local bin??? - disable from xonshrc
+
 =====================================================================
 
 # Copy to Skel
 
-recopy conda in anaconda as conda init will harcode it again
+recopy conda in anaconda as conda init will hardcode it again
 copy conda to
 /home/$USER/anaconda3/bin/
 After this conda command will not work unless we give full path from python, as used in conda-init bash script. When conda init is run it will fix the path and the script will work again
 
 conda clean --all
-Anaconda
+then copy anaconda3 folder
 
 Bin
 Software
@@ -376,8 +369,6 @@ flatpak update
 sudo apt autoremove
 sudo apt clean
 flatpak uninstall --unused
-
-- Cleanup everything after install
 
 ======
 
