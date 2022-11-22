@@ -1,5 +1,7 @@
 TODO:
 
+delete the pkg folder and see of the iso still works
+
 fedora-update change to debian-update
 make backup of final scripts in skel
 
