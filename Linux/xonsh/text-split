@@ -53,7 +53,7 @@ if selection:
 			if mimestart in ['text']:
 
 				file_contents = open(fname, "r").read()
-				file_contents = unicodedata.normalize('NFKD', file_contents).encode('ascii', 'ignore').decode("utf-8")
+				file_contents = unicodedata.normalize('NFKD', file_contents).encode("utf-8", 'ignore').decode("utf-8")
 
 				file_name, _ = get_filename_extension(fname)
 
