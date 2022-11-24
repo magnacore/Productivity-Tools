@@ -400,7 +400,7 @@ pip install isort
 num2words
 
 playsound was installedd in both util and xonsh
-/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobjects
+/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobject
 
 =====================================================================
 

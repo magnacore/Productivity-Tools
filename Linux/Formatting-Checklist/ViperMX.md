@@ -246,6 +246,8 @@ conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip install rofimoji
 /home/manuj/anaconda3/envs/util/bin/pip install ueberzug
 
+rofimoji - change shebang line to use relative path
+
 ===
 
 # qtile
@@ -334,7 +336,7 @@ wallpapers
 qtile
 ranger
 rofi
-sxiv
+sxiv (make sure script is executable)
 xfce4 (with terminal)
 zathura
 greenclip
