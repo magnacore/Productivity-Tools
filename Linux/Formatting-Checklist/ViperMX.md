@@ -1,13 +1,11 @@
 TODO:
 
 delete the pkg folder and see of the iso still works
-
 fedora-update change to debian-update
 make backup of final scripts in skel
 
-Java was already installed. Check if its working
-sudo apt install java-1.8.0-openjdk.x86_64
-sudo alternatives --config java
+Thunderbird extensions
+/usr/lib64/thunderbird/extensions
 
 btrft grub
 
@@ -30,7 +28,7 @@ cpu widget does it have access to psutil, is psutil it in qtile env ?
 firewall
 
 Scripts to test:
-audio-convert-foss
+audio-convert-foss (pyobject error - try pip instead of conda)
 audio-play
 clipboard-clear
 clipboard-convert-text
@@ -72,6 +70,10 @@ utilities.xsh
 video-convert-audio
 video-download
 video-process
+
+Java was already installed. Check if its working
+sudo apt install java-1.8.0-openjdk.x86_64
+sudo alternatives --config java
 
 =====================================================================
 
@@ -229,19 +231,20 @@ duplicate the python3 simlink in /usr/bin/ and rename it python
 
 ## util
 conda install -c conda-forge yt-dlp
-
-conda not available:
-/home/manuj/anaconda3/envs/util/bin/pip install pycp
-/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
-/home/manuj/anaconda3/envs/util/bin/pip install rofimoji
-/home/manuj/anaconda3/envs/util/bin/pip install ueberzug
-
 conda install -c conda-forge go-ipfs
 conda install -c conda-forge pyperclip
 conda install -c conda-forge playsound
 conda install -c conda-forge qrcode
 conda install -c conda-forge libwebp
 conda install -c conda-forge pypdf2
+conda install -c conda-forge rich
+conda install -c conda-forge pygobject (check if this breaks anything)
+
+conda not available:
+/home/manuj/anaconda3/envs/util/bin/pip install pycp
+/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
+/home/manuj/anaconda3/envs/util/bin/pip install rofimoji
+/home/manuj/anaconda3/envs/util/bin/pip install ueberzug
 
 ===
 
@@ -271,6 +274,7 @@ conda install -c conda-forge num2words
 conda install -c conda-forge google-cloud-sdk
 conda install -c conda-forge google-cloud-texttospeech
 conda install -c anaconda nltk
+conda install -c conda-forge rich
 
 Force update only if installed version is not recent. Do this after running the above command:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'
