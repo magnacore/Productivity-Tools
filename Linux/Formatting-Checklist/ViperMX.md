@@ -244,7 +244,7 @@ conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
 /home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
 /home/manuj/anaconda3/envs/util/bin/pip install rofimoji
-/home/manuj/anaconda3/envs/util/bin/pip install ueberzug
+/home/manuj/anaconda3/envs/util/bin/pip install ueberzug (ueberzug command is also hardcoded)
 
 rofimoji - change shebang line to use relative path
 
