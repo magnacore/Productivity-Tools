@@ -194,7 +194,7 @@ screens = [
 				
                 # Temperature
                 widget.TextBox(text = "🌡️", padding = widget_padding, background = colors[1], fontsize = icon_font_size),
-				widget.ThermalSensor(foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
+				widget.ThermalSensor(format='{tag}: {temp:.0f}{unit}', foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[1]),
 
                 # CPU
