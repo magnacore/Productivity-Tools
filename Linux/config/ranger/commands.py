@@ -927,3 +927,20 @@ class text_to_speech(Command):
             self.fm.change_mode("normal")
 
 ###############################################################################
+
+class pdf_convert_text(Command):
+    """:Convert PDF to text"""
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+        else:
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell pdf-convert-text %s")
+
+            self.fm.change_mode("normal")
+
+###############################################################################
