@@ -28,14 +28,14 @@ cpu widget does it have access to psutil, is psutil it in qtile env ?
 firewall
 
 Scripts to test:
-audio-convert-foss (pyobject error - try pip instead of conda)
-audio-play
-clipboard-clear
-clipboard-convert-text
-clipboard-vigenere-decrypt
-clipboard-vigenere-encrypt
-directory-number
-document-convert
+audio-convert-foss - working (pyobject error - try pip instead of conda)
+audio-play - working
+clipboard-clear - working
+clipboard-convert-text - working
+clipboard-vigenere-decrypt - working
+clipboard-vigenere-encrypt - working
+directory-number - working
+document-convert (see which env needs pypdf2)
 fedora-update
 file-convert-text
 file-copy-ranger
@@ -201,7 +201,7 @@ Move binaries from ~/Software/bin to ~/.local/bin
 
 # APT
 
-sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji appimagelauncher libgtk-3-dev -y
+sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer obs-studio calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji appimagelauncher libgtk-3-dev qemu pwgen -y
 
 VS Code:
 installed using mx package manager popular applications
@@ -236,9 +236,8 @@ conda install -c conda-forge pyperclip
 conda install -c conda-forge playsound
 conda install -c conda-forge qrcode
 conda install -c conda-forge libwebp
-conda install -c conda-forge pypdf2
+conda install -c conda-forge pypdf2 (check if needed)
 conda install -c conda-forge rich
-conda install -c conda-forge pygobject (check if this breaks anything)
 
 conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
@@ -271,12 +270,13 @@ pip install isort
 
 # xonsh
 conda install -c conda-forge playsound
-conda install -c conda-forge pyobject
+conda install -c conda-forge pygobject (do not install in util else playsound will break)
 conda install -c conda-forge num2words
 conda install -c conda-forge google-cloud-sdk
 conda install -c conda-forge google-cloud-texttospeech
 conda install -c anaconda nltk
 conda install -c conda-forge rich
+conda install -c conda-forge pypdf2
 
 Force update only if installed version is not recent. Do this after running the above command:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'

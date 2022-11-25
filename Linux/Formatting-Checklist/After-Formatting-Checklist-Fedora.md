@@ -249,6 +249,8 @@ sudo dnf install cpu-x
 sudo dnf install lzip
 sudo dnf install tango-icon-theme tango-icon-theme-extras
 sudo dnf install clamav clamtk
+sudo dnf install qemu
+sudo dnf install pwgen
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
@@ -400,7 +402,7 @@ pip install isort
 num2words
 
 playsound was installedd in both util and xonsh
-/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobject
+/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobject (do not install pygobject in util else playsound will break)
 
 =====================================================================
 
