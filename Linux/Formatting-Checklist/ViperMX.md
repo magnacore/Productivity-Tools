@@ -35,41 +35,33 @@ clipboard-convert-text - working
 clipboard-vigenere-decrypt - working
 clipboard-vigenere-encrypt - working
 directory-number - working
-document-convert (see which env needs pypdf2)
-fedora-update
-file-convert-text
-file-copy-ranger
-file-move-ranger
-file-number
-file-rename-valid
-file-tag
-file-tag-remove
-fontpreview-ueberzug
-get-passphrase-strength
-hdd-size
-image-combine-pdf
-image-convert-text
-image-resize
-media-combine
-media-length
-media-split-equal
-otp-copy
-password-copy
-password-generate
-password-show
-pdf-combine
-pdf-seperate
-pdf-split
-py_utilities.py
-queue-backup
-queue-move
-ranger-open
-sawy-backup
-text-split
-utilities.xsh
-video-convert-audio
-video-download
-video-process
+document-convert (see which env needs pypdf2) - pdflatex not found. Please select a different --pdf-engine or install pdflatex -- see also /usr/share/doc/pandoc/README.Debian
+fedora-update - TODO
+file-convert-text - working
+file-copy-ranger - working
+file-move-ranger - working
+file-number - working
+file-rename-valid - working
+file-tag - working
+file-tag-remove - working
+fontpreview-ueberzug - working
+hdd-size - zramctl not found, remove zramctl section
+image-combine-pdf - working
+image-convert-text - working
+image-resize - working
+media-combine - working
+media-length - working
+media-split-equal - working
+otp-copy - seems like working
+password-copy - seems like working
+password-generate - working
+password-show - seems to be working - not tested
+pdf-combine - working
+pdf-split - working
+ranger-open - working
+text-split - working
+video-convert-audio - working
+video-download - not tested
 
 Java was already installed. Check if its working
 sudo apt install java-1.8.0-openjdk.x86_64
@@ -207,6 +199,10 @@ VS Code:
 installed using mx package manager popular applications
 https://linuxize.com/post/how-to-install-visual-studio-code-on-debian-10/
 
+Which latex do we want?
+texlive
+texlive-base
+texlive-full
 
 =====================================================================
 
@@ -277,6 +273,7 @@ conda install -c conda-forge google-cloud-texttospeech
 conda install -c anaconda nltk
 conda install -c conda-forge rich
 conda install -c conda-forge pypdf2
+conda install -c anaconda pillow
 
 Force update only if installed version is not recent. Do this after running the above command:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'
@@ -288,9 +285,8 @@ No conda:
 
 # Vim installation
 install Vim Plug
-
-Add to one time conda-init script in /usr/local/bin/
 sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+Copy the plug file to the skel
 
 Create an empty file at /home/manuj/.config/nvim/init.vim
 .vimrc from home automatically gets copied to it once we start nvim
@@ -350,7 +346,7 @@ copy .firstlogin to /etc/skel/.firstlogin
 mpv
 gromit in .var
 nvim from .config
-~/.local/share/nvim/site/autoload/plug.vim (do we need this?)
+~/.local/share/nvim/site/autoload/plug.vim (this is vimplug that gets installed)
 ~/.password-store/
 ~/.restore/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
 .local/bin
@@ -359,6 +355,8 @@ nvim from .config
 update vim plugins and copy .vim/plugged
 
 disable handbrake autostart
+
+Templates folder
 
 =====================================================================
 
@@ -393,3 +391,9 @@ ZRam
 
 Are we using pulseaudio or pipewire?
 pactl info | grep "Server Name"
+
+Known Issues:
+do not close ksnip before saving
+
+We start xonsh with a particular version of python, then start a xonsh script with that xonsh
+~/anaconda3/envs/xonsh/bin/python ~/anaconda3/envs/xonsh/bin/xonsh ~/Bin/audio-convert-foss 128 '20201025_130606_Lata-Sharma.aac'

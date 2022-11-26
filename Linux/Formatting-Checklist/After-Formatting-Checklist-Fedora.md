@@ -396,13 +396,15 @@ pip install isort
 ===
 
 # xonsh
-/home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate
+/home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate - do we need this after rich?
 /home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
 /home/manuj/anaconda3/envs/xonsh/bin/pip install nltk
 num2words
 
 playsound was installedd in both util and xonsh
 /home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobject (do not install pygobject in util else playsound will break)
+
+conda install -c anaconda pillow
 
 =====================================================================
 
