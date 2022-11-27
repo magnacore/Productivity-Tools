@@ -250,6 +250,7 @@ sudo dnf install tango-icon-theme tango-icon-theme-extras
 sudo dnf install clamav clamtk
 sudo dnf install qemu
 sudo dnf install pwgen
+sudo dnf install veracrypt
 
 sudo dnf install trash-cli
 The following fix was not required for the latest master branch
@@ -416,8 +417,6 @@ Qtile config is already modified to use it
 sudo dnf install code did not work, install as per instructions on fedora on VSCode website
 
 Fredi was installed using rpm download
-
-VeraCrypt was installed by downloading rpm
 
 App image launcher was installed using rpm downloaded from github then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
 
