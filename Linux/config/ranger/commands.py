@@ -142,9 +142,11 @@ class fzf_locate(Command):
         import subprocess
 
         if self.quantifier:
-            command = "locate home media | fzf -e -i"
+            # command = "locate home media | fzf -e -i" # use this command for mlocate
+            command = "locate home | fzf -e -i" # for plocate
         else:
-            command = "locate home media | fzf -e -i"
+            # command = "locate home media | fzf -e -i" # use this command for mlocate
+            command = "locate home | fzf -e -i" # for plocate
         fzf = self.fm.execute_command(command, stdout=subprocess.PIPE)
         stdout, stderr = fzf.communicate()
         if fzf.returncode == 0:

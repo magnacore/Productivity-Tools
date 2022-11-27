@@ -210,7 +210,7 @@ sudo dnf install fzf
 sudo dnf install caca-utils highlight atool w3m w3m-img poppler-utils mediainfo
 sudo dnf install mkvtoolnix mkvtoolnix-gui
 sudo dnf install fd-find
-sudo dnf install mlocate
+sudo dnf install mlocate (switch to plocate)
 sudo dnf install ImageMagick ImageMagick-perl
 sudo dnf install mpv (do not use flatpak)
 sudo dnf install syncthing

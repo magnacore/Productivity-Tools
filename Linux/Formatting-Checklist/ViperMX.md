@@ -193,7 +193,7 @@ Move binaries from ~/Software/bin to ~/.local/bin
 
 # APT
 
-sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find mlocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji appimagelauncher libgtk-3-dev qemu pwgen -y
+sudo apt install ffmpeg fzf caca-utils highlight atool w3m w3m-img poppler-utils mediainfo mkvtoolnix mkvtoolnix-gui fd-find plocate imagemagick libimage-magick-perl mpv syncthing ncdu bpytop virtualbox stacer calibre ffmpegthumbnailer rofi xdotool xsel cmus sxiv zathura zathura-pdf-poppler zathura-djvu zathura-ps calcurse git bleachbit simplescreenrecorder feh pass pass-extension-otp zbar-tools pandoc tesseract-ocr ufw figlet vagrant cpu-x lzip build-essential zoxide trash-cli libx11-dev libxext-dev veracrypt clamav clamtk fonts-noto-color-emoji appimagelauncher libgtk-3-dev qemu pwgen -y
 
 VS Code:
 installed using mx package manager popular applications
@@ -357,6 +357,7 @@ update vim plugins and copy .vim/plugged
 disable handbrake autostart
 
 Templates folder
+plocate settings from /etc/updatedb.conf
 
 =====================================================================
 
