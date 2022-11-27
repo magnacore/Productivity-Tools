@@ -219,7 +219,6 @@ sudo dnf install ncdu
 sudo dnf install bpytop
 sudo dnf install VirtualBox
 sudo dnf install stacer
-sudo dnf install obs-studio
 sudo dnf install calibre (ranger will use this so we do not use flatpak)
 sudo dnf install ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
 sudo dnf install rofi
@@ -342,6 +341,7 @@ flatpak install flathub com.brave.Browser
 flatpak install flathub net.jami.Jami
 flatpak install flathub se.manyver.Manyverse
 flatpak install flathub org.gnome.seahorse.Application
+flatpak install flathub com.obsproject.Studio
 
 =====================================================================
 
