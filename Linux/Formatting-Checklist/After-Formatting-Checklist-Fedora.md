@@ -1,4 +1,6 @@
-make fedora download faster:
+=====================================================================
+= Make fedora updates fast
+=====================================================================
 
 sudo vim /etc/dnf/dnf.conf
 
@@ -6,13 +8,15 @@ fastestmirror=True
 max_parallel_downloads=10
 
 =====================================================================
+= Update fedora
+=====================================================================
 
 sudo dnf check-update
 sudo dnf upgrade --refresh
 
 =====================================================================
-
-Fedora Snapper Setup
+= Fedora Snapper Setup
+=====================================================================
 
 lsblk
 
@@ -134,22 +138,26 @@ b) PRUNEPATHS ; man page says the default is no paths are skipped, but Fedora's 
 c) sudo updatedb
 
 =====================================================================
+= Install anaconda
+=====================================================================
 
 Install anaconda, do not use sudo
+
 conda create --name qtile
 conda create --name xonsh
 conda create --name util
-conda create --name ranger
-conda create --name go
+
 Do not create quant it will be cloned later
 
 Install pip in all environments
 conda install -c anaconda pip
 
+conda create --name go
 conda install -c conda-forge go
 
 =====================================================================
-
+= Setup anaconda environments
+=====================================================================
 Go to respective environments and install
 
 QTILE:
@@ -158,18 +166,118 @@ pip install --no-cache-dir xcffib
 pip install --no-cache-dir cairocffi
 pip install --no-cache-dir qtile
 
+Delete keyboard shortcut for window manager and keyboards
+
 https://github.com/qtile/qtile/issues/994
 
-===
+Delete keyboard shortcut for window manager and keyboards
 
-sudo dnf install zoxide (install system wide, not in environment)
-pip install ranger-fm
+sudo apt install neovim
 
-===
+sudo nvim /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml
 
+To make the change on a global scope for all users which do not have this setting already in there private xfce configuration, alter
+This is the xfce4-session.xml that does not start the panel, desktop and wm. 3 lines each were deleted for each of them.
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-session" version="1.0">
+  <property name="general" type="empty">
+    <property name="FailsafeSessionName" type="string" value="Failsafe"/>
+    <property name="LockCommand" type="string" value=""/>
+  </property>
+  <property name="sessions" type="empty">
+    <property name="Failsafe" type="empty">
+      <property name="IsFailsafe" type="bool" value="true"/>
+      <property name="Count" type="int" value="5"/>
+      <property name="Client0_Priority" type="int" value="15"/>
+      <property name="Client0_PerScreen" type="bool" value="false"/>
+      <property name="Client1_Command" type="array">
+        <value type="string" value="xfsettingsd"/>
+      </property>
+      <property name="Client1_Priority" type="int" value="20"/>
+      <property name="Client1_PerScreen" type="bool" value="false"/>
+      <property name="Client2_Priority" type="int" value="25"/>
+      <property name="Client2_PerScreen" type="bool" value="false"/>
+      <property name="Client3_Command" type="array">
+        <value type="string" value="Thunar"/>
+        <value type="string" value="--daemon"/>
+      </property>
+      <property name="Client3_Priority" type="int" value="30"/>
+      <property name="Client3_PerScreen" type="bool" value="false"/>
+      <property name="Client4_Priority" type="int" value="35"/>
+      <property name="Client4_PerScreen" type="bool" value="false"/>
+    </property>
+  </property>
+</channel>
+
+conda install -c conda-forge psutil
+
+=====================================================================
+
+QUANT:
+
+conda create --name quant --clone base
+If we get an error that package is corrupted, delete all files in the /home/manuj/anaconda3/pkgs folder and the quant env folder and retry.
+/home/manuj/anaconda3/envs/quant/bin/pip install vectorbt
+/home/manuj/anaconda3/envs/quant/bin/pip install pandas-ta
+/home/manuj/anaconda3/envs/quant/bin/pip install nsepy
+
+conda install -c anaconda pylint
+conda install -c conda-forge black
+pip install isort
+
+=====================================================================
+
+XONSH:
 conda install -c conda-forge xonsh
+conda install -c conda-forge playsound
+conda install -c conda-forge pygobject (do not install in util else playsound will break)
+conda install -c conda-forge num2words
+conda install -c conda-forge google-cloud-sdk
+conda install -c conda-forge google-cloud-texttospeech
+conda install -c anaconda nltk
+conda install -c conda-forge rich
+conda install -c conda-forge pypdf2
+conda install -c anaconda pillow
+
+Force update only if installed version is not recent. Do this after running the above command:
+conda install -c conda-forge 'google-cloud-texttospeech>=2'
+
+No conda:
+/home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
 
 Do not make Xonsh the default shell. Flatpak apps will not appear in rofi, alacritty terminal will not read colors from alacritty.yaml and zramctl command will fail.
+
+playsound was installed in both util and xonsh
+
+=====================================================================
+
+UTIL:
+
+Note: for scripts which are using python like pdf-split-1, we are importing a path like this:
+#!/home/manuj/anaconda3/envs/util/bin/python3
+The imports must be installed in the same environment from which we are importing python, in this case util
+conda install -c conda-forge pypdf2
+
+conda install -c conda-forge yt-dlp
+conda install -c conda-forge go-ipfs
+conda install -c conda-forge pyperclip
+conda install -c conda-forge playsound
+conda install -c conda-forge qrcode
+conda install -c conda-forge libwebp
+conda install -c conda-forge pypdf2 (check if needed)
+conda install -c conda-forge rich
+
+conda not available:
+/home/manuj/anaconda3/envs/util/bin/pip install pycp
+/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
+/home/manuj/anaconda3/envs/util/bin/pip install rofimoji
+/home/manuj/anaconda3/envs/util/bin/pip install ueberzug (ueberzug command is also hardcoded)
+
+rofimoji - change shebang line to use relative path
+
+(do not install pygobject in util else playsound will break)
 
 =====================================================================
 
@@ -188,76 +296,16 @@ in logout do not save sessions
 copy all configs to their respective folders
 
 =====================================================================
+= DNF
+=====================================================================
 
-# DNF
+See kickstart file
 
-sudo dnf install gtk3-devel
-If the above does not work try also
 sudo dnf groupinstall "Development Tools" "Development Libraries"
 I added ~/.local/bin in Xonsh path already (no need to do)
 
-Dragon, Pistol and Hugo-extended are already built and can be copied to ~/.local/bin from ~/Software/bin
-
-Just run `make` to compile dragon and get an executable you can run immediately or put where you like. To install, run `make install`, which will put it into ~/.local/bin by default.
-
 sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-
-sudo dnf install ffmpeg
-sudo dnf install timeshift
-sudo dnf install alacritty
-sudo dnf install fzf
-sudo dnf install caca-utils highlight atool w3m w3m-img poppler-utils mediainfo
-sudo dnf install mkvtoolnix mkvtoolnix-gui
-sudo dnf install fd-find
-sudo dnf install mlocate (switch to plocate)
-sudo dnf install ImageMagick ImageMagick-perl
-sudo dnf install mpv (do not use flatpak)
-sudo dnf install syncthing
-sudo dnf install autokey-gtk
-sudo dnf install ncdu
-sudo dnf install bpytop
-sudo dnf install VirtualBox
-sudo dnf install stacer
-sudo dnf install calibre (ranger will use this so we do not use flatpak)
-sudo dnf install ffmpegthumbnailer (ffmpegthumbnailer is needed for ranger thumbnail for videos)
-sudo dnf install rofi
-sudo dnf install eosrei-emojione-fonts (optional)
-sudo dnf install xdotool xsel
-sudo dnf install cmus
-sudo dnf install sxiv
-sudo dnf install zathura zathura-pdf-poppler zathura-djvu
-sudo dnf install zathura-pdf-mupdf (optional)
-sudo dnf install neovim
-sudo dnf install calcurse
-sudo dnf install git
-sudo dnf install nodejs
-sudo dnf copr enable elxreno/preload -y && sudo dnf install preload -y
-sudo dnf install bleachbit
-sudo dnf install dnf-plugin-system-upgrade
-sudo dnf install simplescreenrecorder
-sudo dnf install feh
-sudo dnf pass pass-otp zbar
-sudo dnf install pandoc
-sudo dnf install texlive-scheme-full
-sudo dnf install tesseract
-sudo dnf install ufw
-sudo dnf install figlet
-sudo dnf install vagrant
-sudo dnf install cpu-x
-sudo dnf install lzip
-sudo dnf install tango-icon-theme tango-icon-theme-extras
-sudo dnf install clamav clamtk
-sudo dnf install qemu
-sudo dnf install pwgen
-sudo dnf install veracrypt
-
-sudo dnf install trash-cli
-The following fix was not required for the latest master branch
-File ranger/core/actions.py, line 459, in
-filenames = [f.path for f in files]
-change the line to
-filenames = [f if isinstance(f, str) else f.path for f in files]
 
 VS Code:
 sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
@@ -266,12 +314,13 @@ dnf check-update
 sudo dnf install code
 
 Java
-sudo dnf install java-1.8.0-openjdk.x86_64
+sudo dnf install java-1.8.0-openjdk.x86_64 (already in kickstart)
 sudo alternatives --config java
 
----
+=====================================================================
+= Vim installation
+=====================================================================
 
-## Vim installation
 install Vim Plug
 
 sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
@@ -299,10 +348,10 @@ from within nvim
 To change the venv
 :CocCommand then fuzzy search for python.setInterpreter and choose the venv.
 
-
+=====================================================================
+= Flatpak
 =====================================================================
 
-# FLATPAK
 Note: flatpak commands can be run by ranger, even if they are not available in terminal. See ksnip as an example. But if a 3rd part software is executing terminal command then we should install terminal version.
 
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -345,78 +394,17 @@ flatpak install flathub org.gnome.seahorse.Application
 flatpak install flathub com.obsproject.Studio
 
 =====================================================================
-
-# PIP/Conda Install
-
-## util
-### YoutubeDL using pip in conda environment util:
-/home/manuj/anaconda3/envs/util/bin/pip install -U yt-dlp
-
-/home/manuj/anaconda3/envs/util/bin/pip install pycp
-
-Note: for scripts which are using python like pdf-split-1, we are importing a path like this:
-#!/home/manuj/anaconda3/envs/util/bin/python3
-The imports must be installed in the same environment from which we are importing python, in this case util
-conda install -c conda-forge pypdf2
-conda install -c conda-forge tqdm
-
-/home/manuj/anaconda3/envs/util/bin/pip install rofimoji
-
-/home/manuj/anaconda3/envs/util/bin/pip install ueberzug
-
-conda install -c conda-forge go-ipfs
-conda install -c conda-forge pyperclip
-
-/home/manuj/anaconda3/envs/util/bin/pip install playsound
-
-/home/manuj/anaconda3/envs/util/bin/pip install qrcode
-
-conda install -c conda-forge libwebp
-
-/home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
-
-===
-
-# qtile
-For qtile memory module
-conda install -c conda-forge psutil
-
-===
-
-# quant
-conda create --name quant --clone base
-If we get an error that package is corrupted, delete all files in the /home/manuj/anaconda3/pkgs folder and the quant env folder and retry.
-/home/manuj/anaconda3/envs/quant/bin/pip install vectorbt
-/home/manuj/anaconda3/envs/quant/bin/pip install pandas-ta
-/home/manuj/anaconda3/envs/quant/bin/pip install nsepy
-
-conda install -c anaconda pylint
-conda install -c conda-forge black
-pip install isort
-
-===
-
-# xonsh
-/home/manuj/anaconda3/envs/xonsh/bin/pip install tabulate - do we need this after rich?
-/home/manuj/anaconda3/envs/xonsh/bin/pip install simple-term-menu
-/home/manuj/anaconda3/envs/xonsh/bin/pip install nltk
-num2words
-
-playsound was installedd in both util and xonsh
-/home/manuj/anaconda3/envs/util/bin/pip install playsound and pygobject (do not install pygobject in util else playsound will break)
-
-conda install -c anaconda pillow
-
+= RPM / Manual
 =====================================================================
-
-# RPM
 
 greenclip was downloaded using the https://github.com/erebe/greenclip/releases and put in ~/.local/bin
 Qtile config is already modified to use it
 
-sudo dnf install code did not work, install as per instructions on fedora on VSCode website
+Hugo : Download the binary from github page and put it in ~/.local/bin
 
-Fredi was installed using rpm download
+Dragon, Pistol and Hugo-extended are already built and can be copied to ~/.local/bin from ~/Software/bin
+
+Just run `make` to compile dragon and get an executable you can run immediately or put where you like. To install, run `make install`, which will put it into ~/.local/bin by default.
 
 App image launcher was installed using rpm downloaded from github then double click a app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
 
@@ -433,29 +421,21 @@ Move binaries from ~/Software/bin to ~/.local/bin
 Update the binaries by downloading them from GitHub
 
 =====================================================================
+= Appimages
+=====================================================================
 
 AppImages
 Sourcetrail
 ImageMosaic
 
-=======
-
-Hugo : Download the binary from github page and put it in ~/.local/bin
-
-# As Needed
-Avidemux
-jdk by redhat
-CMap
+=====================================================================
+= Optional
+=====================================================================
 Recoll
 
-===
-
-Gnome:
-cipboard https://extensions.gnome.org/extension/779/clipboard-indicator/
-Gnome sushi sudo apt-get install gnome-sushi
-gnome tweak, enable weekdays
-
-===
+=====================================================================
+= Wiki
+=====================================================================
 
 Debian:
 rofi:
@@ -463,5 +443,3 @@ sudo apt install fonts-emojione rofi xdotool xsel
 
 sudo apt-get install texlive-xetex texlive-fonts-recommended texlive-plain-generic
 sudo apt install tig
-
-===
