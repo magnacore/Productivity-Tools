@@ -301,6 +301,75 @@ copy all configs to their respective folders
 
 See kickstart file
 
+git
+gtk3-devel
+ffmpeg
+timeshift
+fzf
+caca-utils
+highlight
+atool
+w3m
+w3m-img
+poppler-utils
+mediainfo
+mkvtoolnix
+mkvtoolnix-gui
+fd-find
+ImageMagick
+ImageMagick-perl
+mpv
+syncthing
+ncdu
+bpytop
+VirtualBox
+stacer
+calibre
+ffmpegthumbnailer
+rofi
+eosrei-emojione-fonts
+xdotool
+xsel
+cmus
+sxiv
+zathura
+zathura-pdf-poppler
+zathura-djvu
+zathura-pdf-mupdf
+neovim
+calcurse
+git
+nodejs
+bleachbit
+dnf-plugin-system-upgrade
+simplescreenrecorder
+feh
+pass
+pass-otp
+zbar
+pandoc
+texlive-scheme-full
+tesseract
+ufw
+figlet
+vagrant
+cpu-x
+lzip
+tango-icon-theme
+tango-icon-theme-extras
+clamav
+clamtk
+qemu
+pwgen
+trash-cli
+java-1.8.0-openjdk.x86_64
+plocate
+efibootmgr
+# veracrypt (not available in repo, install using rpm)
+flatpak
+p7zip
+zoxide
+
 sudo dnf groupinstall "Development Tools" "Development Libraries"
 I added ~/.local/bin in Xonsh path already (no need to do)
 
