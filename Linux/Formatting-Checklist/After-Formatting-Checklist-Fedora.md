@@ -301,75 +301,6 @@ copy all configs to their respective folders
 
 See kickstart file
 
-git
-gtk3-devel
-ffmpeg
-timeshift
-fzf
-caca-utils
-highlight
-atool
-w3m
-w3m-img
-poppler-utils
-mediainfo
-mkvtoolnix
-mkvtoolnix-gui
-fd-find
-ImageMagick
-ImageMagick-perl
-mpv
-syncthing
-ncdu
-bpytop
-VirtualBox
-stacer
-calibre
-ffmpegthumbnailer
-rofi
-eosrei-emojione-fonts
-xdotool
-xsel
-cmus
-sxiv
-zathura
-zathura-pdf-poppler
-zathura-djvu
-zathura-pdf-mupdf
-neovim
-calcurse
-git
-nodejs
-bleachbit
-dnf-plugin-system-upgrade
-simplescreenrecorder
-feh
-pass
-pass-otp
-zbar
-pandoc
-texlive-scheme-full
-tesseract
-ufw
-figlet
-vagrant
-cpu-x
-lzip
-tango-icon-theme
-tango-icon-theme-extras
-clamav
-clamtk
-qemu
-pwgen
-trash-cli
-java-1.8.0-openjdk.x86_64
-plocate
-efibootmgr
-# veracrypt (not available in repo, install using rpm)
-flatpak
-p7zip
-zoxide
-
 sudo dnf groupinstall "Development Tools" "Development Libraries"
 I added ~/.local/bin in Xonsh path already (no need to do)
 
@@ -425,42 +356,6 @@ Note: flatpak commands can be run by ranger, even if they are not available in t
 
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-flatpak install flathub com.github.tchx84.Flatseal
-flatpak install flathub org.libreoffice.LibreOffice
-flatpak install flathub org.keepassxc.KeePassXC
-flatpak install flathub nz.mega.MEGAsync
-flatpak install flathub org.signal.Signal
-flatpak install flathub fr.handbrake.ghb
-flatpak install flathub com.github.Murmele.Gittyup
-flatpak install flathub org.gimp.GIMP
-flatpak install flathub us.zoom.Zoom
-flatpak install flathub com.skype.Client
-flatpak install flathub org.mozilla.Thunderbird
-flatpak install flathub com.github.xournalpp.xournalpp
-flatpak install flathub net.codeindustry.MasterPDFEditor
-flatpak install flathub org.ksnip.ksnip
-flatpak install flathub net.christianbeier.Gromit-MPX
-flatpak install flathub com.github.miguelmota.Cointop
-flatpak install flathub org.shotcut.Shotcut
-flatpak install flathub org.blender.Blender
-flatpak install flathub org.inkscape.Inkscape
-flatpak install flathub com.valvesoftware.Steam
-flatpak install flathub com.discordapp.Discord
-flatpak install flathub net.agalwood.Motrix
-flatpak install flathub org.fedoraproject.MediaWriter
-flatpak install flathub io.lbry.lbry-app
-flatpak install flathub com.github.alexhuntley.Plots
-flatpak install flathub org.gaphor.Gaphor
-flatpak install flathub com.usebottles.bottles
-flatpak install flathub fyi.zoey.TeX-Match
-flatpak install flathub md.obsidian.Obsidian
-flatpak install flathub org.ferdium.Ferdium
-flatpak install flathub org.gnome.meld
-flatpak install flathub com.brave.Browser
-flatpak install flathub net.jami.Jami
-flatpak install flathub se.manyver.Manyverse
-flatpak install flathub org.gnome.seahorse.Application
-flatpak install flathub com.obsproject.Studio
 
 =====================================================================
 = RPM / Manual
