@@ -41,8 +41,11 @@ if selection:
 			split_after_kb = 10
 
 	console.rule(f"[bold cyan]Splitting Text to {split_after_kb} kbs each...")
-
-	nltk.download('punkt', download_dir=f"{myhome}/anaconda3/envs/xonsh/share/nltk_data")
+	
+	try:
+		nltk.data.find('tokenizers/punkt')
+	except LookupError:
+		nltk.download('punkt', download_dir=f"{myhome}/anaconda3/envs/xonsh/share/nltk_data")
 
 	for fname in track(allFiles, description="[bold cyan]Splitting : [/bold cyan]"):
 
