@@ -32,7 +32,7 @@ usage() {
 start_ueberzug() {
     mkfifo "$FIFO" || exit 1
     touch "$IMAGE" || exit 1
-    ueberzug layer --parser json --silent < "$FIFO" &
+    $HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/ueberzug layer --parser json --silent < "$FIFO" &
     # https://github.com/seebye/ueberzug/issues/54#issuecomment-502869935
     exec 3>"$FIFO"
 }
