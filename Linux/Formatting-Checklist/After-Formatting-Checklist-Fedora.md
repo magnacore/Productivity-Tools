@@ -179,38 +179,6 @@ sudo nvim /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml
 To make the change on a global scope for all users which do not have this setting already in there private xfce configuration, alter
 This is the xfce4-session.xml that does not start the panel, desktop and wm. 3 lines each were deleted for each of them.
 
-<?xml version="1.0" encoding="UTF-8"?>
-
-<channel name="xfce4-session" version="1.0">
-  <property name="general" type="empty">
-    <property name="FailsafeSessionName" type="string" value="Failsafe"/>
-    <property name="LockCommand" type="string" value=""/>
-  </property>
-  <property name="sessions" type="empty">
-    <property name="Failsafe" type="empty">
-      <property name="IsFailsafe" type="bool" value="true"/>
-      <property name="Count" type="int" value="5"/>
-      <property name="Client0_Priority" type="int" value="15"/>
-      <property name="Client0_PerScreen" type="bool" value="false"/>
-      <property name="Client1_Command" type="array">
-        <value type="string" value="xfsettingsd"/>
-      </property>
-      <property name="Client1_Priority" type="int" value="20"/>
-      <property name="Client1_PerScreen" type="bool" value="false"/>
-      <property name="Client2_Priority" type="int" value="25"/>
-      <property name="Client2_PerScreen" type="bool" value="false"/>
-      <property name="Client3_Command" type="array">
-        <value type="string" value="Thunar"/>
-        <value type="string" value="--daemon"/>
-      </property>
-      <property name="Client3_Priority" type="int" value="30"/>
-      <property name="Client3_PerScreen" type="bool" value="false"/>
-      <property name="Client4_Priority" type="int" value="35"/>
-      <property name="Client4_PerScreen" type="bool" value="false"/>
-    </property>
-  </property>
-</channel>
-
 conda install -c conda-forge psutil
 
 =====================================================================
@@ -274,8 +242,6 @@ conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip3 install passphraseme
 /home/manuj/anaconda3/envs/util/bin/pip install rofimoji
 /home/manuj/anaconda3/envs/util/bin/pip install ueberzug (ueberzug command is also hardcoded)
-
-rofimoji - change shebang line to use relative path
 
 (do not install pygobject in util else playsound will break)
 
