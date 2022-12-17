@@ -151,7 +151,7 @@ nnoremap <C-k> <C-w>k
 nnoremap <C-l> <C-w>l
 
 " Remap ESC to ii
-:imap ii <Esc>
+" :imap ii <Esc>
 
 " Make adjusing split sizes a bit more friendly
 noremap <C-Left> :vertical resize +3<CR>
