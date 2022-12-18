@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import pyperclip as pc
+from playsound import playsound
+from py_utilities import find_urls
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+url_file_name = f"{myhome}/Backups/youtube.txt"
+
+clipboard_content = pc.paste()
+
+urls = find_urls(clipboard_content)
+
+if len(urls)>0:
+    for url in urls:
+        # open file
+        with open(url_file_name, "a+") as f:
+            f.write(url + "\n")
+            playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)
+
+else:
+    playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg", block=False)
