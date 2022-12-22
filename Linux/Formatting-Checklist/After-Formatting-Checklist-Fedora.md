@@ -236,6 +236,7 @@ conda install -c conda-forge qrcode
 conda install -c conda-forge libwebp
 conda install -c conda-forge pypdf2 (check if needed)
 conda install -c conda-forge rich
+conda install -c conda-forge plyer
 
 conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
