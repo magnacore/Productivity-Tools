@@ -8,10 +8,10 @@ console = Console()
 console.rule(f"[bold cyan]Laptop Backup Mount...", style="cyan")
 
 console.print(f"[bold cyan]Open the container...")
-sudo cryptsetup luksOpen /dev/sdb luks-laptop-backup-full
+sudo cryptsetup luksOpen /dev/sda luks-laptop-backup-full
 
 console.print(f"[bold cyan]Mount the container...")
-sudo mkdir /media/$USER/laptop_backup_full
+sudo mkdir -p /media/$USER/laptop_backup_full
 
 # Change the owner
 sudo chown $USER:$USER /media/$USER/laptop_backup_full
@@ -23,7 +23,7 @@ time.sleep( 5 )
 # mount the directory
 if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_backup_full"):
     sudo btrfs filesystem show
-    
+
     audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 
 else:
