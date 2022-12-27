@@ -28,7 +28,7 @@ Plug 'preservim/nerdtree'
 Plug 'tpope/vim-commentary'
 
 " Show hex colors
-Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
+" Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
 
 " Convert text to title case using motion
 Plug 'christoomey/vim-titlecase'
