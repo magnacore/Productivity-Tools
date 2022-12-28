@@ -199,8 +199,6 @@ pip install isort
 
 XONSH:
 conda install -c conda-forge xonsh
-conda install -c conda-forge playsound
-conda install -c conda-forge pygobject (do not install in util else playsound will break)
 conda install -c conda-forge num2words
 conda install -c conda-forge google-cloud-sdk
 conda install -c conda-forge google-cloud-texttospeech
@@ -231,7 +229,6 @@ conda install -c conda-forge pypdf2
 conda install -c conda-forge yt-dlp
 conda install -c conda-forge go-ipfs
 conda install -c conda-forge pyperclip
-conda install -c conda-forge playsound
 conda install -c conda-forge qrcode
 conda install -c conda-forge libwebp
 conda install -c conda-forge pypdf2 (check if needed)
