@@ -27,6 +27,7 @@ $EDITOR=$VISUAL
 # =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
 
+aliases ["sda-eject"] = "udisksctl power-off -b /dev/sda"
 aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
 aliases ["g"] = "git"
