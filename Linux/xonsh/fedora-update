@@ -7,7 +7,7 @@ console = Console()
 console.rule(f"[bold cyan]Updating Fedora...", style="cyan")
 
 console.print(f"[bold cyan]Delete old files in trash...[/bold cyan]")
-trash-empty 3
+trash-empty -f 3
 
 # console.print(f"[bold cyan]Deleting None files...[/bold cyan]")
 # find $HOME/ -type f -name "None" -delete
