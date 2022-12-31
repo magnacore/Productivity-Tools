@@ -11,4 +11,4 @@ if len(sys.argv) > 1:
 if selection:
 	audio_to_play = sys.argv[1]
 
-	os.system("mpv --really-quiet --volume=200 " + audio_to_play)
+	os.system("mpv --really-quiet --volume=100 " + audio_to_play)
