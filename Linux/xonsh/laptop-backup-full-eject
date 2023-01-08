@@ -25,7 +25,7 @@ sudo cryptsetup luksClose luks-laptop-backup-full
 console.print(f"[bold cyan]Waiting for 3 seconds before turning off...")
 time.sleep(3)
 console.print(f"[bold cyan]Powering off...")
-udisksctl power-off -b /dev/sdb
+udisksctl power-off -b /dev/sda
 
 lsblk
 
