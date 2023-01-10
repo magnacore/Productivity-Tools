@@ -124,7 +124,7 @@ sudo dnf install cronie
 
 reboot
 or
-systemctl start crodd.service
+systemctl start crond.service
 
 systemctl status crond.service
 
