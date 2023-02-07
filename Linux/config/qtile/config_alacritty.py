@@ -2,7 +2,7 @@ from typing import List  # noqa: F401
 
 import os
 import re
-import socket
+# import socket
 import subprocess
 
 from libqtile import bar, layout, widget, hook, qtile
@@ -69,6 +69,7 @@ keys = [
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
+    Key([mod], "y", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
     Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
 
     ## Rofi
@@ -194,7 +195,7 @@ screens = [
 				
                 # Temperature
                 widget.TextBox(text = "🌡️", padding = widget_padding, background = colors[1], fontsize = icon_font_size),
-				widget.ThermalSensor(foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
+				widget.ThermalSensor(tag_sensor='edge', format='APU:{temp:.0f}{unit}', foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[1]),
 
                 # CPU
