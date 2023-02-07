@@ -20,7 +20,7 @@ font:
     family: RobotoMono Nerd Font
     style: Bold Italic
 
-  size: 12.5  #13 font size will cause an empty line to appear below nvim for this font
+  size: 13.5  #13 font size will cause an empty line to appear below nvim for this font
 
 colors:
   name: Monokai (dark)
