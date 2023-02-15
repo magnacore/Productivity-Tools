@@ -1,7 +1,7 @@
 #!/usr/bin/env xonsh
 
 import sys
-from playsound import playsound
+import os
 
 selection = False
 
@@ -11,4 +11,4 @@ if len(sys.argv) > 1:
 if selection:
 	audio_to_play = sys.argv[1]
 
-	playsound(audio_to_play, block=False)
+	os.system("mpv --really-quiet --volume=100 " + audio_to_play)
