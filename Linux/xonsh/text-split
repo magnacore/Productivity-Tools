@@ -14,7 +14,7 @@ from utilities import get_mime, get_filename_extension, get_user_selection
 
 console = Console()
 
-split_choice = ['Google TTS API', '10', 'Speechelo', 'Custom']
+split_choice = ['Google TTS API', '10k', '18k', 'Custom']
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
@@ -29,9 +29,9 @@ if selection:
 
 	choice = get_user_selection(split_choice, "Each part will contain how many kilobytes?")
 
-	if choice == '10':
+	if choice == '10k':
 		split_after_kb = 10
-	elif choice == 'Speechelo':
+	elif choice == '18k':
 		split_after_kb = 18
 	elif choice == 'Google TTS API':
 		split_after_kb = 4.5
@@ -41,7 +41,7 @@ if selection:
 			split_after_kb = 10
 
 	console.rule(f"[bold cyan]Splitting Text to {split_after_kb} kbs each...")
-	
+
 	try:
 		nltk.data.find('tokenizers/punkt')
 	except LookupError:
