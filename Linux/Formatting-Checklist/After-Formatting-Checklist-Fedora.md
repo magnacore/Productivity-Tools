@@ -207,7 +207,7 @@ conda install -c conda-forge rich
 conda install -c conda-forge pypdf2
 conda install -c anaconda pillow
 
-Force update only if installed version is not recent. Do this after running the above command:
+Force update only if installed version is not recent. Do this after running the above commands:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'
 
 No conda:
@@ -215,7 +215,11 @@ No conda:
 
 Do not make Xonsh the default shell. Flatpak apps will not appear in rofi, alacritty terminal will not read colors from alacritty.yaml and zramctl command will fail.
 
-playsound was installed in both util and xonsh
+Installing Playsound:
+playsound was installed in xonsh
+https://stackoverflow.com/questions/70508775/error-could-not-build-wheels-for-pycairo-which-is-required-to-install-pyprojec
+sudo dnf install gobject-introspection-devel cairo-gobject-devel
+pip install PyGObject
 
 =====================================================================
 
@@ -226,7 +230,7 @@ Note: for scripts which are using python like pdf-split-1, we are importing a pa
 The imports must be installed in the same environment from which we are importing python, in this case util
 conda install -c conda-forge pypdf2
 
-conda install -c conda-forge yt-dlp
+conda install -c conda-forge yt-dlp (do not install using conda because we get old versions - use pip)
 conda install -c conda-forge go-ipfs
 conda install -c conda-forge pyperclip
 conda install -c conda-forge qrcode
