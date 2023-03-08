@@ -1,0 +1,61 @@
+#!/usr/bin/env xonsh
+
+from rich.console import Console
+from rich import print
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_filename_extension, get_user_selection
+
+console = Console()
+
+console.rule(f"[bold cyan]Extracting track form .mkv...", style="cyan")
+
+# sys.argv[0] is the name of the script which will always be there
+if len(sys.argv) == 1: # No arguments passed
+	selection = False
+elif len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	# Ask the user if they want to delete the original media
+	delete_original = ["No", "Yes"]
+	console.print(f"[bold cyan]Delete Original Media?")
+	delete_choice = get_user_selection(delete_original)
+
+	for file in allFiles:
+		mimestart = get_mime(file)
+
+		if mimestart != None:
+			if mimestart in ['video', 'audio']:
+				console.rule(f"[bold cyan]Extracting track form {file}", style="cyan")
+				mkvinfo @(file)
+
+				# Ask the user which track to extract
+				extract_choice = input("\nWhich track to extract? ")
+				
+				filename, _ = get_filename_extension(file)
+				
+				if !(mkvextract @(file) tracks @(int(extract_choice)):@(filename).rename):
+					print(f"[bold green] Extracted: {file}")
+					
+					if delete_choice == "Yes":
+						trash-put @(file)
+					else:
+						mkdir -p ./Original_Media
+						mv @(file) ./Original_Media/
+				else:
+					print(f"[bold red] Unable to extract: {file}")
+
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+	console.print("No files selected!", style="bold red")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")

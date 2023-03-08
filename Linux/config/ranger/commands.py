@@ -946,3 +946,15 @@ class pdf_convert_text(Command):
             self.fm.change_mode("normal")
 
 ###############################################################################
+
+class mkv_extract_track(Command):
+    """:Interactively extract tracks from mkv/a without conversion"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell mkv-extract-track %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################
