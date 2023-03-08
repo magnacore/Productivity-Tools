@@ -32,6 +32,8 @@ def text_to_audio(voice_name: str, text: str):
 
 
 # https://cloud.google.com/text-to-speech/docs/voices
+# en-US-Neural2-J
+# en-US-Neural2-F
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
