@@ -1,0 +1,14 @@
+#!/usr/bin/env xonsh
+
+from rich.console import Console
+
+console = Console()
+
+console.rule(f"[bold cyan]Kill Process...", style="cyan")
+
+# use -9 to hard kill
+ps aux | fzf | awk '{print $2}' | xargs kill -15
+
+console.rule(style="cyan")
+
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
