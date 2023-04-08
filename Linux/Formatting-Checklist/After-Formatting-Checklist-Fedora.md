@@ -206,6 +206,7 @@ conda install -c anaconda nltk
 conda install -c conda-forge rich
 conda install -c conda-forge pypdf2
 conda install -c anaconda pillow
+conda install -c conda-forge playsound
 
 Force update only if installed version is not recent. Do this after running the above commands:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'
