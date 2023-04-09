@@ -1,0 +1,55 @@
+#!/usr/bin/env xonsh
+import os
+import sys
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from rich.console import Console
+from utilities import get_filename_extension, get_mime, get_timestamp
+
+console = Console()
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) == 3:
+	selection = True
+else:
+	console.print(f"[bold red]Select the video and the subtitle file.")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+if selection:
+	video = sys.argv[1]
+	subtitle = sys.argv[2]
+
+	console.rule(f"[bold cyan]Embedding subtitle in video...", style="cyan")
+
+	mimestart1 = get_mime(video)
+	mimestart2 = get_mime(subtitle)
+
+	if (mimestart1 != None) and (mimestart2 != None):
+		if mimestart2 in ['video'] and mimestart1 in ['text']:
+			# swap
+			temp = video
+			video = subtitle
+			subtitle = temp
+
+		mimestart1 = get_mime(video)
+		mimestart2 = get_mime(subtitle)
+
+		if mimestart1 in ['video'] and mimestart2 in ['text']:
+			new_filename, _ = get_filename_extension(video)
+			new_filename = new_filename + "_" + get_timestamp() + '.mkv'
+
+			if !(mkvmerge -o @(new_filename) @(video) @(subtitle) --chapter-language en):
+				console.print(f"[green]Embedded {subtitle} in {new_filename}")
+				audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+			else:
+				console.print(f"[bold red]Could not embed {subtitle} in {new_filename}")
+				audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+		else:
+			console.print(f"[bold red]Select a valid video and subtitle file.")
+			audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")

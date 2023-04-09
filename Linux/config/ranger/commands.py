@@ -958,3 +958,14 @@ class mkv_extract_track(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class embed_subtitle(Command):
+    """:Embed a subtitle in a video file."""
+
+    def execute(self):
+        self.fm.execute_console(f"shell embed-subtitle %s")
+
+        self.fm.change_mode("normal")
+        self.fm.notify("Subtitle embedded.")
+
+###############################################################################
