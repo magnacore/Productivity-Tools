@@ -37,6 +37,7 @@ if selection:
 		new_filename, _ = get_filename_extension(input_2)
 		new_filename = new_filename + "_" + get_timestamp() + '.mkv'
 
+	# order of video and subtile file is unimportant
 	if !(mkvmerge -o @(new_filename) @(input_1) @(input_2) --chapter-language en):
 		console.print(f"[green]Embedded in {new_filename}")
 		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
@@ -48,6 +49,7 @@ console.rule(style="cyan")
 
 """
 Archive
+This script works fine. The reason we are using the above script is because get_mime is returning None for .srt files.
 
 #!/usr/bin/env xonsh
 import os
