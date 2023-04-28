@@ -1,0 +1,4 @@
+#!/usr/bin/env xonsh
+
+fedora-update
+sudo shutdown -h now
