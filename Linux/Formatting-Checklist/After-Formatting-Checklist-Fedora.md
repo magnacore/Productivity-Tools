@@ -162,6 +162,10 @@ Go to respective environments and install
 
 QTILE:
 The pip cache is cleared (remove ~/.cache/pip, if it exists)
+pip install xcffib wheel
+pip install --no-cache --upgrade --no-build-isolation cairocffi
+
+Old Method:
 pip install --no-cache-dir xcffib
 pip install --no-cache-dir cairocffi
 pip install --no-cache-dir qtile
