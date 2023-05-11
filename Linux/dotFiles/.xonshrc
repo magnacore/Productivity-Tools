@@ -23,6 +23,7 @@ execx($(zoxide init xonsh), 'exec', __xonsh__.ctx, filename='zoxide')
 
 $VISUAL='/usr/bin/nvim'
 $EDITOR=$VISUAL
+$TERMINFO='/usr/share/terminfo'
 
 # =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
