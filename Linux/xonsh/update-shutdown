@@ -1,4 +1,4 @@
 #!/usr/bin/env xonsh
 
-fedora-update
+viperos-update
 sudo shutdown -h now
