@@ -3,27 +3,27 @@
 from_path = "/media/manuj/laptop_backup_full/@current/" # end with /
 
 # If there is a space in the destination path enclose in quotes
-rsync --delete --progress -vahi @(from_path + ".fonts/") /home/manuj/.fonts/
-rsync --delete --progress -vahi @(from_path + ".gnupg/") /home/manuj/.gnupg/
-rsync --delete --progress -vahi @(from_path + ".icons/") /home/manuj/.icons/
-rsync --delete --progress -vahi @(from_path + ".password-store/") /home/manuj/.password-store/
-rsync --delete --progress -vahi @(from_path + "Backups/") /home/manuj/Backups/
-rsync --delete --progress -vahi @(from_path + "Bin/") /home/manuj/Bin/
-rsync --delete --progress -vahi @(from_path + "Books/") /home/manuj/Books/
-rsync --delete --progress -vahi @(from_path + "Copy To HDD/") "/home/manuj/Copy To HDD/"
-rsync --delete --progress -vahi @(from_path + "Desktop/") /home/manuj/Desktop/
-rsync --delete --progress -vahi @(from_path + "Documents/") /home/manuj/Documents/
-rsync --delete --progress -vahi @(from_path + "Downloads/") /home/manuj/Downloads/
-rsync --delete --progress -vahi @(from_path + "Installers/") /home/manuj/Installers/
-rsync --delete --progress -vahi @(from_path + "Music/") /home/manuj/Music/
-rsync --delete --progress -vahi @(from_path + "My_Cmaps/") /home/manuj/My_Cmaps/
-rsync --delete --progress -vahi @(from_path + "Pictures/") /home/manuj/Pictures/
-rsync --delete --progress -vahi @(from_path + "Productivity_System/") /home/manuj/Productivity_System/
-rsync --delete --progress -vahi @(from_path + "Projects/") /home/manuj/Projects/
-rsync --delete --progress -vahi @(from_path + "Public/") /home/manuj/Public/
-rsync --delete --progress -vahi @(from_path + "Software/") /home/manuj/Software/
-rsync --delete --progress -vahi @(from_path + "Templates/") /home/manuj/Templates/
-rsync --delete --progress -vahi @(from_path + "To_Convert/") /home/manuj/To_Convert/
-rsync --delete --progress -vahi @(from_path + "Videos/") /home/manuj/Videos/
-rsync --delete --progress -vahi @(from_path + "VirtualBox VMs/") "/home/manuj/VirtualBox VMs/"
-rsync --delete --progress -vahi @(from_path + "Wiki/") /home/manuj/Wiki/
+rsync --delete --progress -vahi @(from_path + ".fonts/") ~/.fonts/
+rsync --delete --progress -vahi @(from_path + ".gnupg/") ~/.gnupg/
+rsync --delete --progress -vahi @(from_path + ".icons/") ~/.icons/
+rsync --delete --progress -vahi @(from_path + ".password-store/") ~/.password-store/
+rsync --delete --progress -vahi @(from_path + "Backups/") ~/Backups/
+rsync --delete --progress -vahi @(from_path + "Bin/") ~/Bin/
+rsync --delete --progress -vahi @(from_path + "Books/") ~/Books/
+rsync --delete --progress -vahi @(from_path + "Copy To HDD/") "~/Copy To HDD/"
+rsync --delete --progress -vahi @(from_path + "Desktop/") ~/Desktop/
+rsync --delete --progress -vahi @(from_path + "Documents/") ~/Documents/
+rsync --delete --progress -vahi @(from_path + "Downloads/") ~/Downloads/
+rsync --delete --progress -vahi @(from_path + "Installers/") ~/Installers/
+rsync --delete --progress -vahi @(from_path + "Music/") ~/Music/
+rsync --delete --progress -vahi @(from_path + "My_Cmaps/") ~/My_Cmaps/
+rsync --delete --progress -vahi @(from_path + "Pictures/") ~/Pictures/
+rsync --delete --progress -vahi @(from_path + "Productivity_System/") ~/Productivity_System/
+rsync --delete --progress -vahi @(from_path + "Projects/") ~/Projects/
+rsync --delete --progress -vahi @(from_path + "Public/") ~/Public/
+rsync --delete --progress -vahi @(from_path + "Software/") ~/Software/
+rsync --delete --progress -vahi @(from_path + "Templates/") ~/Templates/
+rsync --delete --progress -vahi @(from_path + "To_Convert/") ~/To_Convert/
+rsync --delete --progress -vahi @(from_path + "Videos/") ~/Videos/
+rsync --delete --progress -vahi @(from_path + "VirtualBox VMs/") "~/VirtualBox VMs/"
+rsync --delete --progress -vahi @(from_path + "Wiki/") ~/Wiki/
