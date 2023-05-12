@@ -1,0 +1,45 @@
+#!/usr/bin/env xonsh
+
+import pyperclip as pc
+
+from rich.console import Console
+console = Console()
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import rot13_5
+
+console.rule(f"[bold cyan]Encrypting clipboard using Rot13/5 Cipher...", style="cyan")
+
+# Use raw strings
+# Python cannot handle \ as the last character in a raw string. It can be at the start or middle.
+# What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
+clipboard_content = pc.paste()
+
+cipher_text = rot13_5(clipboard_content)
+
+pc.copy(cipher_text)
+
+## Check
+clipboard_content_check = pc.paste()
+plain_text = rot13_5(clipboard_content_check)
+
+if plain_text == clipboard_content:
+	console.print(f"Copied: Rot13/5 encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
+
+	warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
+
+	if cipher_text[0] == " ":
+		console.print(f"[bold red]Warning: Ciphertext contains a leading space! {warning_cipher_text}")
+	elif cipher_text[-1] == " ":
+		console.print(f"[bold red]Warning: Ciphertext contains a trailing space! {warning_cipher_text}")
+
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+	console.print('ERROR!')
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")

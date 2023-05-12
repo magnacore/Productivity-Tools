@@ -106,3 +106,21 @@ def get_password_entropy(password_length, pool_size = 92):
 	brute_force_attempts = 2**(entropy-1)
 
 	return entropy, brute_force_attempts
+
+def rot13_5(input_string):
+    output_string = ""
+
+    for char in input_string:
+        ascii_val = ord(char)
+
+        if ascii_val >= ord('a') and ascii_val <= ord('z'):
+            output_string += chr((ascii_val - ord('a') + 13) % 26 + ord('a'))
+        elif ascii_val >= ord('A') and ascii_val <= ord('Z'):
+            output_string += chr((ascii_val - ord('A') + 13) % 26 + ord('A'))
+        elif ascii_val >= ord('0') and ascii_val <= ord('9'):
+            output_string += chr((ascii_val - ord('0') + 5) % 10 + ord('0'))
+        else:
+            output_string += char
+
+    return output_string
+	
