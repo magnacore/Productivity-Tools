@@ -123,4 +123,18 @@ def rot13_5(input_string):
             output_string += char
 
     return output_string
-	
+
+def rot13(input_string):
+    output_string = ""
+
+    for char in input_string:
+        ascii_val = ord(char)
+
+        if ascii_val >= ord('a') and ascii_val <= ord('z'):
+            output_string += chr((ascii_val - ord('a') + 13) % 26 + ord('a'))
+        elif ascii_val >= ord('A') and ascii_val <= ord('Z'):
+            output_string += chr((ascii_val - ord('A') + 13) % 26 + ord('A'))
+        else:
+            output_string += char
+
+    return output_string

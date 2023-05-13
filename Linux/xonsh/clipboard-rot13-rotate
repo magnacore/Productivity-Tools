@@ -10,7 +10,7 @@ import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import rot13_5
+from utilities import rot13
 
 console.rule(f"[bold cyan]Encrypting clipboard using Rot13/5 Cipher...", style="cyan")
 
@@ -19,16 +19,16 @@ console.rule(f"[bold cyan]Encrypting clipboard using Rot13/5 Cipher...", style="
 # What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
 clipboard_content = pc.paste()
 
-cipher_text = rot13_5(clipboard_content)
+cipher_text = rot13(clipboard_content)
 
 pc.copy(cipher_text)
 
 ## Check
 clipboard_content_check = pc.paste()
-plain_text = rot13_5(clipboard_content_check)
+plain_text = rot13(clipboard_content_check)
 
 if plain_text == clipboard_content:
-	console.print(f"Copied: Rot13/5 encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
+	console.print(f"Copied: Rot13 encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
 
 	warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
 
