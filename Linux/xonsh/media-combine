@@ -1,6 +1,7 @@
 #!/usr/bin/env xonsh
 import os
 import sys
+from datetime import datetime
 
 from rich.console import Console
 console = Console()
@@ -17,11 +18,14 @@ if selection:
     allFiles = sys.argv[1:]
     allFiles.sort()
 
+    date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    file_name = f"combined_{date_time}.mkv"
+
     temp_filename = 'video_list_temp.txt'
 
     echo @([f"file \'{filename}\'\n" for filename in allFiles]) > @(temp_filename)
 
-    ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy combined.mkv
+    ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy @(file_name)
 
     os.remove(temp_filename)
 
