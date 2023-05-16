@@ -79,10 +79,10 @@ if selection:
 						excess = math.ceil(remaining/parts)
 						split_duration_individual = int(split_duration + excess)
 
-						new_filename = filename + f'_SPLIT_EQUAL' + extension
+						new_filename = filename + f'_PART' + extension
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_individual)+'s')
 					else:
-						new_filename = filename + f'_SPLIT_EQUAL' + extension
+						new_filename = filename + f'_PART' + extension
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
 
 					if delete_choice == "Yes":
