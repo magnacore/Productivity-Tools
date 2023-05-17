@@ -74,15 +74,15 @@ if selection:
 					elif mimestart == 'video':
 						extension = ".mkv"
 
+					new_filename = filename + f'-part' + extension
+
 					if (parts != 0):
 						remaining = duration%split_duration
 						excess = math.ceil(remaining/parts)
 						split_duration_individual = int(split_duration + excess)
-
-						new_filename = filename + f'_PART' + extension
+						
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_individual)+'s')
 					else:
-						new_filename = filename + f'_PART' + extension
 						mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
 
 					if delete_choice == "Yes":
