@@ -989,3 +989,26 @@ class epub_convert_text(Command):
             self.fm.change_mode("normal")
 
 ###############################################################################
+
+class files_tag_percentage(Command):
+    """:tag files with percentage"""
+
+    def execute(self):
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-tag-percentage %s")
+
+        self.fm.change_mode("normal")
+
+
+###############################################################################
+
+class files_tag_remove_percentage(Command):
+    """:remove files tags with percentage"""
+
+    def execute(self):
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-tag-remove-percentage %s")
+
+        self.fm.change_mode("normal")
+
+###############################################################################

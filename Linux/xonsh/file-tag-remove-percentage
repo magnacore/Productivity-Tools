@@ -1,0 +1,43 @@
+#!/usr/bin/env xonsh
+from rich.progress import track
+from rich.console import Console
+
+import sys
+import os
+import re
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_filename_extension
+
+console = Console()
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1: # Arguments passed
+	selection = True
+
+if selection:	
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	console.rule(f"[bold cyan]Removing percentage tag ...", style="cyan")
+
+	pattern = r'-\d{1,4}pc$'
+
+	for file in track(allFiles, description="[bold cyan]Untagging : [/bold cyan]"):
+		file_name, extension = get_filename_extension(file)		
+		
+		new_filename = re.sub(pattern, '', file_name)
+
+		new_filename = new_filename + extension
+		new_filename = new_filename.strip()
+
+		os.rename(file, new_filename)
+else:
+	console.print("No files selected!", style="bold red")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
