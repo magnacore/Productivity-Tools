@@ -14,7 +14,7 @@ console = Console()
 # sys.argv[0] is the name of the script which will always be there
 selection = False
 
-if len(sys.argv) > 1: # No arguments passed
+if len(sys.argv) > 1: # Arguments passed
 	selection = True
 
 if selection:	
