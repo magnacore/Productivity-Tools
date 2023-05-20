@@ -95,7 +95,7 @@ if selection:
 				if choice == "Lossless" and extension == ".flac":
 					print(f"[bold red]Skipping converting {file} to .flac[/bold red]")
 				else:
-					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -vbr on f"{filename}"):
+					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -af "volume=1.0" -vbr on f"{filename}"):
 						print(f"[green]Converted {file} to {filename}")
 						
 						if delete_choice == "Yes":
