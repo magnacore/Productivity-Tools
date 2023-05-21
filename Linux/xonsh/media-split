@@ -1,0 +1,90 @@
+#!/usr/bin/env xonsh
+import datetime
+
+from rich.console import Console
+from rich.progress import track
+from rich import print
+
+console = Console()
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_duration, set_valid_file_names, get_user_selection
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	clean_file_names = set_valid_file_names(allFiles)
+
+	to_split = False
+
+	console.rule(f"[bold cyan]Splitting media...", style="cyan")
+	console.print(f"[bold cyan]Looking for media longer than 5 minutes...")
+
+	delete_original = ["No", "Yes"]
+
+	for file in clean_file_names:
+		mimestart = get_mime(file)
+
+		if mimestart != None:
+			if mimestart in ['audio', 'video']:
+
+				duration = get_duration(file)
+
+				if duration > float(300):
+					console.print(f"[bold green]Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...")
+					to_split = True					
+					break
+
+	if to_split == True:
+		console.print(f"[bold cyan]Delete Original Media?")
+		delete_choice = get_user_selection(delete_original)
+
+		for file in track(clean_file_names, description="[bold cyan]Splitting : [/bold cyan]"):
+
+			mimestart = get_mime(file)
+
+			if mimestart != None:
+
+				if mimestart in ['audio', 'video']:
+
+					duration = get_duration(file)
+					
+					# duration should be the double of split_duration
+					# 7.5 equally divides 60 (8) and (7.5/1.5) also equally divides 60 (12)
+					# 7.5 can be played at 1x speed and it will still be less than 10
+					if duration >= 900:
+						# If media is more than 15 minutes, split into 7.5 minute parts
+						split_duration = 450
+					else:
+						# If media is more than 10 minutes, split into 5 minute parts
+						split_duration = 300
+						
+					media-split-equal @(file) @(split_duration)
+
+					if delete_choice == "Yes":
+						trash-put @(file)
+					else:
+						mkdir -p ./Original_Media
+						mv @(file) ./Original_Media/
+
+				else:
+					print(f"[yellow]Skipping {file}")
+
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+
+	else:
+		console.print(f"[green]Nothing to split...exiting.")
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
