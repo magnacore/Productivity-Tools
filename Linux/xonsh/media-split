@@ -29,7 +29,7 @@ if selection:
 	to_split = False
 
 	console.rule(f"[bold cyan]Splitting media...", style="cyan")
-	console.print(f"[bold cyan]Looking for media longer than 5 minutes...")
+	console.print(f"[bold cyan]Looking for media longer than 10 minutes...")
 
 	delete_original = ["No", "Yes"]
 
@@ -41,7 +41,7 @@ if selection:
 
 				duration = get_duration(file)
 
-				if duration > float(300):
+				if duration > float(600):
 					console.print(f"[bold green]Media of length {datetime.timedelta(seconds = round(duration,0))} found. Will split...")
 					to_split = True					
 					break
