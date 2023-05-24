@@ -671,36 +671,24 @@ class file_convert_text(Command):
 ###############################################################################
 
 
-# class media_split_equal(Command):
-#     """
-#     :media_split_equal <split_duration_seconds> <threshold_seconds> <selection>
-#     Splits media
-#     """
-
-#     def execute(self):
-#         # self.arg(1) is the first (space-separated) argument to the function.
-#         # This way you can write ":my_edit somefilename<ENTER>".
-#         if self.arg(1) and self.arg(2):
-#             duration = self.arg(1)
-#             threshold = self.arg(2)
-#         else:
-#             duration = 300
-#             threshold = 600
-
-#         # %s sends each file as an argument
-#         self.fm.execute_console(f"shell media-split-equal {duration} {threshold} %s")
-
-#         self.fm.change_mode("normal")
-
-class media_split(Command):
+class media_split_equal(Command):
     """
-    :media_split <selection>
-    Splits media into parts less than 7.5 minutes
+    :media_split_equal <split_duration_seconds> <threshold_seconds> <files>
+    Splits media
     """
 
     def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1) and self.arg(2):
+            duration = self.arg(1)
+            threshold = self.arg(2)
+        else:
+            duration = 300
+            threshold = 600
+
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell media-split %s")
+        self.fm.execute_console(f"shell media-split-equal {duration} {threshold} %s")
 
         self.fm.change_mode("normal")
 
