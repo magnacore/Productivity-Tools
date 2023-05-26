@@ -692,6 +692,26 @@ class media_split_equal(Command):
 
         self.fm.change_mode("normal")
 
+class media_split_equal_long(Command):
+    """
+    :media_split_equal_long <split_duration_seconds> <threshold_seconds> <files>
+    Splits media
+    """
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1) and self.arg(2):
+            duration = self.arg(1)
+            threshold = self.arg(2)
+        else:
+            duration = 450
+            threshold = 450
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell media-split-equal-long {duration} {threshold} %s")
+
+        self.fm.change_mode("normal")
 
 ###############################################################################
 
