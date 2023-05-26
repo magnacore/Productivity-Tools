@@ -100,7 +100,7 @@ if selection:
 						remaining = duration%split_duration
 						excess = math.ceil(remaining/parts)
 
-						if remaining < 300 and excess < 30:
+						if excess < 30:
 							split_duration_with_excess = int(split_duration + excess)
 						else:
 							split_duration_with_excess = int(split_duration)
