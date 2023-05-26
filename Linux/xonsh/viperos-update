@@ -50,7 +50,7 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     rm -rf @(p"~/.cache")/*
 
     console.print(f"[bold cyan]Clean Xonsh history...[/bold cyan]")
-    rm -rf @(p"~/.local/share/xonsh/history_json")/*
+    rm -rf @(p"~/.local/share/xonsh")/*
 
     console.print(f"[bold cyan]Deleting logs from home folder only...[/bold cyan]")
     # rm -rf @(p"~/.var/app/fr.handbrake.ghb/config/ghb/EncodeLogs")/*
