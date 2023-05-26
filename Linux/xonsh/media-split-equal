@@ -15,6 +15,18 @@ sys.path.append(f"{myhome}/Bin")
 
 from utilities import get_mime, get_duration, get_filename_extension, set_valid_file_names, get_user_selection
 
+import fnmatch
+
+def percentage_tag(file_name):
+	# Get a list of all files in the current directory
+	all_files = os.listdir('.')
+
+	# Filter the list to only include files starting with the input string
+	matching_files = [file for file in all_files if fnmatch.fnmatch(file, f"{file_name}*")]
+    
+	file-tag-percentage @(matching_files)
+
+
 # sys.argv[0] is the name of the script which will always be there
 selection = False
 
@@ -90,6 +102,8 @@ if selection:
 					else:
 						mkdir -p ./Original_Media
 						mv @(file) ./Original_Media/
+				
+					percentage_tag(filename)
 
 				else:
 					print(f"[yellow]Skipping {file}")

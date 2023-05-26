@@ -21,7 +21,7 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	console.rule(f"[bold cyan]Adding percentage tag...", style="cyan")
+	# console.rule(f"[bold cyan]Adding percentage tag...", style="cyan")
 
 	total_files = len(allFiles)
 	position = 1
@@ -35,4 +35,4 @@ else:
 	console.print("No files selected!", style="bold red")
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
-console.rule(style="cyan")
+# console.rule(style="cyan")
