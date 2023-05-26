@@ -24,6 +24,9 @@ def percentage_tag(file_name):
 	# Filter the list to only include files starting with the input string
 	matching_files = [file for file in all_files if fnmatch.fnmatch(file, f"{file_name}*")]
     
+	# file-tag-percentage is a xonsh script. matching_files is a list. We are passing the elements
+	# of a list as arguments to a xonsh script
+	# We are therefore calling a xonsh script from another xonsh script (which is this file)
 	file-tag-percentage @(matching_files)
 
 
