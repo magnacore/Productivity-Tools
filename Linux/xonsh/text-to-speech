@@ -23,7 +23,7 @@ def text_to_audio(voice_name: str, text: str):
     language_code = "-".join(voice_name.split("-")[:2])
     text_input = tts.SynthesisInput(text=text)
     voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
-    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS)
+    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8)
 
     client = tts.TextToSpeechClient()
     response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
