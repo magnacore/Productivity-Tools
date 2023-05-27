@@ -68,7 +68,7 @@ if selection:
 
 				# now loop over each sentence
 				for sentence in sent_text:
-					buffer += sentence
+					buffer += sentence + " "
 					buffer_size_kb = sys.getsizeof(buffer) / 1024.0
 
 					# if buffer size is greater than write threashold or we are on the last sentense
