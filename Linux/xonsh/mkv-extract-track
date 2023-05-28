@@ -26,8 +26,7 @@ if selection:
 
 	# Ask the user if they want to delete the original media
 	delete_original = ["No", "Yes"]
-	console.print(f"[bold cyan]Delete Original Media?")
-	delete_choice = get_user_selection(delete_original)
+	delete_choice = get_user_selection(delete_original, "Delete Original Media?")
 
 	for file in allFiles:
 		mimestart = get_mime(file)

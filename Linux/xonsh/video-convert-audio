@@ -29,9 +29,7 @@ if selection:
 	allFiles.sort()
 
 	delete_original = ["No", "Yes"]
-
-	console.print(f"[bold cyan]Delete Original Media?")
-	delete_choice = get_user_selection(delete_original)
+	delete_choice = get_user_selection(delete_original, "Delete Original Media?")
 
 	for file in track(allFiles, description="[bold cyan]Extracting : [/bold cyan]"):
 		mimestart = get_mime(file)
