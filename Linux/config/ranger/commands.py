@@ -471,7 +471,6 @@ class image_convert(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell image-resize {dimension} %s")
-
         self.fm.change_mode("normal")
 
 
@@ -630,7 +629,6 @@ class files_tag(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag {tag} %s")
-
         self.fm.change_mode("normal")
 
 
@@ -651,7 +649,6 @@ class files_tag_remove(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag-remove {tag} %s")
-
         self.fm.change_mode("normal")
 
 
@@ -664,54 +661,8 @@ class file_convert_text(Command):
     def execute(self):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-convert-text %s")
-
         self.fm.change_mode("normal")
 
-
-###############################################################################
-
-
-class media_split_equal(Command):
-    """
-    :media_split_equal <split_duration_seconds> <threshold_seconds> <files>
-    Splits media
-    """
-
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1) and self.arg(2):
-            duration = self.arg(1)
-            threshold = self.arg(2)
-        else:
-            duration = 300
-            threshold = 600
-
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell media-split-equal {duration} {threshold} %s")
-
-        self.fm.change_mode("normal")
-
-class media_split_equal_long(Command):
-    """
-    :media_split_equal_long <split_duration_seconds> <threshold_seconds> <files>
-    Splits media
-    """
-
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1) and self.arg(2):
-            duration = self.arg(1)
-            threshold = self.arg(2)
-        else:
-            duration = 450
-            threshold = 450
-
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell media-split-equal-long {duration} {threshold} %s")
-
-        self.fm.change_mode("normal")
 
 ###############################################################################
 
@@ -732,7 +683,6 @@ class file_number(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-number {starting_number} {padding} %s")
-
         self.fm.change_mode("normal")
 
 
@@ -753,7 +703,6 @@ class document_convert(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell document-convert {extension} %s")
-
         self.fm.change_mode("normal")
 
 
@@ -825,7 +774,6 @@ class audio_convert_foss(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell audio-convert-foss {bitrate} %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -837,7 +785,6 @@ class video_convert_audio(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell video-convert-audio %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -856,7 +803,6 @@ class pdf_split(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell pdf-split {split_after} %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -868,7 +814,6 @@ class media_combine(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell media-combine %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -880,9 +825,7 @@ class file_rename_valid(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-rename-valid %s")
-
         self.fm.change_mode("normal")
-
         self.fm.notify("Files renamed.")
 
 ###############################################################################
@@ -894,7 +837,6 @@ class pdf_combine(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell pdf-combine %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -913,7 +855,6 @@ class text_split(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell text-split {split_after} %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -925,7 +866,6 @@ class image_combine_pdf(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell image-combine-pdf %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -962,7 +902,6 @@ class pdf_convert_text(Command):
         else:
             # %s sends each file as an argument
             self.fm.execute_console(f"shell pdf-convert-text %s")
-
             self.fm.change_mode("normal")
 
 ###############################################################################
@@ -974,7 +913,6 @@ class mkv_extract_track(Command):
 
         # %s sends each file as an argument
         self.fm.execute_console(f"shell mkv-extract-track %s")
-
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -1016,7 +954,6 @@ class files_tag_percentage(Command):
     def execute(self):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag-percentage %s")
-
         self.fm.change_mode("normal")
 
 
@@ -1028,7 +965,29 @@ class files_tag_remove_percentage(Command):
     def execute(self):
         # %s sends each file as an argument
         self.fm.execute_console(f"shell file-tag-remove-percentage %s")
-
         self.fm.change_mode("normal")
+
+###############################################################################
+
+# class media_split_equal(Command):
+#     """
+#     :media_split_equal <split_duration_seconds> <threshold_seconds> <files>
+#     Splits media
+#     """
+
+#     def execute(self):
+#         # self.arg(1) is the first (space-separated) argument to the function.
+#         # This way you can write ":my_edit somefilename<ENTER>".
+#         if self.arg(1) and self.arg(2):
+#             duration = self.arg(1)
+#             threshold = self.arg(2)
+#         else:
+#             duration = 300
+#             threshold = 600
+
+#         # %s sends each file as an argument
+#         self.fm.execute_console(f"shell media-split-equal {duration} {threshold} %s")
+
+#         self.fm.change_mode("normal")
 
 ###############################################################################
