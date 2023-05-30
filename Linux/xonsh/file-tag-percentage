@@ -25,12 +25,17 @@ if selection:
 
 	total_files = len(allFiles)
 	position = 1
+	countdown = total_files
 
 	for file in track(allFiles, description="[bold cyan]Tagging : [/bold cyan]"):
 		file_name, extension = get_filename_extension(file)
-		new_filename = file_name + f"-{str(int((position/total_files)*100)).zfill(3)}pc" + extension
+		new_filename = file_name + \
+			f"-{str(countdown).zfill(3)}c" + \
+			f"-{str(int((position/total_files)*100)).zfill(3)}p" + \
+			extension
 		os.rename(file, new_filename)
 		position += 1
+		countdown -= 1
 else:
 	console.print("No files selected!", style="bold red")
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
