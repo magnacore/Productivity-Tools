@@ -17,7 +17,7 @@ rsync --delete --progress --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homed
 date > ~/Software/logs/laptop-backup-b.txt
 date > /run/media/$USER/LAPTOP_BACKUP_B/@current/backup_date.txt
 
-sudo btrfs filesystem show
+# sudo btrfs filesystem show
 
 console.rule(style="cyan")
 
