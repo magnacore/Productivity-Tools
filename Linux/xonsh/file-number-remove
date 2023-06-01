@@ -7,7 +7,7 @@ def rename_files(files):
     for file in files:
         directory = os.path.dirname(file)
         old_name = os.path.basename(file)
-        new_name = re.sub(r'^\d{3,}[-\s]', '', old_name)
+        new_name = re.sub(r'^\d{3,}[-\s_]', '', old_name)
         if old_name != new_name:
             os.rename(file, os.path.join(directory, new_name))
 
