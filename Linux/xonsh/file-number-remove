@@ -1,0 +1,23 @@
+#!/usr/bin/env xonsh
+import os
+import argparse
+import re
+
+def rename_files(files):
+    for file in files:
+        directory = os.path.dirname(file)
+        old_name = os.path.basename(file)
+        new_name = re.sub(r'^\d{3,}[-\s]', '', old_name)
+        if old_name != new_name:
+            os.rename(file, os.path.join(directory, new_name))
+
+def main():
+    parser = argparse.ArgumentParser(description='Remove leading digits from file names.')
+    parser.add_argument('files', metavar='F', type=str, nargs='+',
+                        help='an integer for the accumulator')
+
+    args = parser.parse_args()
+    rename_files(args.files)
+
+if __name__ == "__main__":
+    main()
