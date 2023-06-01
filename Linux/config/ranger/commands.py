@@ -991,3 +991,23 @@ class files_tag_remove_percentage(Command):
 #         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class file_number_remove(Command):
+    """:remove numbers from the start of filenames"""
+
+    def execute(self):
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-number-remove %s")
+        self.fm.change_mode("normal")
+
+###############################################################################
+
+class files_group_move(Command):
+    """:groups files by name and moves them to a folder"""
+
+    def execute(self):
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell files-group-move %s")
+        self.fm.change_mode("normal")
+
+###############################################################################
