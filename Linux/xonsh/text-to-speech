@@ -23,9 +23,9 @@ def text_to_audio(voice_name: str, text: str):
     language_code = "-".join(voice_name.split("-")[:2])
     text_input = tts.SynthesisInput(text=text)
     voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
-    # effects_profile_id : Optional. Input only. An identifier which selects 'audio effects' profiles 
+    # effects_profile_id : Optional. Input only. An identifier which selects 'audio effects' profiles
 	# that are applied on (post synthesized) text to speech. Effects are applied on top of each other
-	# in the order they are given.
+	# in the order they are given. https://cloud.google.com/text-to-speech/docs/audio-profiles
     audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8, effects_profile_id=["headphone-class-device"])
 
     client = tts.TextToSpeechClient()
