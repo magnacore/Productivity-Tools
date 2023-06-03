@@ -23,7 +23,7 @@ def text_to_audio(voice_name: str, text: str):
     language_code = "-".join(voice_name.split("-")[:2])
     text_input = tts.SynthesisInput(text=text)
     voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
-    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8)
+    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8, effects_profile_id=["headphone-class-device"])
 
     client = tts.TextToSpeechClient()
     response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
@@ -59,16 +59,16 @@ if selection:
 		if mimestart != None:
 			if mimestart in ['text']:
 				filename, _ = get_filename_extension(file)
-                output_filename = f"{filename}.opus"
+				output_filename = f"{filename}.opus"
 
-                # open the file
-                contents = open(file,"r")
-               
-                with open(output_filename, "wb") as out:
-                    out.write(text_to_audio(voice, contents.read()))
-                    print(f"[bold green]{output_filename} created.")
+				# open the file
+				contents = open(file,"r")
 
-                contents.close()
+				with open(output_filename, "wb") as out:
+					out.write(text_to_audio(voice, contents.read()))
+					print(f"[bold green]{output_filename} created.")
+
+				contents.close()
 	
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
