@@ -1011,3 +1011,13 @@ class files_group_move(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class audio_add_music(Command):
+    """:Add background music to audio file."""
+
+    def execute(self):
+        self.fm.execute_console(f"shell audio-add-music %s")
+        self.fm.change_mode("normal")
+        self.fm.notify("Background music embedded.")
+
+###############################################################################

@@ -1,0 +1,75 @@
+#!/usr/bin/env xonsh
+
+import os
+import sys
+import json
+from rich.console import Console
+from rich import print_json
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+from utilities import (get_filename_extension, get_mime, get_timestamp, get_user_selection)
+
+console = Console()
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) == 3:
+	selection = True
+else:
+	console.print(f"[bold red]Select two files: the audio and the background music.")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+if selection:
+	input_1, input_2 = sys.argv[1:3]
+
+	console.rule(f"[bold cyan]Adding background music to audio...", style="cyan")
+
+	if get_mime(input_1) in ['audio'] or get_mime(input_2) in ['audio']:
+
+		volume_selection = ['0.4', '0.3', '0.2', '0.1', '0.5', '0.6'] # most used first
+		volume = float(get_user_selection(volume_selection, "Choose volume of background music in %..."))
+
+		playback_speed_selection = ['1.5', '1.65', '1.82', '2.0'] # mpv defaults
+		playback_speed = float(get_user_selection(playback_speed_selection, "Choose playback speed of audio..."))
+
+		selected_files = [input_1, input_2]
+		background_music = get_user_selection(selected_files, "Which file is the background music?")
+		
+		if background_music == input_1:
+			# if the background music is the first input, then swap the files
+			input_1, input_2 = input_2, input_1
+
+		new_filename, _ = get_filename_extension(input_1)
+		new_filename = new_filename + "-" + get_timestamp() + '.opus'		
+
+		# Command to get audio file details
+		# Do not use fstring in subprocess
+		bitrate_json = $(ffprobe -v quiet -print_format json -show_streams @(input_2))
+		print_json(bitrate_json)
+
+		# Parse JSON output
+		details = json.loads(bitrate_json)
+
+		# Fetch the bitrate
+		for stream in details['streams']:
+			if stream['codec_type'] == 'audio':
+				bitrate = int(stream.get('bit_rate', '0')) // 1000  # Bitrate in kbps
+				break
+
+		if bitrate == 0:
+			bitrate = 128
+
+		console.print(f"[green]Target Bitrate {bitrate}kbps")
+
+		ffmpeg -i @(input_1) -stream_loop -1 -i @(input_2) -filter_complex f"[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=1.0[a0]; [1:a]atempo={1/playback_speed},aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume={volume}[a1]; [a0][a1]amix=inputs=2:duration=first:dropout_transition=2,pan=stereo|c0<c0+c2|c1<c1+c3[aout]" -map "[aout]" -c:a libopus -b:a @(f"{bitrate}k") @(new_filename)
+
+		console.print(f"[green]Added background music to {new_filename}")
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+	else:
+		console.print(f"[bold red]Select the audio and the background music.")
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
+
