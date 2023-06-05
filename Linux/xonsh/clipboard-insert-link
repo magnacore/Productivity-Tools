@@ -5,7 +5,6 @@ import sys
 import pyperclip as pc
 from playsound import playsound
 from py_utilities import find_urls
-from plyer import notification
 
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
@@ -16,13 +15,15 @@ clipboard_content = pc.paste()
 
 urls = find_urls(clipboard_content)
 
+toast_time_seconds = 10
+
 if len(urls)>0:
     for url in urls:
         # open file
         with open(url_file_name, "a+") as f:
             f.write(url + "\n")
-            playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)
-            notification.notify(title=f"URL inserted in {url_file_name}", message=url, timeout=2)
+            playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)            
+            os.system(f"notify-send -t {toast_time_seconds*1000} {url_file_name} {url}")
 
 else:
     playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg", block=False)
