@@ -48,7 +48,7 @@ def main():
         process_files(args)
         audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
     else:
-        console.print(f"[green]Nothing to split...exiting.")
+        console.print(f"[red]No file selected...exiting")
         audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
     
     console.rule(style="cyan")
