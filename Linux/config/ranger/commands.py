@@ -1022,38 +1022,42 @@ class audio_add_music(Command):
 
 ###############################################################################
 
-class audio_volume_change(Command):
-    """:Change volume of audio"""
+# The below command is working. Its commented as its not frequently used
+# and when needed can be used as a command
+# class audio_volume_change(Command):
+#     """:Change volume of audio: audio_volume_change 3"""
 
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1):
-            # self.rest(1) contains self.arg(1) and everything that follows
-            volume = self.arg(1)
-        else:
-            volume = 1
+#     def execute(self):
+#         # self.arg(1) is the first (space-separated) argument to the function.
+#         # This way you can write ":my_edit somefilename<ENTER>".
+#         if self.arg(1):
+#             # self.rest(1) contains self.arg(1) and everything that follows
+#             volume = self.arg(1)
+#         else:
+#             volume = 1
 
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell audio-volume-change -v {volume} %s")
-        self.fm.change_mode("normal")
+#         # %s sends each file as an argument
+#         self.fm.execute_console(f"shell audio-volume-change -v {volume} %s")
+#         self.fm.change_mode("normal")
 
 ###############################################################################
 
-class audio_speed_change(Command):
-    """:Change speed of audio"""
+# The below command is working. Its commented as its not frequently used
+# and when needed can be used as a command
+# class audio_speed_change(Command):
+#     """:Change speed of audio: audio_speed_change 1.5"""
 
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1):
-            # self.rest(1) contains self.arg(1) and everything that follows
-            speed = self.arg(1)
-        else:
-            speed = 1.5
+#     def execute(self):
+#         # self.arg(1) is the first (space-separated) argument to the function.
+#         # This way you can write ":my_edit somefilename<ENTER>".
+#         if self.arg(1):
+#             # self.rest(1) contains self.arg(1) and everything that follows
+#             speed = self.arg(1)
+#         else:
+#             speed = 1.5
 
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell audio-speed-change -s {speed} %s")
-        self.fm.change_mode("normal")
+#         # %s sends each file as an argument
+#         self.fm.execute_console(f"shell audio-speed-change -s {speed} %s")
+#         self.fm.change_mode("normal")
 
 ###############################################################################
