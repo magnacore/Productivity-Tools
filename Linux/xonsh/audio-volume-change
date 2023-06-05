@@ -1,0 +1,57 @@
+#!/usr/bin/env xonsh
+
+import os
+import sys
+import argparse
+from rich.console import Console
+from rich.progress import track
+from rich import print
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+from utilities import (get_filename_extension, get_mime, get_timestamp)
+
+console = Console()
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Change audio volume")
+    parser.add_argument('-v', '--volume', type=float, required=True, help="Volume increase factor")
+    parser.add_argument('files', nargs='+', help="Files to process")
+    return parser.parse_args()
+
+def cap_volume(volume):
+    return min(max(volume, 0.1), 5)
+
+def process_files(args):
+    allFiles = args.files
+    allFiles.sort()
+    volume = cap_volume(args.volume)
+
+    console.rule(f"[bold cyan]Volume change...", style="cyan")
+
+    for file in track(allFiles, description="[bold cyan]Changing volume : [/bold cyan]"):
+        mimestart = get_mime(file)
+        if mimestart in ['audio']:
+            filename, extension = get_filename_extension(file)
+            new_filename = f"{filename}-{get_timestamp()}{extension}"
+
+            if !(ffmpeg -i @(file) -af @(f"volume={float(volume)}") @(new_filename)):
+                print(f"[green]Changed volume of {new_filename}")
+            else:
+                print(f"[bold red]Could not change volume of {new_filename}")
+                audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+def main():
+    args = parse_args()
+
+    if args.files:
+        process_files(args)
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    else:
+        console.print(f"[green]Nothing to split...exiting.")
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+    
+    console.rule(style="cyan")
+
+if __name__ == "__main__":
+    main()

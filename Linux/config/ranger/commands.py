@@ -1021,3 +1021,21 @@ class audio_add_music(Command):
         self.fm.notify("Background music embedded.")
 
 ###############################################################################
+
+class audio_volume_change(Command):
+    """:Change volume of audio"""
+
+    def execute(self):
+        # self.arg(1) is the first (space-separated) argument to the function.
+        # This way you can write ":my_edit somefilename<ENTER>".
+        if self.arg(1):
+            # self.rest(1) contains self.arg(1) and everything that follows
+            volume = self.arg(1)
+        else:
+            volume = 1
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell audio-volume-change -v {volume} %s")
+        self.fm.change_mode("normal")
+
+###############################################################################
