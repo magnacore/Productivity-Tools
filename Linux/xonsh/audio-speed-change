@@ -1,0 +1,72 @@
+#!/usr/bin/env xonsh
+
+# For Neospeech Julie at 0, the below setting of 0.8 can be used so the audio will play well at 1.5x speed
+
+import os
+import sys
+import argparse
+from rich.console import Console
+from rich.progress import track
+from rich import print
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+from utilities import (get_filename_extension, get_mime, get_user_selection)
+
+console = Console()
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Change audio speed")
+    parser.add_argument('-s', '--speed', type=float, required=True, help="Speed value")
+    parser.add_argument('files', nargs='+', help="Files to process")
+    return parser.parse_args()
+
+def cap_speed(speed):
+    return min(max(speed, 0.5), 2)
+
+def process_files(args):
+    allFiles = args.files
+    allFiles.sort()
+    speed = cap_speed(args.speed)
+
+    console.rule(f"[bold cyan]Speed change...", style="cyan")
+
+    delete_choice = get_user_selection(["No", "Yes"], "Delete original files?")
+
+    for file in track(allFiles, description="[bold cyan]Changing speed : [/bold cyan]"):
+        mimestart = get_mime(file)
+        if mimestart in ['audio']:
+            filename, extension = get_filename_extension(file)
+            new_filename = f"{filename}-{speed}x{extension}"
+
+            if !(ffmpeg -i @(file) -filter:a @(f"atempo={float(speed)}") -vn @(new_filename)):
+                print(f"[green]Changed speed of {new_filename}")
+            else:
+                print(f"[bold red]Could not change speed of {new_filename}")
+                audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+            
+            handle_original_file(file, delete_choice)
+
+def handle_original_file(file, delete_choice):
+    if delete_choice == "Yes":
+        trash-put @(file)
+    else:
+        mkdir -p ./Original_Media
+        mv @(file) ./Original_Media/
+
+def main():
+    args = parse_args()
+
+    if args.files:
+        process_files(args)
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    else:
+        console.print(f"[red]No file selected...exiting.")
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+    
+    console.rule(style="cyan")
+
+if __name__ == "__main__":
+    main()
+
+
