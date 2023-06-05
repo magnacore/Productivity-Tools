@@ -35,7 +35,7 @@ def process_files(args):
             filename, extension = get_filename_extension(file)
             new_filename = f"{filename}-{get_timestamp()}{extension}"
 
-            if !(ffmpeg -i @(file) -af @(f"volume={float(volume)}") @(new_filename)):
+            if !(ffmpeg -i @(file) -af @(f"volume={volume}") @(new_filename)):
                 print(f"[green]Changed volume of {new_filename}")
             else:
                 print(f"[bold red]Could not change volume of {new_filename}")
