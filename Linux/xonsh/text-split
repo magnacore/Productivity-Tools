@@ -10,7 +10,10 @@ import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension, get_user_selection
+from utilities import (get_mime, 
+		       get_filename_extension, 
+			   get_user_selection,
+			   handle_original_file)
 
 console = Console()
 
@@ -28,6 +31,7 @@ if selection:
 	allFiles.sort()
 
 	choice = get_user_selection(split_choice, "Each part will contain how many kilobytes?")
+	delete_choice = get_user_selection(["No", "Yes"], "Delete original text files after splitting?")
 
 	if choice == '10k':
 		split_after_kb = 10
@@ -79,6 +83,8 @@ if selection:
 						output_file.close()
 						buffer = ""
 						part += 1
+
+			handle_original_file(fname, delete_choice, "Texts")
 
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 
