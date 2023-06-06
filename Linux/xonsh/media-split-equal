@@ -17,7 +17,8 @@ from utilities import (
     get_duration,
     get_filename_extension,
     set_valid_file_names,
-    get_user_selection
+    get_user_selection,
+    handle_original_file
 )
 
 console = Console()    
@@ -76,7 +77,7 @@ def handle_splitting(clean_file_names, split_duration, equal):
             new_filename = filename + f'-part' + (".mka" if (mimestart == 'audio' or extension == ".mka") else ".mkv")
 
             split_file(file, new_filename, split_duration, equal)
-            handle_original_file(file, delete_choice)
+            handle_original_file(file, delete_choice, "Media")
             run_percentage_tag(filename)
         else:
             print(f"[yellow]Skipping {file}")
@@ -105,13 +106,6 @@ def split_file(file, new_filename, split_duration, equal):
         ## This path is used when the media's duration is less than split duration
         mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
 
-
-def handle_original_file(file, delete_choice):
-    if delete_choice == "Yes":
-        trash-put @(file)
-    else:
-        mkdir -p ./Original_Media
-        mv @(file) ./Original_Media/
 
 def main():
     args = parse_args()

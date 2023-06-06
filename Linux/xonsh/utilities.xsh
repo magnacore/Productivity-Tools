@@ -138,3 +138,11 @@ def rot13(input_string):
             output_string += char
 
     return output_string
+
+def handle_original_file(file, delete_choice, foldername="Files"):
+    if delete_choice == "Yes":
+        trash-put @(file)
+    else:
+        mkdir -p f"./Original_{foldername}"
+        mv @(file) f"./Original_{foldername}"
+
