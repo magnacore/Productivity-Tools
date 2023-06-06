@@ -6,7 +6,10 @@ from datetime import datetime
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension
+from utilities import (get_mime, 
+                       get_filename_extension, 
+                       handle_original_file, 
+                       get_user_selection)
 
 from rich.console import Console
 console = Console()
@@ -22,6 +25,8 @@ if len(sys.argv) > 1:
 if selection:
     allFiles = sys.argv[1:]
     allFiles.sort()
+
+    delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
 
     _, extension = get_filename_extension(allFiles[0])
 
@@ -43,12 +48,18 @@ if selection:
 
         ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy @(file_name)
 
-        os.remove(temp_filename)
-
         # https://github.com/xonsh/xonsh/issues/1307
         # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
 
-        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+        os.remove(temp_filename)
+
+    for file in allFiles:
+        mimestart = get_mime(file)
+        if mimestart in ['audio', 'video']:
+            handle_original_file(file, delete_choice, "Media")
+
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+
 else:
     console.print("No files selected!", style="bold red")
     audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
