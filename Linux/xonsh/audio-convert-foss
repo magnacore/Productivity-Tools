@@ -27,7 +27,11 @@ import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension, set_valid_file_names, get_user_selection
+from utilities import (get_mime, 
+		       get_filename_extension, 
+			   set_valid_file_names, 
+			   get_user_selection,
+			   handle_original_file)
 
 console = Console()
 
@@ -77,10 +81,7 @@ if selection:
 
 	clean_file_names = set_valid_file_names(allFiles)
 
-	delete_original = ["No", "Yes"]
-
-	console.print(f"[bold cyan]Delete Original Media?")
-	delete_choice = get_user_selection(delete_original)
+	delete_choice = get_user_selection(["No", "Yes"], "Delete Original Media?")
 
 	for file in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(file)
@@ -90,20 +91,17 @@ if selection:
 				filename, extension = get_filename_extension(file)
 				extension = extension.lower().strip()
 
-				filename = filename + new_extension
+				if extension == ".opus":
+					filename = filename + "-converted" + new_extension
+				else:
+					filename = filename + new_extension
 
 				if choice == "Lossless" and extension == ".flac":
 					print(f"[bold red]Skipping converting {file} to .flac[/bold red]")
 				else:
 					if !(ffmpeg -i @(file) -c:a @(codec) -b:a @(bitrate)k -vn -af "volume=1.0" -vbr on f"{filename}"):
-						print(f"[green]Converted {file} to {filename}")
-						
-						if delete_choice == "Yes":
-							trash-put @(file)
-						else:
-							mkdir -p ./Original_Media
-							mv @(file) ./Original_Media/
-
+						print(f"[green]Converted {file} to {filename}")						
+						handle_original_file(file, delete_choice, "Audio")
 					else:
 						print(f"[bold red]Unable to convert {file}[/bold red]")
 						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
