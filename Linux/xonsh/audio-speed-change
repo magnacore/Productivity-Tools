@@ -11,7 +11,7 @@ from rich import print
 
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
-from utilities import (get_filename_extension, get_mime, get_user_selection)
+from utilities import (get_filename_extension, get_mime, handle_original_file)
 
 console = Console()
 
@@ -19,6 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Change audio speed")
     parser.add_argument('-s', '--speed', type=float, required=True, help="Speed value")
     parser.add_argument('files', nargs='+', help="Files to process")
+    parser.add_argument('-d', '--delete', action='store_true', help="Move files to trash after processing")
     return parser.parse_args()
 
 def cap_speed(speed):
@@ -31,28 +32,21 @@ def process_files(args):
 
     console.rule(f"[bold cyan]Speed change...", style="cyan")
 
-    delete_choice = get_user_selection(["No", "Yes"], "Delete original files?")
-
     for file in track(allFiles, description="[bold cyan]Changing speed : [/bold cyan]"):
         mimestart = get_mime(file)
         if mimestart in ['audio']:
             filename, extension = get_filename_extension(file)
             new_filename = f"{filename}-{speed}x{extension}"
 
-            if !(ffmpeg -i @(file) -filter:a @(f"atempo={float(speed)}") -vn @(new_filename)):
+            if !(ffmpeg -i @(file) -filter:a @(f"atempo={speed}") -vn @(new_filename)):
                 print(f"[green]Changed speed of {new_filename}")
+                if args.delete:
+                    handle_original_file(file, "Yes", "Audio")
+                else:
+                    handle_original_file(file, "No", "Audio")
             else:
                 print(f"[bold red]Could not change speed of {new_filename}")
                 audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-            
-            handle_original_file(file, delete_choice)
-
-def handle_original_file(file, delete_choice):
-    if delete_choice == "Yes":
-        trash-put @(file)
-    else:
-        mkdir -p ./Original_Media
-        mv @(file) ./Original_Media/
 
 def main():
     args = parse_args()

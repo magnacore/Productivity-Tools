@@ -9,7 +9,7 @@ from rich import print
 
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
-from utilities import (get_filename_extension, get_mime, get_timestamp)
+from utilities import (get_filename_extension, get_mime, handle_original_file)
 
 console = Console()
 
@@ -17,6 +17,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Change audio volume")
     parser.add_argument('-v', '--volume', type=float, required=True, help="Volume increase factor")
     parser.add_argument('files', nargs='+', help="Files to process")
+    parser.add_argument('-d', '--delete', action='store_true', help="Move files to trash after processing")
     return parser.parse_args()
 
 def cap_volume(volume):
@@ -33,10 +34,14 @@ def process_files(args):
         mimestart = get_mime(file)
         if mimestart in ['audio']:
             filename, extension = get_filename_extension(file)
-            new_filename = f"{filename}-{get_timestamp()}{extension}"
+            new_filename = f"{filename}-{volume}v{extension}"
 
             if !(ffmpeg -i @(file) -af @(f"volume={volume}") @(new_filename)):
                 print(f"[green]Changed volume of {new_filename}")
+                if args.delete:
+                    handle_original_file(file, "Yes", "Audio")
+                else:
+                    handle_original_file(file, "No", "Audio")
             else:
                 print(f"[bold red]Could not change volume of {new_filename}")
                 audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
