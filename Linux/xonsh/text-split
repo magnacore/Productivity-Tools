@@ -1,97 +1,100 @@
 #!/usr/bin/env xonsh
 
-from rich.progress import track
-from rich.console import Console
-import nltk
-# import unicodedata
+import os
+import re
+import sys
 import unidecode
 
-import sys
-import os
+from rich.console import Console
+from rich.progress import track
+
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
 from utilities import (get_mime, 
-		       get_filename_extension, 
-			   get_user_selection,
-			   handle_original_file)
+                       get_filename_extension, 
+                       get_user_selection,
+                       handle_original_file)
 
 console = Console()
 
 split_choice = ['Google TTS API', '10k', '18k', 'Custom']
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
 
-if len(sys.argv) >= 3:
-	selection = True
+def process_files(allFiles, split_after_kb, delete_choice):
+    allFiles.sort()
+    console.rule(f"[bold cyan]Splitting Text to {split_after_kb} kbs each...")
 
-if selection:
-	allFiles = sys.argv[2:]
-	split_after_kb = int(sys.argv[1])
-	allFiles.sort()
+    for fname in track(allFiles, description="[bold cyan]Splitting : [/bold cyan]"):
+        mimestart = get_mime(fname)
+        if mimestart and mimestart in ['text']:
+            split_text_file(fname, split_after_kb)
+        handle_original_file(fname, delete_choice, "Texts")
 
-	choice = get_user_selection(split_choice, "Each part will contain how many kilobytes?")
-	delete_choice = get_user_selection(["No", "Yes"], "Delete original text files after splitting?")
 
-	if choice == '10k':
-		split_after_kb = 10
-	elif choice == '18k':
-		split_after_kb = 18
-	elif choice == 'Google TTS API':
-		split_after_kb = 4.5
-	elif choice == 'Custom':
-		split_after_kb = float(input("Each part will contain how many kilobytes? "))
-		if split_after_kb < 1:
-			split_after_kb = 10
+def split_text_file(fname, split_after_kb):
+    file_contents = open(fname, "r").read()
+    file_contents = unidecode.unidecode(file_contents)
 
-	console.rule(f"[bold cyan]Splitting Text to {split_after_kb} kbs each...")
+    file_name, _ = get_filename_extension(fname)
 
-	try:
-		nltk.data.find('tokenizers/punkt')
-	except LookupError:
-		nltk.download('punkt', download_dir=f"{myhome}/anaconda3/envs/xonsh/share/nltk_data")
+    part = 1
+    buffer = ""
+    sent_text = re.split('(?<=[.!?]) +', file_contents)
 
-	for fname in track(allFiles, description="[bold cyan]Splitting : [/bold cyan]"):
+    for sentence in sent_text:
+        buffer += sentence + " "
+        if is_buffer_size_exceeded(buffer, split_after_kb, sentence, sent_text):
+            write_buffer_to_file(buffer, file_name, part)
+            buffer = ""
+            part += 1
 
-		mimestart = get_mime(fname)
 
-		if mimestart != None:
+def is_buffer_size_exceeded(buffer, split_after_kb, sentence, sent_text):
+    buffer_size_kb = sys.getsizeof(buffer) / 1024.0
+    return (buffer_size_kb > split_after_kb) or (sentence == sent_text[-1])
 
-			if mimestart in ['text']:
 
-				file_contents = open(fname, "r").read()
-				# file_contents = unicodedata.normalize('NFKD', file_contents).encode("ascii", 'ignore').decode("utf-8")
-				file_contents = unidecode.unidecode(file_contents)
+def write_buffer_to_file(buffer, file_name, part):
+    new_filename = file_name + "-" + str(part).zfill(4) + ".txt"
+    with open(new_filename, 'w') as output_file:
+        output_file.write(buffer)
 
-				file_name, _ = get_filename_extension(fname)
 
-				part = 1
+def main():
+    if len(sys.argv) < 3:
+        console.print(f"[bold red]No file selected...exiting.")
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        console.rule(style="cyan")
+        return
 
-				sent_text = nltk.sent_tokenize(file_contents) # this gives us a list of sentences
+    split_after_kb = int(sys.argv[1])
+    allFiles = sys.argv[2:]
 
-				buffer = ""
+    choice = get_user_selection(split_choice, "Each part will contain how many kilobytes?")
+    delete_choice = get_user_selection(["No", "Yes"], "Delete original text files after splitting?")
 
-				# now loop over each sentence
-				for sentence in sent_text:
-					buffer += sentence + " "
-					buffer_size_kb = sys.getsizeof(buffer) / 1024.0
+    split_after_kb = parse_split_after_kb_choice(choice, split_after_kb)
 
-					# if buffer size is greater than write threashold or we are on the last sentense
-					if (buffer_size_kb > split_after_kb) or (sentence == sent_text[-1]):
-						new_filename = file_name + "_" + str(part).zfill(4) + ".txt"
-						output_file = open(new_filename, 'w')
-						output_file.write(buffer)
-						output_file.close()
-						buffer = ""
-						part += 1
+    process_files(allFiles, split_after_kb, delete_choice)
+    
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    console.rule(style="cyan")
 
-			handle_original_file(fname, delete_choice, "Texts")
 
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+def parse_split_after_kb_choice(choice, split_after_kb):
+    if choice == '10k':
+        return 10
+    elif choice == '18k':
+        return 18
+    elif choice == 'Google TTS API':
+        return 4.5
+    elif choice == 'Custom':
+        split_after_kb = float(input("Each part will contain how many kilobytes? "))
+        if split_after_kb < 1:
+            return 10
+    return split_after_kb
 
-else:
-	console.print(f"[bold red]No file selected...exiting.")
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
-console.rule(style="cyan")
+if __name__ == "__main__":
+    main()

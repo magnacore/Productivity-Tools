@@ -206,7 +206,7 @@ conda install -c conda-forge xonsh
 conda install -c conda-forge num2words
 conda install -c conda-forge google-cloud-sdk
 conda install -c conda-forge google-cloud-texttospeech
-conda install -c anaconda nltk
+# conda install -c anaconda nltk
 conda install -c conda-forge rich
 conda install -c conda-forge pypdf2
 conda install -c anaconda pillow
