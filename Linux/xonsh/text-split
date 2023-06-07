@@ -3,7 +3,8 @@
 from rich.progress import track
 from rich.console import Console
 import nltk
-import unicodedata
+# import unicodedata
+import unidecode
 
 import sys
 import os
@@ -60,7 +61,8 @@ if selection:
 			if mimestart in ['text']:
 
 				file_contents = open(fname, "r").read()
-				file_contents = unicodedata.normalize('NFKD', file_contents).encode("ascii", 'ignore').decode("utf-8")
+				# file_contents = unicodedata.normalize('NFKD', file_contents).encode("ascii", 'ignore').decode("utf-8")
+				file_contents = unidecode.unidecode(file_contents)
 
 				file_name, _ = get_filename_extension(fname)
 
