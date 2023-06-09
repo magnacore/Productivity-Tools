@@ -28,10 +28,10 @@ if selection:
 
 	if get_mime(input_1) in ['audio'] or get_mime(input_2) in ['audio']:
 
-		volume_selection = ['0.4', '0.3', '0.2', '0.1', '0.5', '0.6'] # most used first
+		volume_selection = ['0.4', '0.3', '0.2', '0.1', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0'] # most used first
 		volume = float(get_user_selection(volume_selection, "Choose volume of background music in %..."))
 
-		playback_speed_selection = ['1.5', '1.65', '1.82', '2.0'] # mpv defaults
+		playback_speed_selection = ['1.5', '1.65', '1.82', '2.0', '1.0'] # mpv defaults
 		playback_speed = float(get_user_selection(playback_speed_selection, "Choose playback speed of audio..."))
 
 		selected_files = [input_1, input_2]
