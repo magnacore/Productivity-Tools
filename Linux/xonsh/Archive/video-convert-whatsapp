@@ -29,11 +29,16 @@ for video in tqdm(allFiles):
 		if mimestart in ['video']:
 			filename = os.path.splitext(video)[0]+' #converted.mp4'
 
-			ffmpeg -i @(video) -c:v libx264 -b:v 300k -pass 1 -n -an -f null /dev/null and \
-			ffmpeg -i @(video) -c:v libx264 -b:v 300k -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 f"./converted/{filename}"
+			#ffmpeg -i @(video) -c:v libx264 -b:v 300k -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
+			#ffmpeg -i @(video) -c:v libx264 -b:v 300k -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./converted/{filename}"
 
-rm ffmpeg2pass-0.log.mbtree
-rm ffmpeg2pass-0.log
+			bitrate = 500
+
+			ffmpeg -i @(video) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
+			ffmpeg -i @(video) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./converted/{filename}"
+
+
+rm temp_log*
 
 print(u'\u2500' * os.get_terminal_size().columns)
 

@@ -27,14 +27,18 @@ for video in tqdm(allFiles):
 		if mimestart in ['video']:
 			filename = os.path.splitext(video)[0]+' #converted.mkv'
 
-			# ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 1 -r 15 -vsync vfr -an -f null /dev/null and \
-			# ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 100k -pass 2 -r 15 -vsync vfr -n -c:a libopus -b:a 32k -ac 1 output.mkv
+			# ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 150k -pass 1 -r 30 -an -passlogfile mylog -f null /dev/null and \
+			# ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 150k -pass 2 -r 30 -vsync vfr -n -c:a libopus -b:a 32k -ac 1 -passlogfile mylog f"./converted/{filename}"
 
-			ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 150k -pass 1 -n -an -f null /dev/null and \
-			ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 150k -pass 2 -r 30 -vsync vfr -n -c:a libopus -b:a 64k -ac 1 f"./converted/{filename}"
 
-rm ffmpeg2pass-0.log
+			bitrate = 500
+
+			ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 300k -crf 30 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
+			ffmpeg -i @(video) -c:v libvpx-vp9 -b:v 300k -crf 30 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a libopus -b:a 32k -ac 1 -passlogfile temp_log f"./converted/{filename}"
+
+rm temp_log*
 
 print(u'\u2500' * os.get_terminal_size().columns)
 
 audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+
