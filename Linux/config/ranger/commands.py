@@ -470,7 +470,7 @@ class image_convert(Command):
             dimension = 1080
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell image-resize {dimension} %s")
+        self.fm.execute_console(f"shell image-convert {dimension} %s")
         self.fm.change_mode("normal")
 
 

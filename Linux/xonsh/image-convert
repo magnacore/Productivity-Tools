@@ -8,7 +8,13 @@ import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension, set_valid_file_names
+from utilities import (
+	get_mime,
+	get_filename_extension,
+	set_valid_file_names, 
+	handle_original_file, 
+	get_user_selection
+	)
 
 console = Console()
 
@@ -24,11 +30,13 @@ if selection:
 	allFiles.sort()	
 
 	if resize_dimension > 0:
-		console.rule(f"[bold cyan]Changing images dimension to {resize_dimension}p...", style="cyan")
+		console.rule(f"[bold cyan]Changing images dimension to {resize_dimension}p and converting to webp format...", style="cyan")
 	else:
 		console.rule("[bold cyan]Converting images to webp format....", style="cyan")
 
 	clean_file_names = set_valid_file_names(allFiles)
+
+	delete_choice = get_user_selection(["No", "Yes"], "Delete original files after splitting?")
 
 	for image in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(image)
@@ -48,19 +56,19 @@ if selection:
 
 				new_filename = new_filename + ".webp"
 
-				# unlike console, print scrolls above the progress bar
-				# and does not obstruct it
-				print(f"[green]{new_filename}")
-
 				if extension == ".jpg" or extension == ".jpeg":
 					if !(cwebp -metadata all -quiet -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
-						trash-put @(image)
+						# unlike console, print scrolls above the progress bar
+						# and does not obstruct it
+						print(f"[green]{image} -> {new_filename}")
+						handle_original_file(image, delete_choice, "Images")
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
 						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 				elif extension == ".gif":
 					if !(gif2webp -metadata all -quiet @(image) -o @(new_filename)):
-						trash-put @(image)
+						print(f"[green]{image} -> {new_filename}")
+						handle_original_file(image, delete_choice, "Images")
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
 						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
@@ -68,7 +76,8 @@ if selection:
 						print(f"[bold red]Skipping converting webp to webp with no change in dimension.[/bold red]")
 				else:
 					if !(cwebp -metadata all -quiet -lossless -exact -resize 0 @(resize_dimension) @(image) -o @(new_filename)):
-						trash-put @(image)
+						print(f"[green]{image} -> {new_filename}")
+						handle_original_file(image, delete_choice, "Images")
 					else:
 						print(f"[bold red]Unable to convert {image}[/bold red]")
 						audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
