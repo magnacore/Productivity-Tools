@@ -34,8 +34,9 @@ if selection:
 
     for file in allFiles:
         mimestart = get_mime(file)
-        if mimestart in ['audio', 'video']:
-            media_files_list.append(file)    
+        if mimestart != None:
+            if mimestart in ['audio', 'video']:
+                media_files_list.append(file)
     
     if media_files_list:
         delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
