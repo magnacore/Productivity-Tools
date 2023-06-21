@@ -40,13 +40,13 @@ if selection:
         elif mimestart == 'video':
             extension = "mkv"
 
-        file_name = f"combined_{date_time}.{extension}"
+        output_file_name = f"combined_{date_time}.{extension}"
 
         temp_filename = 'video_list_temp.txt'
 
         echo @([f"file \'{filename}\'\n" for filename in allFiles]) > @(temp_filename)
 
-        ffmpeg -safe 0 -f concat -i video_list_temp.txt -c copy @(file_name)
+        ffmpeg -safe 0 -f concat -i @(temp_filename) -c copy @(output_file_name)
 
         # https://github.com/xonsh/xonsh/issues/1307
         # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
