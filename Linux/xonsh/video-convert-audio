@@ -12,24 +12,26 @@ import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension, get_user_selection
+from utilities import (get_mime, 
+		       get_filename_extension, 
+			   get_user_selection,
+			   handle_original_file)
 
 console = Console()
 
 console.rule(f"[bold cyan]Extracting audio form video...", style="cyan")
 
 # sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) == 1: # No arguments passed
-	selection = False
-elif len(sys.argv) > 1:
+selection = False
+
+if len(sys.argv) > 1:
 	selection = True
 
 if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	delete_original = ["No", "Yes"]
-	delete_choice = get_user_selection(delete_original, "Delete Original Media?")
+	delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
 
 	for file in track(allFiles, description="[bold cyan]Extracting : [/bold cyan]"):
 		mimestart = get_mime(file)
@@ -39,13 +41,8 @@ if selection:
 				filename, _ = get_filename_extension(file)
 				filename = filename +'.mka'
 				if !(ffmpeg -i @(file) -n -vn -hide_banner -loglevel error -acodec copy @(filename)):
-					print(f"[bold green] Extracted: {file}")
-					
-					if delete_choice == "Yes":
-						trash-put @(file)
-					else:
-						mkdir -p ./Original_Media
-						mv @(file) ./Original_Media/
+					print(f"[bold green] Extracted: {file}")					
+					handle_original_file(file, delete_choice, "Video")
 				else:
 					print(f"[bold red] Unable to extract: {file}")
 
