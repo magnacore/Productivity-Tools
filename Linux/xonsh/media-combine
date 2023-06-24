@@ -13,7 +13,8 @@ sys.path.append(f"{myhome}/Bin")
 from utilities import (get_mime, 
                        get_filename_extension, 
                        handle_original_file, 
-                       get_user_selection)
+                       get_user_selection,
+                       get_timestamp)
 
 from rich.console import Console
 console = Console()
@@ -41,7 +42,7 @@ if selection:
     if media_files_list:
         delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
         
-        date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        date_time = get_timestamp()
         _, extension = get_filename_extension(media_files_list[0])  
         mimestart = get_mime(media_files_list[0])
         
