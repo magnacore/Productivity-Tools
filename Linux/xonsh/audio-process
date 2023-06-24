@@ -29,7 +29,7 @@ def process_files(args):
     delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
 
     if process_selection == "Speed":
-        speed_selection = get_user_selection(["0.5", "0.6666666666666666", "0.7", "0.8", "0.9", "1.5", "1.65", "1.82", "2.0"], "Select speed:")
+        speed_selection = get_user_selection(["0.5", "0.667", "0.7", "0.8", "0.9", "1.5", "1.65", "1.82", "2.0"], "Select speed:")
         if delete_choice == "Yes":
             audio-speed-change -s @(speed_selection) -d @(allFiles)
         elif delete_choice == "No":
