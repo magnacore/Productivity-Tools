@@ -5,11 +5,10 @@
 
 import sys
 import os
-import time
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_valid_filename, get_filename_extension, get_timestamp
+from utilities import get_valid_filename, get_filename_extension, get_uuid
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
@@ -34,20 +33,16 @@ if selection:
 		# We are dealing with folder if extension is null
 		if extension == "":
 			if valid_file_name == "":
-				time_stamp = get_timestamp()
-				clean_file_name = time_stamp
-				time.sleep(1)
+				clean_file_name = get_uuid()
 			else:
 				clean_file_name = valid_file_name
 		else: # We are dealing with files
 			if valid_file_name == "":
-				time_stamp = get_timestamp()
-				clean_file_name = f"{time_stamp}.{valid_extension}"
-				time.sleep(1)
+				uuid = get_uuid()
+				clean_file_name = f"{uuid}.{valid_extension}"
 			elif valid_file_name == "tar":
-				time_stamp = get_timestamp()
-				clean_file_name = f"{time_stamp}tar.{valid_extension}"
-				time.sleep(1)
+				uuid = get_uuid()
+				clean_file_name = f"{uuid}tar.{valid_extension}"
 			else:
 				clean_file_name = f"{valid_file_name}.{valid_extension}"
 

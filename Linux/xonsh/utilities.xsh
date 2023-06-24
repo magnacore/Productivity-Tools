@@ -146,3 +146,6 @@ def handle_original_file(file, delete_choice, foldername="Files"):
         mkdir -p f"./Original_{foldername}"
         mv @(file) f"./Original_{foldername}"
 
+def get_uuid():
+    import uuid
+    return str(uuid.uuid4())
