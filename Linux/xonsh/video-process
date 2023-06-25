@@ -2,7 +2,6 @@
 
 import glob
 
-import sys
 import os
 myhome = os.path.expanduser('~')
 

@@ -7,7 +7,6 @@ from playsound import playsound
 from py_utilities import find_urls
 
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
 
 url_file_name = f"{myhome}/Backups/youtube.txt"
 
