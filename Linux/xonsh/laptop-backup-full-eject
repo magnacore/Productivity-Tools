@@ -1,7 +1,10 @@
 #!/usr/bin/env xonsh
 import time
+import os
 
 from rich.console import Console
+
+myhome = os.path.expanduser('~')
 
 console = Console()
 
@@ -31,6 +34,9 @@ lsblk
 
 console.print(f"[bold cyan]Empty trash...")
 trash-empty -f
+
+# Create audiobook histogram
+@(f"{myhome}/anaconda3/bin/python") @(f"{myhome}/Bin/audiobook-distribution")
 
 console.rule(style="cyan")
 

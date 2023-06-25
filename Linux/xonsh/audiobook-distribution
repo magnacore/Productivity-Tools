@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+import os
+import matplotlib.pyplot as plt
+from collections import Counter
+import numpy as np
+from py_utilities import get_timestamp 
+
+myhome = os.path.expanduser('~')
+
+# Specify the directory you want to explore
+directory = f'{myhome}/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/BIN/AUDIO/ODD'
+
+# Use os.listdir to get files in the directory
+filenames = os.listdir(directory)
+
+# Extract the first 3 letters from each filename and convert to integers
+numbers = [int(file[:3]) for file in filenames if file[:3].isdigit()]
+
+# Calculate min and max of the numbers to set the range of bins
+min_num = min(numbers)
+max_num = max(numbers)
+
+# Define bins such that each integer is in its own bin
+bins = range(min_num, max_num+2) # +2 because the range end value is exclusive and we also need to account for the space for the last bin.
+
+# Calculate the mean frequency
+counter = Counter(numbers)
+mean_freq = np.mean(list(counter.values()))
+
+# Use matplotlib to plot a histogram of the numbers
+plt.hist(numbers, bins=bins, color='#0504aa', alpha=0.7, rwidth=1, align='left')
+plt.axhline(mean_freq, color='r', linestyle='dashed', linewidth=2)  # Add mean line
+plt.grid(axis='y', alpha=0.75)
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title('Histogram of First 3 Letters of Filenames')
+
+# Set the desired figure size for 720p (1280x720 pixels)
+fig = plt.gcf()
+fig.set_size_inches(12.8, 7.2)
+
+# Save the plot to a directory of your choice
+save_path = f'{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/audiobook-{get_timestamp()}.png'  # Replace with the desired directory and filename
+plt.savefig(save_path, dpi=100)  # Adjust the dpi value as needed
