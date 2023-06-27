@@ -32,7 +32,7 @@ if selection:
 		volume = float(get_user_selection(volume_selection, "Choose volume of background music in %..."))
 
 		playback_speed_selection = ['1.5', '1.65', '1.82', '2.0', '1.0'] # mpv defaults
-		playback_speed = float(get_user_selection(playback_speed_selection, "Choose playback speed of audio..."))
+		playback_speed = float(get_user_selection(playback_speed_selection, "Choose the speed at which you will listen to the audio..."))
 
 		selected_files = [input_1, input_2]
 		background_music = get_user_selection(selected_files, "Which file is the background music?")
