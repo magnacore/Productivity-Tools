@@ -1,6 +1,5 @@
 #!/usr/bin/env xonsh
 import time
-import os
 
 from rich.console import Console
 
