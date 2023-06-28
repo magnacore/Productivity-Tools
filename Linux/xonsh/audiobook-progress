@@ -8,7 +8,6 @@ This script runs in the xonhs environment. But audiobook-distribution runs in th
 base environment.
 """
 
-import time
 import os
 
 myhome = os.path.expanduser('~')

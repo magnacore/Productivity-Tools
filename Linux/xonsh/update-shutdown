@@ -1,5 +1,5 @@
 #!/usr/bin/env xonsh
 
 viperos-update
-audio-process
+audiobook-progress
 sudo shutdown -h now
