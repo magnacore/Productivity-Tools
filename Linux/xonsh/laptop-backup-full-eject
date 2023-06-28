@@ -4,8 +4,6 @@ import os
 
 from rich.console import Console
 
-myhome = os.path.expanduser('~')
-
 console = Console()
 
 console.rule(f"[bold cyan]Eject Laptop Backup Full...", style="cyan")
@@ -34,9 +32,6 @@ lsblk
 
 console.print(f"[bold cyan]Empty trash...")
 trash-empty -f
-
-# Create audiobook histogram
-@(f"{myhome}/anaconda3/bin/python") @(f"{myhome}/Bin/audiobook-distribution")
 
 console.rule(style="cyan")
 
