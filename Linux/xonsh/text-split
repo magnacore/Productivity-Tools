@@ -88,7 +88,7 @@ def parse_split_after_kb_choice(choice, split_after_kb):
     elif choice == '18k':
         return 18
     elif choice == 'Google TTS API':
-        return 4.5
+        return 4
     elif choice == 'Custom':
         split_after_kb = float(input("Each part will contain how many kilobytes? "))
         if split_after_kb < 1:
