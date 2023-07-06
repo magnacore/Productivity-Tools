@@ -3,13 +3,18 @@ import os
 import sys
 from datetime import datetime
 
+"""
+Note: Using mkvmerge to merge files will not re-encode them, so the operation will be fast and lossless. However, this also means that all input files must have the same codecs for the operation to work. If you're trying to merge files with different codecs, you'll first need to re-encode them to use the same codecs. You can do this with a tool like ffmpeg.
+"""
+
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
 from utilities import (get_mime, 
                        get_filename_extension, 
                        handle_original_file, 
-                       get_user_selection)
+                       get_user_selection,
+                       get_timestamp)
 
 from rich.console import Console
 console = Console()
@@ -24,17 +29,23 @@ if len(sys.argv) > 1:
 
 if selection:
     allFiles = sys.argv[1:]
-    allFiles.sort()
+    allFiles.sort()    
 
-    delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
+    media_files_list = []
 
-    _, extension = get_filename_extension(allFiles[0])
-
-    mimestart = get_mime(allFiles[0])
-
-    date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
-    if mimestart in ['audio', 'video']:
+    for file in allFiles:
+        mimestart = get_mime(file)
+        if mimestart != None:
+            if mimestart in ['audio', 'video']:
+                media_files_list.append(file)
+    
+    if media_files_list:
+        delete_choice = get_user_selection(["No", "Yes"], "Delete original files after processing?")
+        
+        date_time = get_timestamp()
+        _, extension = get_filename_extension(media_files_list[0])  
+        mimestart = get_mime(media_files_list[0])
+        
         if (mimestart == 'audio') or (extension == ".mka"):
             extension = "mka"
         elif mimestart == 'video':
@@ -42,23 +53,18 @@ if selection:
 
         output_file_name = f"combined_{date_time}.{extension}"
 
-        temp_filename = 'video_list_temp.txt'
+        # Add '+' to the start of all items except the first one
+        input_files_list = [media_files_list[0]] + [f"+{file}" for file in media_files_list[1:]]
 
-        echo @([f"file \'{filename}\'\n" for filename in allFiles]) > @(temp_filename)
+        mkvmerge -o @(output_file_name) @(input_files_list)
 
-        ffmpeg -safe 0 -f concat -i @(temp_filename) -c copy @(output_file_name)
-
-        # https://github.com/xonsh/xonsh/issues/1307
-        # ffmpeg -f concat -i < @([f"file \'{filename}\'\n" for filename in allMediaFiles]) -c copy output.mkv
-
-        os.remove(temp_filename)
-
-    for file in allFiles:
-        mimestart = get_mime(file)
-        if mimestart in ['audio', 'video']:
+        for file in media_files_list:
             handle_original_file(file, delete_choice, "Media")
 
-    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &    
+    else:
+        console.print("No media files selected!", style="bold red")
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 else:
     console.print("No files selected!", style="bold red")
