@@ -14,8 +14,8 @@ def check_incomplete_downloads(directory):
     for filename in os.listdir(directory):
         if filename.endswith('.part'):
             console.print(f"[red]{filename} not downloaded.")
-        else:
-            console.print(f"[green]{filename} downloaded.")
+        # else:
+        #     console.print(f"[green]{filename} downloaded.")
 
 console = Console()
 
