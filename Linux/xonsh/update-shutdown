@@ -1,5 +1,16 @@
 #!/usr/bin/env xonsh
+import datetime
 
 viperos-update
-audiobook-progress
+
+# Get today's date
+today = datetime.datetime.now()
+
+# Get the day of the month
+day = today.day
+
+# Check if it's divisible by 4
+if day % 4 == 0:
+    audiobook-progress
+
 sudo shutdown -h now
