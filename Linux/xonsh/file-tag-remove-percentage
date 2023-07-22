@@ -19,17 +19,17 @@ selection = False
 if len(sys.argv) > 1: # Arguments passed
 	selection = True
 
-if selection:	
+if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
 	console.rule(f"[bold cyan]Removing percentage tag ...", style="cyan")
 
-	pattern = r'-\d{1,4}c-\d{1,4}p$'
+	pattern = r'-\d{1,4}c-\d{1,4}p'
 
 	for file in track(allFiles, description="[bold cyan]Untagging : [/bold cyan]"):
-		file_name, extension = get_filename_extension(file)		
-		
+		file_name, extension = get_filename_extension(file)
+
 		new_filename = re.sub(pattern, '', file_name)
 
 		new_filename = new_filename + extension
