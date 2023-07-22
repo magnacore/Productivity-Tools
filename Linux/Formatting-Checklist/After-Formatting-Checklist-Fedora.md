@@ -197,6 +197,7 @@ If we get an error that package is corrupted, delete all files in the /home/manu
 
 conda install -c anaconda pylint
 conda install -c conda-forge black
+conda install -c conda-forge numpy-financial
 pip install isort
 
 =====================================================================
