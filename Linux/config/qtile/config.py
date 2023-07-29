@@ -306,6 +306,7 @@ def start_once():
         [myBrowser],
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
+        "flatpak run org.ferdium.Ferdium".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open".split(),
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
