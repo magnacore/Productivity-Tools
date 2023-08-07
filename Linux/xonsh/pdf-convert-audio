@@ -1,0 +1,54 @@
+#!/usr/bin/env xonsh
+from rich.console import Console
+from rich import print
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_filename_extension
+
+console = Console()
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1: # arguments passed
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	console.rule(f"[bold cyan]Convert pdf to audio...", style="cyan")
+
+	for file in allFiles:
+		mimestart = get_mime(file, part=1)
+		if mimestart != None:
+			if mimestart in ['pdf']:
+				filename, _ = get_filename_extension(file)
+				text_filename = filename + '.txt'
+				audio_filename = filename + '.opus'
+				output_audio_filename = filename + '.mkv'
+
+				# convert pdf to text
+				pdf-convert-text @(file)
+				# convert text to audio
+				text-to-speech @(text_filename)
+				# delete the text file
+				trash-put @(text_filename)
+				# rename the file
+				mv @(audio_filename) @(output_audio_filename)
+				
+				# if !(ebook-convert @(file) @(output_filename) --pretty-print):
+				# 	print(f"[green]Converted {file}")
+				# else:
+				# 	print(f"[bold red]Could not convert {file}")
+	
+	# audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+	console.print("No files selected!", style="bold red")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
