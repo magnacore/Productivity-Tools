@@ -928,10 +928,10 @@ class embed_subtitle(Command):
 
 ###############################################################################
 
-class epub_convert_text(Command):
+class epub_convert_multiple(Command):
     """
-    :epub_convert_text
-    Converts epub to text
+    :epub_convert_multiple
+    Converts epub to text or pdf
     If only one file is highlighted, it will be treated as a single selection
     """
 
@@ -943,7 +943,7 @@ class epub_convert_text(Command):
             return
         else:
             # %s sends each file as an argument
-            self.fm.execute_console(f"shell epub-convert-text %s")
+            self.fm.execute_console(f"shell epub-convert-multiple %s")
             self.fm.change_mode("normal")
 
 ###############################################################################
