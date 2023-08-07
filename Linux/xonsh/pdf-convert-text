@@ -31,7 +31,7 @@ if selection:
 				output_filename, _ = get_filename_extension(file)
 				output_filename = output_filename + '.txt'
 				
-				if !(ebook-convert @(file) @(output_filename)):
+				if !(ebook-convert @(file) @(output_filename) --pretty-print):
 					print(f"[green]Converted {file}")
 				else:
 					print(f"[bold red]Could not convert {file}")
