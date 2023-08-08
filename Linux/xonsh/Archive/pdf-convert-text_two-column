@@ -1,0 +1,77 @@
+#!/usr/bin/env xonsh
+
+from rich.console import Console
+from rich.progress import Progress
+from PyPDF2 import PdfFileReader
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_filename_extension
+
+console = Console()
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) >= 2:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	console.rule(f"[bold cyan]Converting PDFs to text...")
+
+	with Progress() as progress:
+
+		overall_progress = progress.add_task(f"[bold cyan]Converting {len(allFiles)} PDF(s)...", total=len(allFiles))
+
+		while not progress.finished:
+
+			for fname in allFiles:				
+
+				mimestart = get_mime(fname, 1)
+
+				if mimestart != None:
+					
+					if mimestart in ['pdf']:
+
+						file_name, _ = get_filename_extension(fname)
+
+						pdf = PdfFileReader(fname)						
+
+						text = ""
+
+						total_pages = pdf.getNumPages()
+
+						individual_progress = progress.add_task(f"[bold cyan]Converting {fname}: [/bold cyan]", total=total_pages)
+
+						for page in range(total_pages):
+							page_obj = pdf.getPage(page)
+							page_text = page_obj.extractText()
+							text += page_text
+							# convert page to text
+							progress.update(individual_progress, advance=1)
+
+							# if we are on the last page
+							if (page+1 == total_pages):
+								output_filename = file_name + ".txt"
+
+								with open(output_filename, 'w') as out:
+									out.write(text)
+									text = ""
+						
+						progress.remove_task(individual_progress)
+
+				progress.update(overall_progress, advance=1)
+
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+
+else:
+	console.print(f"[bold red]No file selected...exiting.")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
