@@ -17,6 +17,7 @@ from rich import print
 from rich.text import Text
 from rich import box
 from rich.markdown import Markdown
+from rich.progress import track
 
 from utilities import get_mime, get_duration, get_filename_extension
 
@@ -43,8 +44,8 @@ if selection:
 
 		total_duration = 0.0
 		
-		for root, dirs, files in os.walk(directory):			
-			for file in files:
+		for root, dirs, files in os.walk(directory):
+			for file in track(files, description="[bold cyan]Adding : [/bold cyan]"):
 				mimestart = get_mime(file)
 				filename, _ = get_filename_extension(file)
 				if mimestart != None:
