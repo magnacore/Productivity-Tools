@@ -1,4 +1,9 @@
 #!/usr/bin/env xonsh
+
+"""
+Usage Ranger:	:shell -w media-length-academic Folder_1 Folder_2
+"""
+
 import datetime
 
 import sys
