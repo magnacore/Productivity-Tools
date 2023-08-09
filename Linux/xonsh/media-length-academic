@@ -53,8 +53,8 @@ if selection:
 						duration = get_duration(file_path)
 						total_duration += duration
 						table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
-					# else:
-					# 	print(f"[yellow]Skipping {file}[/yellow]")
+					else:
+						print(f"[yellow]Skipping {file}[/yellow]")
 
 		table.add_row(u'\u2500' * 8, Markdown("---"))
 		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
