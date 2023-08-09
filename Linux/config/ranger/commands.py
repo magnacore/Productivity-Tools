@@ -1034,3 +1034,27 @@ class audio_process(Command):
         self.fm.change_mode("normal")
 
 ###############################################################################
+
+class media_length_academic(Command):
+    """
+    : Calculate length of videos in subdirectores of selected folders
+    : with a specific tag
+    : Denostrates how commands can be executed on selected folders
+    """
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+
+        files = [f for f in self.fm.thistab.get_selection()]
+
+        for f in files:
+            self.fm.execute_console(f"""shell -w media-length-academic '{f.relative_path}' """)
+
+        self.fm.change_mode("normal")
+
+###############################################################################
