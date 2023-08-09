@@ -1,0 +1,66 @@
+#!/usr/bin/env xonsh
+import datetime
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from rich.console import Console
+from rich.table import Table
+from rich import print
+from rich.text import Text
+from rich import box
+from rich.markdown import Markdown
+
+from utilities import get_mime, get_duration, get_filename_extension
+
+console = Console()
+
+console.rule(f"[bold cyan]Summing media duration in directory", style="cyan")
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1: # arguments passed
+	selection = True
+
+if selection:
+	allDirectories = sys.argv[1:]
+	allDirectories.sort()
+
+	for directory in allDirectories:
+		console.rule(f"[bold cyan]Summing media duration in {directory}", style="cyan")
+		table = Table(title="Media Duration", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
+
+		table.add_column("Duration", justify="right", style="green")
+		table.add_column("File name", justify="left")
+
+		total_duration = 0.0
+		
+		for root, dirs, files in os.walk(directory):			
+			for file in files:
+				mimestart = get_mime(file)
+				filename, _ = get_filename_extension(file)
+				if mimestart != None:
+					if mimestart in ['video'] and "#manuj" in filename:
+						file_path = os.path.abspath(os.path.join(root, file))
+						duration = get_duration(file_path)
+						total_duration += duration
+						table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
+					# else:
+					# 	print(f"[yellow]Skipping {file}[/yellow]")
+
+		table.add_row(u'\u2500' * 8, Markdown("---"))
+		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
+		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}",	Text.from_markup("[bold green]Total media duration @1.5x", justify="left"))
+		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}",	Text.from_markup("[bold green]Total media duration @1.65x", justify="left"))
+		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.82,0))}",	Text.from_markup("[bold green]Total media duration @1.82x", justify="left"))
+		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/2,0))}",		Text.from_markup("[bold green]Total media duration @2x", justify="left"))
+
+
+		console.print(table)
+
+console.rule(style="cyan")
+
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
