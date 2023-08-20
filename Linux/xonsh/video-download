@@ -1,5 +1,13 @@
 #!/usr/bin/env xonsh
 
+"""
+Can also use the full channel name:
+https://www.youtube.com/@thedocandchef
+or a playlist
+https://www.youtube.com/playlist?list=PLH2LCTUmfbOoxzN-b1ZqECd5S33YbBFK5
+in the youtube.txt file
+"""
+
 from rich.console import Console
 import sys
 import os
