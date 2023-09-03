@@ -1,14 +1,23 @@
 #!/usr/bin/env xonsh
-
 from rich.console import Console
 
 console = Console()
 
 console.rule("[bold cyan]Backing up backup drive....", style="cyan")
 
-rsync --delete --progress -vahi /run/media/$USER/BACKUP_01_A/ /run/media/$USER/BACKUP_01_B/
+console.print(f"[bold cyan]Deleting previous snapshot...")
+sudo btrfs subvolume delete /run/media/$USER/BACKUP_01_B/BACKUP/@previous
+
+console.print(f"[bold cyan]Creating a new read only snapshot...")
+sudo btrfs subvolume snapshot -r /run/media/$USER/BACKUP_01_B/BACKUP/@current/ /run/media/$USER/BACKUP_01_B/BACKUP/@previous
+
+console.print(f"[bold cyan]Synchronizing...")
+rsync -vahiP --delete /run/media/$USER/BACKUP_01_A/ /run/media/$USER/BACKUP_01_B/BACKUP/@current/
 
 date > ~/Software/logs/backup-backup.txt
+date > /run/media/$USER/BACKUP_01_B/BACKUP/@current/backup_date.txt
+
+# sudo btrfs filesystem show
 
 console.rule(style="cyan")
 
