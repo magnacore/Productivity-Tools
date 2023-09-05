@@ -5,7 +5,7 @@ console = Console()
 
 console.rule(f"[bold cyan]Backup Tutorials...")
 
-rsync --delete --progress -vahi /run/media/$USER/LEARNING/ /run/media/$USER/TutsBackup/BACKUP/
+rsync -vahiP --delete /run/media/$USER/LEARNING/ /run/media/$USER/TutsBackup/BACKUP/
 
 date > ~/Software/logs/tutorials-backup.txt
 

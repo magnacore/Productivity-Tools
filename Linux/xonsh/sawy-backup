@@ -12,7 +12,7 @@ console.print(f"[bold cyan]Creating a new read only snapshot...")
 sudo btrfs subvolume snapshot -r /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-rsync --delete --progress -vahi /run/media/$USER/SAWY_01_A/SAWY/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
+rsync -vahiP --delete /run/media/$USER/SAWY_01_A/SAWY/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
 
 date > ~/Software/logs/sawy-backup.txt
 

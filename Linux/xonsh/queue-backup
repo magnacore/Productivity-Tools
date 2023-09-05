@@ -5,7 +5,7 @@ console = Console()
 
 console.rule(f"[bold cyan]Backing up queue...")
 
-rsync --delete --progress -vahi /run/media/$USER/QUEUE/QUEUE/ /run/media/$USER/Q_BACKUP/QUEUE_BACKUP/
+rsync -vahiP --delete /run/media/$USER/QUEUE/QUEUE/ /run/media/$USER/Q_BACKUP/QUEUE_BACKUP/
 
 date > ~/Software/logs/queue-backup.txt
 
