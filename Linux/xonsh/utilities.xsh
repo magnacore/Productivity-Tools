@@ -149,3 +149,7 @@ def handle_original_file(file, delete_choice, foldername="Files"):
 def get_uuid():
     import uuid
     return str(uuid.uuid4())
+
+def title_case(input_string):
+    input_string = input_string.replace('-', ' ')
+    return input_string.title()

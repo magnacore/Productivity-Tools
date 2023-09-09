@@ -1,0 +1,37 @@
+#!/usr/bin/env xonsh
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_filename_extension, get_valid_filename, title_case
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	for file in allFiles:
+		file_name, extension = get_filename_extension(file)
+
+		valid_file_name = get_valid_filename(file_name)
+		valid_extension = get_valid_filename(extension)
+
+		valid_file_name = title_case(valid_file_name)
+
+		clean_file_name = ""
+
+		# We are dealing with folder if extension is null
+		if extension == "":
+			clean_file_name = valid_file_name
+		else: # We are dealing with files
+			clean_file_name = f"{valid_file_name}.{valid_extension}"
+			clean_file_name = clean_file_name.replace("tar.", ".tar.")
+
+		os.rename(file, clean_file_name)
