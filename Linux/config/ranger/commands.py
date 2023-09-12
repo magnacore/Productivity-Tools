@@ -1070,3 +1070,15 @@ class file_rename_title(Command):
         self.fm.notify("Files renamed.")
 
 ###############################################################################
+
+class file_rename_extension(Command):
+    """:Change filename extension"""
+
+    def execute(self):
+
+        # %s sends each file as an argument
+        self.fm.execute_console(f"shell file-rename-extension %s")
+        self.fm.change_mode("normal")
+        self.fm.notify("Extension renamed.")
+
+###############################################################################

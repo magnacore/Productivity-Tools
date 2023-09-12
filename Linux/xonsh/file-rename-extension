@@ -1,0 +1,27 @@
+#!/usr/bin/env xonsh
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_filename_extension, get_user_selection
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1:
+	selection = True
+
+if selection:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	extension_choice = get_user_selection(["mkv", "opus", "mka"], "Choose new file extension:")
+
+	for file in allFiles:
+		file_name, _ = get_filename_extension(file)
+
+		new_file_name = f"{file_name}.{extension_choice}"
+
+		os.rename(file, new_file_name)
