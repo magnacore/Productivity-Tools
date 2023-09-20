@@ -151,5 +151,5 @@ def get_uuid():
     return str(uuid.uuid4())
 
 def title_case(input_string):
-    input_string = input_string.replace('-', ' ')
+    input_string = input_string.replace('-', ' ').replace('_', ' ')
     return input_string.title()
