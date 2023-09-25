@@ -76,6 +76,9 @@ call plug#end()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " VIM SETTINGS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" Default Leader is used which is \
+
 set ruler
 
 " Show relative line numbers
