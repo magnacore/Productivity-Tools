@@ -38,7 +38,7 @@ Plug 'morhetz/gruvbox'
 Plug 'sickill/vim-monokai'
 
 " Physics based scrolling
-Plug 'yuttie/comfortable-motion.vim'
+" Plug 'yuttie/comfortable-motion.vim'
 
 " Status bar
 Plug 'vim-airline/vim-airline'
@@ -61,7 +61,7 @@ Plug 'terryma/vim-multiple-cursors'
 " Plug 'tc50cal/vim-terminal'
 
 " Tagbar for code navigation
-Plug 'preservim/tagbar'
+" Plug 'preservim/tagbar'
 
 " Open buffers in tabs
 Plug 'ap/vim-buftabline'
@@ -187,7 +187,7 @@ nnoremap <Leader>c :reg<CR>
 " PLUGIN SETTINGS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight Colors
-let g:Hexokinase_highlighters = ['backgroundfull']
+" let g:Hexokinase_highlighters = ['backgroundfull']
 
 " FZF shortcuts, ! opens in full screen
 nnoremap <Leader>ff :Files!<CR>
@@ -248,14 +248,14 @@ nmap <Leader>rr <Plug>ReplaceWithRegisterLine
 xmap <Leader>r  <Plug>ReplaceWithRegisterVisual
 
 " Comfortable motion
-let g:comfortable_motion_scroll_down_key = "j"
-let g:comfortable_motion_scroll_up_key = "k"
+" let g:comfortable_motion_scroll_down_key = "j"
+" let g:comfortable_motion_scroll_up_key = "k"
 
 " Neovide
 " set guifont=SauceCodePro\ Nerd\ Font\ Mono:h18
-set guifont=LM\ Mono\ 10:h20
-let g:neovide_transparency=0.95
-let g:neovide_cursor_antialiasing=v:true
+" set guifont=LM\ Mono\ 10:h20
+" let g:neovide_transparency=0.95
+" let g:neovide_cursor_antialiasing=v:true
 " let g:neovide_cursor_vfx_mode = "pixiedust"
 
 " ALE
