@@ -49,7 +49,7 @@ if selection:
 				mimestart = get_mime(file)
 				filename, _ = get_filename_extension(file)
 				if mimestart != None:
-					if mimestart in ['video'] and "#manuj" in filename:
+					if mimestart in ['video'] and "#manuj" in filename.lower():
 						file_path = os.path.abspath(os.path.join(root, file))
 						duration = get_duration(file_path)
 						total_duration += duration
