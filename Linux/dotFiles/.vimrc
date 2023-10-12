@@ -35,7 +35,8 @@ Plug 'christoomey/vim-titlecase'
 
 " Color themes
 Plug 'morhetz/gruvbox'
-Plug 'sickill/vim-monokai'
+" Plug 'sickill/vim-monokai'
+Plug 'phanviet/vim-monokai-pro'
 
 " Physics based scrolling
 " Plug 'yuttie/comfortable-motion.vim'
@@ -123,7 +124,7 @@ set smartindent
 " Set color scheme
 " set bg=dark
 syntax enable
-colorscheme monokai
+colorscheme monokai_pro
 let g:airline_theme='molokai'
 
 if (has("termguicolors"))
