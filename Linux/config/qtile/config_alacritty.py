@@ -265,6 +265,7 @@ screens = [
 
             ],
             bar_size,
+            opacity=0.9
         ),
     ),
 ]
