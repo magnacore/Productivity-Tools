@@ -131,6 +131,12 @@ if (has("termguicolors"))
 		set termguicolors
 endif
 
+" Make the background transparent
+highlight Normal guibg=none
+highlight NonText guibg=none
+highlight Normal ctermbg=none
+highlight NonText ctermbg=none
+
 set history=1000
 
 set scrolloff=5
