@@ -34,9 +34,10 @@ Plug 'tpope/vim-commentary'
 Plug 'christoomey/vim-titlecase'
 
 " Color themes
-Plug 'morhetz/gruvbox'
+" Plug 'morhetz/gruvbox'
 " Plug 'sickill/vim-monokai'
 Plug 'phanviet/vim-monokai-pro'
+" Plug 'overcache/NeoSolarized'
 
 " Physics based scrolling
 " Plug 'yuttie/comfortable-motion.vim'
@@ -125,7 +126,10 @@ set smartindent
 " set bg=dark
 syntax enable
 colorscheme monokai_pro
+"colorscheme NeoSolarized
 let g:airline_theme='molokai'
+"let g:airline_theme='solarized'
+"let g:airline_theme='base16_monokai'
 
 if (has("termguicolors"))
 		set termguicolors
