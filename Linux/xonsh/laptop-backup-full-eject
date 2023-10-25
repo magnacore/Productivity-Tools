@@ -7,6 +7,10 @@ console = Console()
 
 console.rule(f"[bold cyan]Eject Laptop Backup Full...", style="cyan")
 
+console.print(f"[bold cyan]Syncing...")
+sync
+time.sleep(3)
+
 console.print(f"[bold cyan]Unmounting...")
 sudo umount /media/$USER/laptop_backup_full
 time.sleep(3)
