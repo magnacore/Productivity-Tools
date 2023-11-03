@@ -20,6 +20,6 @@ Handbrake profile backup
 
 /home/manuj/.config/obs-studio
 
-Git push
+Git push productivity system, passwords
 
 Enable secure boot
