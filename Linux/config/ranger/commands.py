@@ -521,7 +521,7 @@ class gpg_detached_sign(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"""shell -f gpg --detach-sign "{f.relative_path}" """
+                f"""shell -f gpg --detach-sign -u 2776C56B5A434EAB "{f.relative_path}" """
             )
 
         self.fm.change_mode("normal")
@@ -578,7 +578,7 @@ class gpg_encrypt_file(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"""shell -f gpg -e -u 'Manuj Chandra Sharma' -r 'Manuj Chandra Sharma' "{f.relative_path}" """
+                f"""shell -f gpg -e -u F19C46E0E40C9568 -r F19C46E0E40C9568 "{f.relative_path}" """
             )
 
         self.fm.change_mode("normal")
