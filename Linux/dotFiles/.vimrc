@@ -123,7 +123,8 @@ set autoindent
 set smartindent
 
 " Set color scheme
-" set bg=dark
+" Light and dark themes will switch to dark mode
+set bg=dark
 syntax enable
 colorscheme monokai_pro
 "colorscheme NeoSolarized
