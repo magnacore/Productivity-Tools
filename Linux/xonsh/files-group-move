@@ -1,4 +1,8 @@
 #!/usr/bin/env xonsh
+
+# No need to select individual files. Select all the files and run the script.
+# All common files will be grouped and all uncommon files will be ignored.
+
 import os
 import shutil
 from collections import defaultdict
@@ -31,7 +35,7 @@ def move_files_based_on_prefix(file_paths):
     for (prefix, directory), group in file_groups.items():
         common_prefix = longest_common_prefix(group)
         folder_path = os.path.join(directory, common_prefix)
-        
+
         if len(group) > 1:
             os.makedirs(folder_path, exist_ok=True)
             for file in group:
