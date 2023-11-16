@@ -16,10 +16,6 @@ Thunderbird
 
 Balabolka dictionary
 
-Handbrake profile backup
-
-/home/manuj/.config/obs-studio
-
 Git push productivity system, passwords
 
 Enable secure boot
