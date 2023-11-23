@@ -17,7 +17,7 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	extension_choice = get_user_selection(["mkv", "opus", "mka"], "Choose new file extension:")
+	extension_choice = get_user_selection(["mkv", "opus", "mka", "txt"], "Choose new file extension:")
 
 	for file in allFiles:
 		file_name, extension = get_filename_extension(file)
