@@ -22,7 +22,7 @@ console = Console()
 console.rule(f"[bold cyan]Summing media duration", style="cyan")
 
 allFiles = glob.glob("*.*")
-allFiles.sort()
+# allFiles.sort()
 
 total_duration = 0.0
 

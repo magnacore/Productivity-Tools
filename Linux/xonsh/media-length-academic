@@ -33,7 +33,7 @@ if len(sys.argv) > 1: # arguments passed
 
 if selection:
 	allDirectories = sys.argv[1:]
-	allDirectories.sort()
+	# allDirectories.sort()
 
 	for directory in allDirectories:
 		console.rule(f"[bold cyan]Summing media duration in {directory}", style="cyan")
@@ -43,7 +43,7 @@ if selection:
 		table.add_column("File name", justify="left")
 
 		total_duration = 0.0
-		
+
 		for root, dirs, files in os.walk(directory):
 			for file in track(files, description="[bold cyan]Adding : [/bold cyan]"):
 				mimestart = get_mime(file)
