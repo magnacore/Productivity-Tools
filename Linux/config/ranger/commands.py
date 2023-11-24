@@ -521,7 +521,7 @@ class gpg_detached_sign(Command):
 
         for f in files:
             self.fm.execute_console(
-                f"""shell -f gpg --detach-sign -u 2776C56B5A434EAB "{f.relative_path}" """
+                f"""shell -f gpg --detach-sign -u 4EADC9043395B72D "{f.relative_path}" """
             )
 
         self.fm.change_mode("normal")
