@@ -1,6 +1,7 @@
 #!/usr/bin/env xonsh
 import datetime
 
+video-process
 viperos-update
 
 # Get today's date
