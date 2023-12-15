@@ -85,7 +85,7 @@ keys = [
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
 
     ## Scratchpads
-    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
+    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" -e sh -c 'nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
     Key([mod2, mod3], "y", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
 ]
 
