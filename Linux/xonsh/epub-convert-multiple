@@ -41,8 +41,13 @@ if selection:
 					else:
 						print(f"[bold red]Could not convert {file}")
 				elif output_format == "pdf":
+					# https://manual.calibre-ebook.com/generated/en/ebook-convert.html#pdf-output-options
+					# if custom-size is specified paper-size will be ignored
 					if !(ebook-convert @(file) @(output_filename) \
-						--paper-size a4  \
+						--custom-size 946x966 \
+						--unit point \
+						--pdf-default-font-size 32 \
+						--paper-size a4 \
 						--preserve-cover-aspect-ratio \
 						--pretty-print \
 						--pdf-page-margin-bottom 10 \
