@@ -44,7 +44,7 @@ if selection:
 					# https://manual.calibre-ebook.com/generated/en/ebook-convert.html#pdf-output-options
 					# if custom-size is specified paper-size will be ignored
 					if !(ebook-convert @(file) @(output_filename) \
-						--custom-size 946x966 \
+						--custom-size 946x967 \
 						--unit point \
 						--pdf-default-font-size 32 \
 						--paper-size a4 \
