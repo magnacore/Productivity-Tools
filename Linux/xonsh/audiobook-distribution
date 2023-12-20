@@ -9,7 +9,7 @@ from py_utilities import get_timestamp
 myhome = os.path.expanduser('~')
 
 # Specify the directory you want to explore
-directory = f'{myhome}/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/BIN/AUDIO/ODD'
+directory = f'{myhome}/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/BIN/AUDIO/3 BOOKS'
 
 # Use os.listdir to get files in the directory
 filenames = os.listdir(directory)
