@@ -10,8 +10,8 @@ today = datetime.datetime.now()
 # Get the day of the month
 day = today.day
 
-# Check if it's divisible by 4
-if day % 4 == 0:
+# Check if it's divisible by 7
+if day % 7 == 0:
     audiobook-progress
 
 sudo shutdown -h now
