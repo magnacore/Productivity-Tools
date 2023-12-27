@@ -20,32 +20,37 @@ with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
 # Use raw strings
 # Python cannot handle \ as the last character in a raw string. It can be at the start or middle.
 # What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
+
 clipboard_content = pc.paste()
 keyword = lines[0].strip()
 
 key = generateKey(clipboard_content, keyword)
 
-cipher_text = cipherText(clipboard_content,key)
-
-pc.copy(cipher_text)
-
-## Check
-clipboard_content_check = pc.paste()
-plain_text = originalText(clipboard_content_check, key)
-
-if plain_text == clipboard_content:
-	console.print(f"Copied: Vigenere encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
-
-	warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
-
-	if cipher_text[0] == " ":
-		console.print(f"[bold red]Warning: Ciphertext contains a leading space! {warning_cipher_text}")
-	elif cipher_text[-1] == " ":
-		console.print(f"[bold red]Warning: Ciphertext contains a trailing space! {warning_cipher_text}")
-
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+if clipboard_content.endswith("\n") or clipboard_content.endswith("\r"):
+		console.print('[bold red]Error: Content ends with a newline. Remove newline and try again.')
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 else:
-	console.print('ERROR!')
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+	cipher_text = cipherText(clipboard_content,key)
+
+	pc.copy(cipher_text)
+
+	## Check
+	clipboard_content_check = pc.paste()
+	plain_text = originalText(clipboard_content_check, key)
+
+	if plain_text == clipboard_content:
+		console.print(f"Copied: Vigenere encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
+
+		warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
+
+		if cipher_text[0] == " ":
+			console.print(f"[bold red]Warning: Ciphertext contains a leading space! {warning_cipher_text}")
+		elif cipher_text[-1] == " ":
+			console.print(f"[bold red]Warning: Ciphertext contains a trailing space! {warning_cipher_text}")
+
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+	else:
+		console.print('ERROR!')
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 console.rule(style="cyan")
