@@ -1,0 +1,56 @@
+#!/usr/bin/env xonsh
+
+"""
+Usage Ranger:	:shell -w file-number-deep Folder_1 Folder_2
+Select the root folder and execute. Do not get inside the root folder.
+Else, select multiple folders and execute. Only selected folder and
+its subfolders will be processed.
+"""
+
+import sys
+import os
+from rich import print
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from rich.console import Console
+from rich.progress import track
+
+from utilities import get_mime
+
+console = Console()
+
+console.rule(f"[bold cyan]Numbering media in directory", style="cyan")
+
+if len(sys.argv) > 1:
+    allDirectories = sys.argv[1:]
+
+    for directory in allDirectories:
+        console.rule(f"[bold cyan]Numbering media in {directory}", style="cyan")
+
+        # Collect directories in a list for bottom-up processing
+        file_list = []
+       
+        for root, dirs, files in os.walk(directory):
+            for file in track(os.listdir(root), description="[bold cyan]Numbering : [/bold cyan]"):
+                mimestart = get_mime(file)
+                if mimestart and  mimestart in ['video']:
+                    file_list.append(os.path.join(root, file))
+                else:
+                    print(f"[yellow]Skipping {file}[/yellow]")
+
+        file_list.sort()
+
+        # Rename the files with the new format
+        for i, file_path in enumerate(file_list, start=1):
+            dir_name = os.path.dirname(file_path)
+            base_name = os.path.basename(file_path)
+            new_name = f"{i:04d}-{base_name}"            
+            new_file_path = os.path.join(dir_name, new_name)
+            
+            os.rename(file_path, new_file_path)
+
+console.rule(style="cyan")
+
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
