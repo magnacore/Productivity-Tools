@@ -21,3 +21,5 @@ Git push productivity system, passwords
 Enable secure boot
 
 Torrent downloading backup
+
+Liferea news capture
