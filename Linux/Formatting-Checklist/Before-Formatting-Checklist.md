@@ -23,3 +23,5 @@ Enable secure boot
 Torrent downloading backup
 
 Liferea news capture
+
+Trading screenshots
