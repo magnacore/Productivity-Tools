@@ -18,7 +18,7 @@ mod2 = "control"
 mod3 = "shift"
 
 # terminal = guess_terminal()
-myTerm = "alacritty"	# My terminal of choice
+myTerm = "xfce4-terminal"	# My terminal of choice
 myBrowser = "firefox"	# My browser of choice
 
 keys = [
@@ -63,11 +63,11 @@ keys = [
 	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
 	
 	# My shortcuts
-	Key([mod], "t", lazy.spawn(myTerm+f" -e {myhome}/anaconda3/envs/xonsh/bin/xonsh"), desc="Launch terminal"),
+	Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
     Key([mod, "shift"], "v", lazy.spawn(f"bash {myhome}/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
-    Key([mod], "Return", lazy.spawn(myTerm+f" -e {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"), desc="Launch Ranger"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open'"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
-    Key([mod, "shift"], "c", lazy.spawn(myTerm+" -e flatpak run com.github.miguelmota.Cointop"), desc='Cointop' ),
+    Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
     Key([mod], "y", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
     Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
@@ -76,7 +76,7 @@ keys = [
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons -dpi 1"), desc='Run Rofi Application Launcher'),
     Key([alt], "Tab", lazy.spawn("rofi -show window -dpi 1"), desc='Run Rofi Window Switcher'),
-    Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
+    Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
     Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}' -dpi 1"), desc='Run Greenclip in Rofi'),
 	
     ## Volume
@@ -85,14 +85,14 @@ keys = [
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
 
     ## Scratchpads
-    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" -e sh -c 'nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
-    Key([mod2, mod3], "y", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
+    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" --disable-server -e 'nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
+    Key([mod2, mod3], "y", lazy.spawn(myTerm+f" --disable-server -e 'nvim {myhome}/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
 ]
 
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
 groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "Ghb", "Thunderbird", "Transmission-gtk"])]),
           Group("2", layout='bsp'),
-          Group("3", layout='bsp', matches=[Match(wm_class=[myBrowser])]),
+          Group("3", layout='bsp', matches=[Match(wm_class=['Firefox-esr'])]),
           Group("4", layout='max'),
           Group("5", layout='bsp'),
           Group("6", layout='bsp'),
@@ -161,7 +161,7 @@ widget_defaults = dict(
 extension_defaults = widget_defaults.copy()
 
 def open_bpytop():
-	qtile.cmd_spawn(myTerm+" -e bpytop")
+	qtile.cmd_spawn(myTerm+" --disable-server -e bpytop")
 
 widget_padding = 0
 seperator_padding = 5
@@ -222,7 +222,7 @@ screens = [
 
                 # Volume
 				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
-                widget.TextBox(text = "🔊", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e alsamixer")}, padding = widget_padding, fontsize = icon_font_size),
+                widget.TextBox(text = "🔊", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" --disable-server -e alsamixer")}, padding = widget_padding, fontsize = icon_font_size),
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.Volume(
                 fmt = '{} ',
@@ -260,7 +260,7 @@ screens = [
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Clock
-                widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+" -e sh -c 'sleep 0.1 && calcurse'")}),
+                widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': lambda : qtile.cmd_spawn(myTerm+""" --disable-server -e "sh -c 'sleep 0.1 && calcurse'" """)}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
             ],
@@ -309,16 +309,26 @@ def start_once():
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
         "flatpak run org.ferdium.Ferdium".split(),
-        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 2 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh".split(),
-        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 4 {myTerm} -e {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open".split(),
+        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
+        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
-        f"{myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} -e cmus".split(),
+        f"{myhome}/anaconda3/envs/qtile/bin/python {myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         f"{myhome}/.local/bin/greenclip daemon".split(),
-        f"{myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
+        f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 
     for p in processes:
         subprocess.Popen(p)
+
+@hook.subscribe.client_new
+def disable_floating(window):
+    rules = [
+        Match(wm_class="mpv")
+    ]
+
+    if any(window.match(rule) for rule in rules):
+        window.togroup(qtile.current_group.name)
+        window.cmd_disable_floating()
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
