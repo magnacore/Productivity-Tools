@@ -116,6 +116,13 @@ virtinst
 libvirt-daemon
 virt-manager
 
+For Veracrypt:
+libwxgtk3.2-1
+pcscd
+
+For portmaster:
+libnetfilter-queue1
+
 =====================================================================
 = Flatpacks
 =====================================================================
@@ -280,7 +287,7 @@ fonts-yanone-kaffeesatz
 = Manual
 =====================================================================
 
-sudo dkpg -i sample_file.deb
+sudo dpkg -i sample_file.deb
 
 App image launcher was installed using ? downloaded from github then double click an app image in thunar, it will ask for a directory to be set. Set to appimage directory. Integrate and run.
 
