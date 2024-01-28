@@ -74,10 +74,10 @@ keys = [
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
 
     ## Rofi
-    Key([mod], "r", lazy.spawn("rofi -show drun -show-icons"), desc='Run Rofi Application Launcher'),
-    Key([alt], "Tab", lazy.spawn("rofi -show window"), desc='Run Rofi Window Switcher'),
+    Key([mod], "r", lazy.spawn("rofi -show drun -show-icons -dpi 1"), desc='Run Rofi Application Launcher'),
+    Key([alt], "Tab", lazy.spawn("rofi -show window -dpi 1"), desc='Run Rofi Window Switcher'),
     Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
-    Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}'"), desc='Run Greenclip in Rofi'),
+    Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}' -dpi 1"), desc='Run Greenclip in Rofi'),
 	
     ## Volume
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
@@ -92,7 +92,7 @@ keys = [
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
 groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "Ghb", "Thunderbird", "Transmission-gtk"])]),
           Group("2", layout='bsp'),
-          Group("3", layout='bsp', matches=[Match(wm_class=[myBrowser])]),
+          Group("3", layout='bsp', matches=[Match(wm_class=['Firefox-esr'])]),
           Group("4", layout='max'),
           Group("5", layout='bsp'),
           Group("6", layout='bsp'),
@@ -319,6 +319,16 @@ def start_once():
 
     for p in processes:
         subprocess.Popen(p)
+
+@hook.subscribe.client_new
+def disable_floating(window):
+    rules = [
+        Match(wm_class="mpv")
+    ]
+
+    if any(window.match(rule) for rule in rules):
+        window.togroup(qtile.current_group.name)
+        window.cmd_disable_floating()
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
