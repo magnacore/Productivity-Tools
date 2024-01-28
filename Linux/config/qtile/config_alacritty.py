@@ -85,7 +85,7 @@ keys = [
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
 
     ## Scratchpads
-    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" -e sh -c 'nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
+    Key([mod2, mod3], "a", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
     Key([mod2, mod3], "y", lazy.spawn(myTerm+f" -e sh -c 'sleep 0.1 && nvim {myhome}/Backups/youtube.txt'"), desc="Launch Youtube Download List"),
 ]
 
@@ -319,6 +319,16 @@ def start_once():
 
     for p in processes:
         subprocess.Popen(p)
+
+@hook.subscribe.client_new
+def disable_floating(window):
+    rules = [
+        Match(wm_class="mpv")
+    ]
+
+    if any(window.match(rule) for rule in rules):
+        window.togroup(qtile.current_group.name)
+        window.cmd_disable_floating()
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
