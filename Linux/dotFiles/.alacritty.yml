@@ -20,7 +20,7 @@ font:
     family: RobotoMono Nerd Font
     style: Bold Italic
 
-  size: 13.5  #13 font size will cause an empty line to appear below nvim for this font
+  size: 9  #13 font size will cause an empty line to appear below nvim for this font
 
 # If `true`, bold text is drawn using the bright color variants.
 draw_bold_text_with_bright_colors: true
