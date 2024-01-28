@@ -7,7 +7,8 @@ console = Console()
 console.rule(f"[bold cyan]Updating Fedora...", style="cyan")
 
 console.print(f"[bold cyan]Delete old files in trash...[/bold cyan]")
-trash-empty -f 3
+# trash-empty -f 3
+trash-empty 3
 
 # console.print(f"[bold cyan]Deleting None files...[/bold cyan]")
 # find $HOME/ -type f -name "None" -delete
@@ -19,14 +20,14 @@ mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CA
 mv --backup=numbered @(p"~/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/DUMP")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
 console.print(f"[bold cyan]Update repositories...[/bold cyan]")
-sudo dnf check-update -y
+sudo apt update -y
 
 console.print(f"[bold cyan]Upgrade software...[/bold cyan]")
-sudo dnf upgrade -y
+sudo apt upgrade -y
 flatpak update -y
 
-console.print(f"[bold cyan]Update Virus Definitions...[/bold cyan]")
-sudo freshclam
+# console.print(f"[bold cyan]Update Virus Definitions...[/bold cyan]")
+# sudo freshclam
 
 # Monday is 0, Saturday is 5
 day_of_week = datetime.datetime.today().weekday()
@@ -34,8 +35,8 @@ this_month = datetime.datetime.today().month
 
 if(day_of_week == 5 and (this_month % 2 == 0)):
     console.print(f"[bold cyan]Clean software cache...[/bold cyan]")
-    sudo dnf autoremove -y
-    sudo dnf clean all -y
+    sudo apt autoremove -y
+    sudo apt clean -y
 
     console.print(f"[bold cyan]Clean flatpaks...[/bold cyan]")
     flatpak update --appstream
