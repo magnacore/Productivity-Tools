@@ -15,8 +15,6 @@ from py_utilities import get_valid_filename, get_timestamp, play_audio
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-
-
 clipboard_content = pc.paste()
 
 file_name = get_valid_filename(clipboard_content[:35])
