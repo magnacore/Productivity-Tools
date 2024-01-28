@@ -21,8 +21,6 @@ clipboard_content = pc.paste()
 
 file_name = get_valid_filename(clipboard_content[:35])
 
-toast_time_seconds = 10
-
 if file_name:
     date_time = get_timestamp()
     file_name = f"{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name}_{date_time}.md"
