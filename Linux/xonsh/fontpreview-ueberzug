@@ -26,20 +26,26 @@ VPAD=$(fzf --version | {
 })
 
 usage() {
-    echo "Usage: fontpreview-ueberzug [-h] [-s FONT_SIZE] [-b BG] [-f FG] [-t TEXT]"
+    echo "Usage: fontpreview-ueberzug [-h] [-a ALIGNMENT] [-s FONT_SIZE] [-b BG] [-f FG] [-t TEXT]"
 }
 
 start_ueberzug() {
+    [ -p "$FIFO" ] && rm -f "$FIFO"
     mkfifo "$FIFO" || exit 1
     touch "$IMAGE" || exit 1
-    $HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/ueberzug layer --parser json --silent < "$FIFO" &
+    # use ueberzugpp if available
+    if command -v ueberzugpp > /dev/null; then
+        ueberzugpp layer --no-cache --silent < "$FIFO" &
+    else
+        ueberzug layer --parser json --silent < "$FIFO" &
+    fi
     # https://github.com/seebye/ueberzug/issues/54#issuecomment-502869935
     exec 3>"$FIFO"
 }
 
 stop_ueberzug() {
     exec 3>&-
-    rm "$FIFO" "$IMAGE" > /dev/null 2>&1
+    rm -f "$FIFO" "$IMAGE"
 }
 
 preview() {
@@ -48,7 +54,7 @@ preview() {
     # In fzf the cols and lines are those of the preview pane
     convert -size "$SIZE" xc:"$BG_COLOR" -fill "$FG_COLOR" \
         -pointsize "$FONT_SIZE" -font "$fontfile" -gravity "$TEXT_ALIGN" \
-        -annotate +${PADDING:-0}+0 "$PREVIEW_TEXT" "$IMAGE" &&
+        -annotate +"${PADDING:-0}+0" "$PREVIEW_TEXT" "$IMAGE" &&
     {   printf '{ "action": "add", "identifier": "%s", "path": "%s",' "$ID" "$IMAGE"
         printf '"x": %d, "y": %d, "scaler": "fit_contain",' 2 1
         printf '"width": %d, "height": %d }\n' "$((WIDTH - VPAD))" "$((HEIGHT - 2))"
@@ -80,10 +86,8 @@ if [ "$#" = 0 ]; then
     export FONTPREVIEW_FG_COLOR="$FG_COLOR"
     export FONTPREVIEW_PREVIEW_TEXT="$PREVIEW_TEXT"
     # The preview command runs this script again with an argument
-    fc-list -f "%{family}:%{style}:%{file}\n" |
+    fc-list -f "%{family[0]}%{:style[0]=}\t%{file}\n" |
     grep -i '\.\(ttc\|otf\|ttf\)$' | sort | uniq |
-    awk -F: '{split($1,a,","); split($2,b,","); printf("%s",a[1]);
-        if(b[1] != "") printf(":style=%s",b[1]); printf("\t%s\n",$3)}' |
     fzf --with-nth 1 --delimiter "\t" --layout=reverse --preview "sh $0 {}" \
         --preview-window "left:50%:noborder:wrap"
 elif [ "$#" = 1 ]; then
