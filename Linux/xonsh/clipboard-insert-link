@@ -3,8 +3,7 @@
 import os
 import sys
 import pyperclip as pc
-from playsound import playsound
-from py_utilities import find_urls
+from py_utilities import find_urls, play_audio
 
 myhome = os.path.expanduser('~')
 
@@ -21,8 +20,8 @@ if len(urls)>0:
         # open file
         with open(url_file_name, "a+") as f:
             f.write(url + "\n")
-            playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)            
+            play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
             os.system(f"notify-send -t {toast_time_seconds*1000} {url_file_name} {url}")
 
 else:
-    playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg", block=False)
+    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")

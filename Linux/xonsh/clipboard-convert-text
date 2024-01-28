@@ -6,22 +6,22 @@
 #!/usr/bin/env conda run -n util python3
 
 import os
+import sys
 #print(os.environ["CONDA_PREFIX"])
-
 from datetime import datetime
 import pyperclip as pc
-from playsound import playsound
-
-import sys
+from py_utilities import get_valid_filename, get_timestamp, play_audio
 
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from py_utilities import get_valid_filename, get_timestamp
+
 
 clipboard_content = pc.paste()
 
 file_name = get_valid_filename(clipboard_content[:35])
+
+toast_time_seconds = 10
 
 if file_name:
     date_time = get_timestamp()
@@ -31,7 +31,7 @@ if file_name:
     with open(file_name, "a+") as f:
         f.write(clipboard_content + "\n")
 
-    playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg", block=False)
+    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
 
 else:
-    playsound(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg", block=False)
+    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")

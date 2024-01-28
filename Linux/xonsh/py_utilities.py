@@ -1,3 +1,4 @@
+import os
 import re
 
 def get_valid_filename(value, allow_unicode=False):
@@ -44,3 +45,6 @@ def get_timestamp():
 	date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 	return date_time
+
+def play_audio(audio_to_play):
+	os.system(f"ffplay -loglevel quiet -autoexit -nodisp {audio_to_play} &")

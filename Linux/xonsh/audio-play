@@ -1,15 +1,8 @@
 #!/usr/bin/env xonsh
 
 import sys
-from playsound import playsound
-
-selection = False
 
 if len(sys.argv) > 1:
-	selection = True
-
-if selection:
 	audio_to_play = sys.argv[1]
 
-	# Keep blocking to true else sound wont play when using &
-	playsound(audio_to_play, block=True)
+	ffplay -loglevel quiet -autoexit -nodisp @(audio_to_play)
