@@ -85,6 +85,7 @@ greybird-gtk-theme
 tango-icon-theme
 elementary-xfce-icon-theme
 elementary-icon-theme
+odt2txt
 
 For distrobox:
 podman
