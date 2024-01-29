@@ -46,6 +46,8 @@ sxiv
 zathura
 zathura-pdf-poppler (replace with zathura-pdf-mupdf)
 zathura-djvu
+zathura-ps
+zathura-cb
 neovim
 calcurse
 bleachbit
