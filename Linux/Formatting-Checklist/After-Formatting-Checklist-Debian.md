@@ -44,7 +44,7 @@ xsel
 cmus
 sxiv
 zathura
-zathura-pdf-poppler
+zathura-pdf-poppler (replace with zathura-pdf-mupdf)
 zathura-djvu
 neovim
 calcurse
