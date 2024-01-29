@@ -9,7 +9,7 @@ set pages-per-row 1
 
 #stop at page boundries
 set scroll-page-aware "true"
-set smooth-scroll "true"
+# set smooth-scroll "true" on by default
 set scroll-full-overlap 0.01
 set scroll-step 100
 
