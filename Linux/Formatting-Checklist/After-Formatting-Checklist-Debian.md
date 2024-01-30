@@ -85,9 +85,11 @@ pinentry-tty
 # texlive-scheme-full
 greybird-gtk-theme
 tango-icon-theme
-elementary-xfce-icon-theme
-elementary-icon-theme
+# elementary-xfce-icon-theme
+# elementary-icon-theme
 odt2txt
+build-essential
+mupdf
 
 For distrobox:
 podman
