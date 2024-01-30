@@ -5,4 +5,6 @@ import sys
 if len(sys.argv) > 1:
 	audio_to_play = sys.argv[1]
 
-	ffplay -loglevel quiet -autoexit -nodisp @(audio_to_play)
+	# Send std out to /dev/null to prevent fflay from creating an extra
+	# line on the terminal
+	ffplay -loglevel quiet -autoexit -nodisp @(audio_to_play) out>/dev/null

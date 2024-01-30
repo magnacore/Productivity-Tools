@@ -47,4 +47,4 @@ def get_timestamp():
 	return date_time
 
 def play_audio(audio_to_play):
-	os.system(f"ffplay -loglevel quiet -autoexit -nodisp {audio_to_play} &")
+	os.system(f"ffplay -loglevel quiet -autoexit -nodisp {audio_to_play} 1>/dev/null &")
