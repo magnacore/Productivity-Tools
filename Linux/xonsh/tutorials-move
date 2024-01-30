@@ -6,13 +6,13 @@ console = Console()
 console.rule(f"[bold cyan]Move Tutorials...")
 
 console.print(f"[bold cyan]Moving Converted...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/00 TO COPY/01 CONVERTED")/* @(p"/run/media/$USER/LEARNING/VIDEO TUTORIALS/CONVERTED/0 TO SORT/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/00 TO COPY/01 CONVERTED")/* @(p"/media/$USER/LEARNING/VIDEO TUTORIALS/CONVERTED/0 TO SORT/")
 
 console.print(f"[bold cyan]Moving 01...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/00 TO COPY/02 TO CONVERT/01")/* @(p"/run/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/01 IMP UR/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/00 TO COPY/02 TO CONVERT/01")/* @(p"/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/01 IMP UR/")
 
 console.print(f"[bold cyan]Moving 02...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/00 TO COPY/02 TO CONVERT/02")/* @(p"/run/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/02 IMP NOT URGENT/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/00 TO COPY/02 TO CONVERT/02")/* @(p"/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/02 IMP NOT URGENT/")
 
 console.rule(style="cyan")
 
