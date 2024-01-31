@@ -43,6 +43,7 @@ for p in reversed([
         $HOME + "/anaconda3/envs/xonsh/bin/",
         $HOME + "/anaconda3/envs/util/bin/",
         $HOME + "/.local/bin",
+        $HOME + "/sbin/",
 ]):
     if p not in $PATH:
         $PATH.insert(0, p)

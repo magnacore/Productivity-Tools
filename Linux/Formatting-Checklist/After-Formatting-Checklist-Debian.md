@@ -90,6 +90,7 @@ tango-icon-theme
 odt2txt
 build-essential
 mupdf
+libcrack2
 
 For distrobox:
 podman
