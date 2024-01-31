@@ -24,8 +24,8 @@ console.print("\n")
 console.print(f"[bold cyan]Used RAM Space: [/bold cyan]")
 free -h
 
-console.print(f"\n[bold cyan]Used ZRAM Space: [/bold cyan]")
-zramctl
+# console.print(f"\n[bold cyan]Used ZRAM Space: [/bold cyan]")
+# zramctl
 
 console.print(f"\n[bold cyan]Used Trash Space: [/bold cyan]")
 du -hs ~/.local/share/Trash
