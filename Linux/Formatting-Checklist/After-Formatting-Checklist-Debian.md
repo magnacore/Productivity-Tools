@@ -91,6 +91,7 @@ odt2txt
 build-essential
 mupdf
 libcrack2
+sioyek
 
 For distrobox:
 podman
