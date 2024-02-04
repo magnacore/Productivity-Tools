@@ -30,7 +30,7 @@ if selection:
 	for file in track(allFiles, description="[bold cyan]Tagging : [/bold cyan]"):
 		file_name, extension = get_filename_extension(file)
 		new_filename = file_name + \
-			f"-{str(countdown).zfill(3)}c" + \
+			f"-{str(countdown).zfill(3)}r" + \
 			f"-{str(int((position/total_files)*100)).zfill(3)}p" + \
 			extension
 		os.rename(file, new_filename)

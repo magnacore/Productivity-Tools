@@ -78,7 +78,7 @@ if selection:
 
 								page_percent = int(((page + 1) / total_pages) * 100)
 
-								output_filename = f"{file_name}-{str(part).zfill(4)}-{str(countdown).zfill(4)}c-{str(page_percent).zfill(3)}p.pdf"
+								output_filename = f"{file_name}-{str(part).zfill(4)}-{str(countdown).zfill(4)}r-{str(page_percent).zfill(3)}p.pdf"
 
 								with open(output_filename, 'wb') as out:
 									pdf_writer.write(out)
