@@ -58,6 +58,7 @@ if selection:
 
 	for file in track(allFiles, description="[bold cyan]TTS : [/bold cyan]"):
 		mimestart = get_mime(file)
+		modification_datetime=$(stat -c %y @(file))
 
 		if mimestart != None:
 			if mimestart in ['text']:
@@ -69,6 +70,7 @@ if selection:
 
 				with open(output_filename, "wb") as out:
 					out.write(text_to_audio(voice, contents.read()))
+					touch -d @(modification_datetime) @(output_filename)
 					print(f"[bold green]{output_filename} created.")
 
 				contents.close()
