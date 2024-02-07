@@ -34,12 +34,14 @@ if selection:
 
 				# convert pdf to text
 				pdf-convert-text @(file)
+				modification_datetime=$(stat -c %y @(file))
 				# convert text to audio
 				text-to-speech @(text_filename)
 				# delete the text file
 				trash-put @(text_filename)
 				# rename the file
 				mv @(audio_filename) @(output_audio_filename)
+				touch -d @(modification_datetime) @(output_audio_filename)
 				
 				# if !(ebook-convert @(file) @(output_filename) --pretty-print):
 				# 	print(f"[green]Converted {file}")
