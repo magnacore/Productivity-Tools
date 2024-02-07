@@ -6,13 +6,13 @@ console = Console()
 console.rule(f"[bold cyan]Backup Sawy Drive...")
 
 console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
+sudo btrfs subvolume delete /media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
 
 console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
+sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-rsync -vahiP --delete /run/media/$USER/SAWY_01_A/SAWY/ /run/media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
+rsync -vahiP --delete /media/$USER/SAWY_01_A/SAWY/ /media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
 
 date > ~/Software/logs/sawy-backup.txt
 
