@@ -8,7 +8,6 @@ from rich import print
 from prompt_toolkit.shortcuts import radiolist_dialog
 
 sys.path.append(os.path.expanduser('~/Bin'))
-sys.path.append(f"{myhome}/Bin")
 
 from utilities import monokai_dialog_style
 

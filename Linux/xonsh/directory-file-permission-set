@@ -6,8 +6,6 @@ import sys
 from rich.console import Console
 from rich import print
 
-sys.path.append(os.path.expanduser('~/Bin'))
-
 console = Console()    
 
 def is_valid_permission(permission):
