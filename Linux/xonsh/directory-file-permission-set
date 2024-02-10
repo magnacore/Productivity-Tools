@@ -1,0 +1,81 @@
+#!/usr/bin/env xonsh
+
+import argparse
+import os
+import sys
+from rich.console import Console
+from rich import print
+
+sys.path.append(os.path.expanduser('~/Bin'))
+
+console = Console()    
+
+def is_valid_permission(permission):
+   """Checks if a given integer is a valid permission code.
+
+   Args:
+       permission: The integer to check.
+
+   Returns:
+       The input integer if it's a valid permission code.
+
+   Raises:
+       ArgumentTypeError: If the permission code is invalid.
+   """
+
+   permission_str = str(permission)
+
+   if len(permission_str) != 3:
+       raise argparse.ArgumentTypeError(f"{permission} should contain exactly 3 digits")
+
+   if any(int(digit) > 7 for digit in permission_str):
+       raise argparse.ArgumentTypeError(f"{permission} : Individual digits in permission code cannot exceed 7")
+
+   return permission
+
+
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Set directories and file permissions")
+
+    parser.add_argument ('-d', '--directory_octal_permission', type=is_valid_permission, required=False,
+                        help="Octal permission of the directories (e.g., 755)",
+                        )
+    parser.add_argument ('-f', '--file_octal_permission', type=is_valid_permission, required=False,
+                        help="Octal permission of the files (e.g., 644)",
+                        )
+    parser.add_argument('directory', metavar='folder', type=str, nargs='+', help='Input directory to process')
+
+    parser.set_defaults(directory_octal_permission=700, file_octal_permission=600)
+
+    return parser.parse_args()
+
+
+def process_directory(args):
+    directories = args.directory
+
+    for folder in directories:
+        console.rule(f"[bold cyan]Setting permissions in {folder}", style="cyan")
+        
+        print(f"Setting directory permissions in {folder}...")
+        find @(f"./{folder}") -type d -exec chmod @(args.directory_octal_permission) '{}' ';'
+        
+        print(f"Setting file permissions in {folder}...")
+        find @(f"./{folder}") -type f -exec chmod @(args.file_octal_permission) '{}' ';'
+
+def main():
+    try:
+        args = parse_args()        
+    except argparse.ArgumentError as err:
+        print(f"Error: {err}")
+        parser.print_help()
+        sys.exit(1)    
+    
+    process_directory(args)
+
+    console.rule(style="cyan")
+
+if __name__ == "__main__":
+    main()
+

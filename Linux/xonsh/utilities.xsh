@@ -1,3 +1,14 @@
+from prompt_toolkit.styles import Style
+
+monokai_dialog_style = Style.from_dict(
+    {
+        "dialog": "bg:#272822",
+        "dialog frame.label": "bg:#f8f8f2 #272822",
+        "dialog.body": "bg:#f8f8f2 #272822",
+        "dialog shadow": "bg:#101010",
+    }
+)
+
 def generateKey(string, key):
 	key = list(key)
 	if len(string) == len(key):

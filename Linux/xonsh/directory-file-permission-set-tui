@@ -1,0 +1,53 @@
+#!/usr/bin/env xonsh
+
+import os
+import sys
+import argparse
+from rich.console import Console
+from rich import print
+from prompt_toolkit.shortcuts import radiolist_dialog
+
+sys.path.append(os.path.expanduser('~/Bin'))
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import monokai_dialog_style
+
+console = Console()    
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Set directories and file permissions")
+
+    parser.add_argument('directory', metavar='folder', type=str, nargs='+', help='Input directory to process')
+
+    return parser.parse_args()
+
+
+def process_directory(args):
+    result = radiolist_dialog(
+        title="Set Directories and Files Permission Recursively",
+        text="What should be the octal permission of directories and files?",
+        values=[
+            ("option1", "744 644"),
+            ("option2", "700 600")
+        ],
+        style=monokai_dialog_style,
+    ).run()
+
+    if result == "option1":
+        directory-file-permission-set -d 744 -f 644 @(args.directory)
+    elif result == "option2":
+        directory-file-permission-set -d 700 -f 600 @(args.directory)
+
+
+def main():
+    try:
+        args = parse_args()        
+    except argparse.ArgumentError as err:
+        print(f"Error: {err}")
+        parser.print_help()
+        sys.exit(1)    
+    
+    process_directory(args)
+
+if __name__ == "__main__":
+    main()
