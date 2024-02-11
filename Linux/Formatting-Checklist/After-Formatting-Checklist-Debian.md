@@ -378,7 +378,7 @@ conda install conda-forge::rich
 conda install conda-forge::pypdf2
 conda install conda-forge::pillow
 conda install conda-forge::unidecode
-
+conda install conda-forge::prompt_toolkit
 
 Force update only if installed version is not recent. Do this after running the above commands:
 conda install -c conda-forge 'google-cloud-texttospeech>=2'
