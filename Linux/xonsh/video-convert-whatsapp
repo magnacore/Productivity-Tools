@@ -27,38 +27,33 @@ def process_files(args, bitrate, timestamp):
 	files = args.files
 
 	mkdir f"converted-{timestamp}"
-	mkdir f"temp-{timestamp}"
 	mkdir f"split-converted-{timestamp}"
 
 	for file in files:
-		# Split the files and store in temp
-		filename, extension = get_filename_extension(file)
-		new_filename = filename + f'-part' + ".mkv"
-		mkvmerge -q -o @(f"./temp-{timestamp}/{new_filename}") @(file) --split duration:@(str(25)+'s')		
+		filename, extension = get_filename_extension(file)		
 
 		# Convert full videos and store in converted folder
 		mimestart = get_mime(file)
 
 		if mimestart in ['video']:
-			filename = os.path.splitext(file)[0]+' #converted.mp4'
+			filename = os.path.splitext(file)[0]+' #whatsapp.mp4'
 
 			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
 			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./converted-{timestamp}/{filename}"
         
 def process_split_videos(bitrate, timestamp):
 	# Convert videos in the split converted folder
-	subfolder = Path(f"./temp-{timestamp}")
+	subfolder = Path(f"./converted-{timestamp}")
 	allVideos = [str(file) for file in subfolder.rglob("*")]
 
-	pattern = r"temp-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\/"
+	pattern = r"converted-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\/"
 	
 	for video in allVideos:		
 		filename, _ = get_filename_extension(video)
-		filename = filename +' #converted.mp4'
 		filename = re.sub(pattern, "", filename)
 
-		ffmpeg -i @(video) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
-		ffmpeg -i @(video) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./split-converted-{timestamp}/{filename}"
+		ffmpeg -i @(video) -c copy -f segment -segment_time 20 -reset_timestamps 1 -map 0 @(f"./split-converted-{timestamp}/{filename} %03d.mp4")
+
 
 
 def main():
@@ -78,10 +73,9 @@ def main():
 	process_split_videos(bitrate, timestamp)
 
 	rm temp_log*
-	rm -r f"temp-{timestamp}"
+
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 	console.rule(style="cyan")
 
 if __name__ == "__main__":
 	main()
-
