@@ -1,0 +1,87 @@
+#!/usr/bin/env xonsh
+
+import os
+import sys
+import glob
+import argparse
+from pathlib import Path
+import re
+from rich.console import Console
+from rich import print
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_timestamp, get_filename_extension
+
+console = Console()
+
+def parse_args():
+	parser = argparse.ArgumentParser(description="Convert videos for sharing on WhatsApp")
+
+	parser.add_argument('files', nargs='+', help="Files to process")
+
+	return parser.parse_args()
+
+def process_files(args, bitrate, timestamp):
+	files = args.files
+
+	mkdir f"converted-{timestamp}"
+	mkdir f"temp-{timestamp}"
+	mkdir f"split-converted-{timestamp}"
+
+	for file in files:
+		# Split the files and store in temp
+		filename, extension = get_filename_extension(file)
+		new_filename = filename + f'-part' + ".mkv"
+		mkvmerge -q -o @(f"./temp-{timestamp}/{new_filename}") @(file) --split duration:@(str(25)+'s')		
+
+		# Convert full videos and store in converted folder
+		mimestart = get_mime(file)
+
+		if mimestart in ['video']:
+			filename = os.path.splitext(file)[0]+' #converted.mp4'
+
+			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
+			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./converted-{timestamp}/{filename}"
+        
+def process_split_videos(bitrate, timestamp):
+	# Convert videos in the split converted folder
+	subfolder = Path(f"./temp-{timestamp}")
+	allVideos = [str(file) for file in subfolder.rglob("*")]
+
+	pattern = r"temp-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\/"
+	
+	for video in allVideos:		
+		filename, _ = get_filename_extension(video)
+		filename = filename +' #converted.mp4'
+		filename = re.sub(pattern, "", filename)
+
+		ffmpeg -i @(video) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
+		ffmpeg -i @(video) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./split-converted-{timestamp}/{filename}"
+
+
+def main():
+	console.rule(f"[bold cyan]Convert videos for sharing on WhatsApp", style="cyan")
+
+	try:
+		args = parse_args()        
+	except argparse.ArgumentError as err:
+		print(f"Error: {err}")
+		parser.print_help()
+		sys.exit(1)
+
+	bitrate = 500
+	timestamp = get_timestamp()
+    
+	process_files(args, bitrate, timestamp)
+	process_split_videos(bitrate, timestamp)
+
+	rm temp_log*
+	rm -r f"temp-{timestamp}"
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+	console.rule(style="cyan")
+
+if __name__ == "__main__":
+	main()
+
