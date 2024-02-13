@@ -6,46 +6,46 @@ console = Console()
 console.rule(f"[bold cyan]Queue Move...")
 
 console.print(f"[bold cyan]Moving Relax Passive Assorted...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/A-RELAX PASSIVE ASSORTED")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE ASSORTED/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/A-RELAX PASSIVE ASSORTED")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE ASSORTED/")
 
 console.print(f"[bold cyan]Moving Audio Books...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE AUDIO BOOK")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE AUDIO BOOK/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE AUDIO BOOK")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE AUDIO BOOK/")
 
 console.print(f"[bold cyan]Moving Trading...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/C-STUDY PASSIVE TRADING")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE TRADING/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/C-STUDY PASSIVE TRADING")/* @(p"/media/$USER/QUEUE/QUEUE/STUDY PASSIVE TRADING/")
 
 console.print(f"[bold cyan]Moving Data Science...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/D-STUDY PASSIVE DATA SCIENCE")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE DATA SCIENCE/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/D-STUDY PASSIVE DATA SCIENCE")/* @(p"/media/$USER/QUEUE/QUEUE/STUDY PASSIVE DATA SCIENCE/")
 
 console.print(f"[bold cyan]Moving Movies...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/E-RELAX PASSIVE MOVIES")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE MOVIES/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/E-RELAX PASSIVE MOVIES")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE MOVIES/")
 
 console.print(f"[bold cyan]Moving Games...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/G-RELAX PASSIVE GAMES")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE GAMES/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/G-RELAX PASSIVE GAMES")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE GAMES/")
 
 console.print(f"[bold cyan]Moving Money...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/M-RELAX PASSIVE LEARNING 01 MONEY FI")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/01 MONEY/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/M-RELAX PASSIVE LEARNING 01 MONEY FI")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/01 MONEY/")
 
 console.print(f"[bold cyan]Moving Learning Others...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/O-RELAX PASSIVE LEARNING 04 OTHERS")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/04 OTHERS/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/O-RELAX PASSIVE LEARNING 04 OTHERS")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/04 OTHERS/")
 
 console.print(f"[bold cyan]Moving Study Passive Assorted...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/P-STUDY PASSIVE ASSORTED")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE ASSORTED/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/P-STUDY PASSIVE ASSORTED")/* @(p"/media/$USER/QUEUE/QUEUE/STUDY PASSIVE ASSORTED/")
 
 console.print(f"[bold cyan]Moving AR...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/R-RELAX PASSIVE LEARNING 03 AR")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/03 AR/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/R-RELAX PASSIVE LEARNING 03 AR")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/03 AR/")
 
 console.print(f"[bold cyan]Moving Sports...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/U-RELAX PASSIVE SPORTS")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE SPORTS/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/U-RELAX PASSIVE SPORTS")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE SPORTS/")
 
 console.print(f"[bold cyan]Moving Health...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/V-RELAX PASSIVE LEARNING 02 HEALTH VEGAN LE")/* @(p"/run/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/02 HEALTH VEGAN LE/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/V-RELAX PASSIVE LEARNING 02 HEALTH VEGAN LE")/* @(p"/media/$USER/QUEUE/QUEUE/RELAX PASSIVE LEARNING/02 HEALTH VEGAN LE/")
 
 console.print(f"[bold cyan]Moving Crypto...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/K-STUDY PASSIVE CRYPTO")/* @(p"/run/media/$USER/QUEUE/QUEUE/STUDY PASSIVE CRYPTO/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/K-STUDY PASSIVE CRYPTO")/* @(p"/media/$USER/QUEUE/QUEUE/STUDY PASSIVE CRYPTO/")
 
 console.print(f"[bold cyan]Moving Linux...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/L-STUDY ACTIVE LINUX")/* @(p"/run/media/manuj/QUEUE/QUEUE/STUDY ACTIVE LINUX/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/L-STUDY ACTIVE LINUX")/* @(p"/media/manuj/QUEUE/QUEUE/STUDY ACTIVE LINUX/")
 
 console.rule(style="cyan")
 
