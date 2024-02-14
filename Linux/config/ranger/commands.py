@@ -928,7 +928,7 @@ class embed_subtitle(Command):
 
 ###############################################################################
 
-class epub_convert_multiple(Command):
+class epub_convert_multiple_tui(Command):
     """
     :epub_convert_multiple
     Converts epub to text or pdf
@@ -943,7 +943,7 @@ class epub_convert_multiple(Command):
             return
         else:
             # %s sends each file as an argument
-            self.fm.execute_console(f"shell epub-convert-multiple %s")
+            self.fm.execute_console(f"shell epub-convert-multiple-tui %s")
             self.fm.change_mode("normal")
 
 ###############################################################################

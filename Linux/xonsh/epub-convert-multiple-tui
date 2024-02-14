@@ -1,0 +1,57 @@
+#!/usr/bin/env xonsh
+
+import sys
+import os
+import argparse
+from rich.console import Console
+from rich import print
+from prompt_toolkit.shortcuts import radiolist_dialog
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import monokai_dialog_style
+
+console = Console()
+
+def parse_args():
+	parser = argparse.ArgumentParser(description="Convert epub")
+
+	parser.add_argument('files', nargs='+', 
+					 	help="Epubs to process")
+
+	return parser.parse_args()
+
+def process_files(args):
+	files = args.files
+
+	result = radiolist_dialog(
+	title="Convert epub",
+	text="What is the output file format?",
+	values=[
+		("pdf", "PDF : Portable Document Format"),
+		("txt", "Plain text file")
+	],
+	style=monokai_dialog_style,
+    ).run()
+
+	if result == "pdf":
+		epub-convert-multiple -o 'pdf' @(args.files)
+	elif result == "txt":
+		epub-convert-multiple -o 'txt' @(args.files)
+
+
+
+def main():
+	try:
+		args = parse_args()
+	except argparse.ArgumentError as err:
+		print(f"Error: {err}")
+		parser.print_help()
+		sys.exit(1)    
+    
+	process_files(args)
+
+if __name__ == "__main__":
+	main()
+ 

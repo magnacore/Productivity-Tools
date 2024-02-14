@@ -1,34 +1,49 @@
 #!/usr/bin/env xonsh
+
+import sys
+import os
+import argparse
 from rich.progress import track
 from rich.console import Console
 from rich import print
 
-import sys
-import os
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
-from utilities import get_mime, get_filename_extension, get_user_selection
+from utilities import get_mime, get_filename_extension
 
 console = Console()
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+def parse_args():
+	parser = argparse.ArgumentParser(description="Convert epub")
 
-if len(sys.argv) > 1: # No arguments passed
-	selection = True
+	parser.add_argument('-w', '--width', type=int, required=False,
+						help="Width of the PDF")
+	parser.add_argument('-l', '--length', type=int, required=False,
+						help="Height of the PDF")
+	parser.add_argument('-f', '--font_size', type=int, required=False,
+						help="Font size of the PDF")
+	parser.add_argument('-m', '--margin', type=int, default=10, required=False,
+						help="Margin of the PDF")
+	parser.add_argument('files', nargs='+', 
+					 	help="Epubs to process")
+	parser.add_argument('-o', '--output_format', choices=['pdf', 'txt'], required=True,
+						help="Output format (pdf or txt)")
 
-if selection:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+	parser.set_defaults(width=946, length=968, font_size=32, margin=10, output_format="pdf")
 
-	user_selection = ['txt', 'pdf']
+	return parser.parse_args()
 
-	output_format = get_user_selection(user_selection)
+def process_files(args):
+	files = args.files
+	output_format = args.output_format
+	width=args.width
+	length=args.length
+	dimension = f"{width}x{length}"
+	font_size = args.font_size
+	margin = args.margin
 
-	console.rule(f"[bold cyan]Convert epub to {output_format}...", style="cyan")
-
-	for file in track(allFiles, description="[bold cyan]Convert : [/bold cyan]"):
+	for file in track(files, description="[bold cyan]Convert : [/bold cyan]"):
 		mimestart = get_mime(file, part=1)
 		if mimestart != None:
 			if mimestart in ['epub', 'epub+zip']:
@@ -44,24 +59,33 @@ if selection:
 					# https://manual.calibre-ebook.com/generated/en/ebook-convert.html#pdf-output-options
 					# if custom-size is specified paper-size will be ignored
 					if !(ebook-convert @(file) @(output_filename) \
-						--custom-size 946x968 \
+						--custom-size @(dimension) \
 						--unit point \
-						--pdf-default-font-size 32 \
+						--pdf-default-font-size @(font_size) \
 						--paper-size a4 \
 						--preserve-cover-aspect-ratio \
 						--pretty-print \
-						--pdf-page-margin-bottom 10 \
-						--pdf-page-margin-top 10 \
-						--pdf-page-margin-left 10 \
-						--pdf-page-margin-right 10):
+						--pdf-page-margin-bottom @(margin) \
+						--pdf-page-margin-top @(margin) \
+						--pdf-page-margin-left @(margin) \
+						--pdf-page-margin-right @(margin)):
 						print(f"[green]Converted {file}")
 					else:
 						print(f"[bold red]Could not convert {file}")
 
-	
+def main():
+	try:
+		args = parse_args()
+	except argparse.ArgumentError as err:
+		audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+		print(f"Error: {err}")
+		parser.print_help()
+		sys.exit(1)    
+    
+	process_files(args)
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print("No files selected!", style="bold red")
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+	console.rule(style="cyan")
 
-console.rule(style="cyan")
+if __name__ == "__main__":
+	main()
+ 
