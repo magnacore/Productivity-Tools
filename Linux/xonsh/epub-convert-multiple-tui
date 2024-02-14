@@ -36,7 +36,19 @@ def process_files(args):
     ).run()
 
 	if result == "pdf":
-		epub-convert-multiple -o 'pdf' @(args.files)
+		dimension_result = radiolist_dialog(
+			title="Choose page size",
+			text="What is the output file dimensions?",
+			values=[
+				("ranger", "Ranger preview"),
+				("a4", "A4 page")
+			],
+			style=monokai_dialog_style,
+			).run()
+		if dimension_result=="ranger":
+			epub-convert-multiple -o 'pdf' @(args.files)
+		elif dimension_result=="a4":
+			epub-convert-multiple -o 'pdf' -w 2480 -l 3508 -f 80 -m 100 @(args.files)
 	elif result == "txt":
 		epub-convert-multiple -o 'txt' @(args.files)
 
