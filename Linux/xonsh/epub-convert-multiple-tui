@@ -41,7 +41,7 @@ def process_files(args):
 			text="What is the output file dimensions?",
 			values=[
 				("ranger", "Ranger preview"),
-				("a4", "A4 page")
+				("a4", "A4 page @300 DPI")
 			],
 			style=monokai_dialog_style,
 			).run()
