@@ -6,16 +6,16 @@ console = Console()
 console.rule("[bold cyan]Backing up backup drive....", style="cyan")
 
 console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /run/media/$USER/BACKUP_01_B/BACKUP/@previous
+sudo btrfs subvolume delete /media/$USER/BACKUP_01_B/BACKUP/@previous
 
 console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /run/media/$USER/BACKUP_01_B/BACKUP/@current/ /run/media/$USER/BACKUP_01_B/BACKUP/@previous
+sudo btrfs subvolume snapshot -r /media/$USER/BACKUP_01_B/BACKUP/@current/ /media/$USER/BACKUP_01_B/BACKUP/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-rsync -vahiP --delete /run/media/$USER/BACKUP_01_A/ /run/media/$USER/BACKUP_01_B/BACKUP/@current/
+rsync -vahiP --delete /media/$USER/BACKUP_01_A/ /media/$USER/BACKUP_01_B/BACKUP/@current/
 
 date > ~/Software/logs/backup-backup.txt
-date > /run/media/$USER/BACKUP_01_B/BACKUP/@current/backup_date.txt
+date > /media/$USER/BACKUP_01_B/BACKUP/@current/backup_date.txt
 
 # sudo btrfs filesystem show
 
