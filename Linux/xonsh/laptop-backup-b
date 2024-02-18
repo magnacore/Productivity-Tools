@@ -6,16 +6,16 @@ console = Console()
 console.rule(f"[bold cyan]Laptop Backup B...", style="cyan")
 
 console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /run/media/$USER/LAPTOP_BACKUP_B/@previous
+sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_B/@previous
 
 console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /run/media/$USER/LAPTOP_BACKUP_B/@current/ /run/media/$USER/LAPTOP_BACKUP_B/@previous
+sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_B/@current/ /media/$USER/LAPTOP_BACKUP_B/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /run/media/$USER/LAPTOP_BACKUP_B/@current/
+rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/LAPTOP_BACKUP_B/@current/
 
 date > ~/Software/logs/laptop-backup-b.txt
-date > /run/media/$USER/LAPTOP_BACKUP_B/@current/backup_date.txt
+date > /media/$USER/LAPTOP_BACKUP_B/@current/backup_date.txt
 
 # sudo btrfs filesystem show
 
