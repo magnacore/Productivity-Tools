@@ -373,7 +373,7 @@ XONSH:
 conda install conda-forge::xonsh
 conda install conda-forge::num2words
 conda install conda-forge::google-cloud-sdk
-conda install conda-forge::google-cloud-texttospeech
+conda install conda-forge::google-cloud-texttospeech (does not require google cloud sdk)
 conda install conda-forge::rich
 conda install conda-forge::pypdf2
 conda install conda-forge::pillow
@@ -403,6 +403,7 @@ conda install conda-forge::qrcode
 conda install conda-forge::libwebp
 conda install conda-forge::rich
 conda install conda-forge::ffmpeg-normalize
+conda install conda-forge::prompt_toolkit
 
 conda not available:
 /home/manuj/anaconda3/envs/util/bin/pip install pycp
