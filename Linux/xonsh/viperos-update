@@ -84,10 +84,11 @@ else:
     console.print(f"[bold green]Skipping cleanup.[/bold green]")
 
 console.print(f"[bold cyan]Update locate database...[/bold cyan]")
-# sudo updatedb --add-single-prunepath '~/Productivity_System/04 BIN/02 PRACTICE'
-sudo updatedb
 
 hdd-size
+
+# sudo updatedb --add-single-prunepath '~/Productivity_System/04 BIN/02 PRACTICE'
+sudo updatedb
 
 date > ~/Software/logs/system-update.txt
 
