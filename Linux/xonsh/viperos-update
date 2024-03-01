@@ -4,14 +4,11 @@ from rich.console import Console
 
 console = Console()
 
-console.rule(f"[bold cyan]Updating Fedora...", style="cyan")
+console.rule(f"[bold cyan]Updating ViperOS...", style="cyan")
 
 console.print(f"[bold cyan]Delete old files in trash...[/bold cyan]")
 # trash-empty -f 3
 trash-empty 3
-
-# console.print(f"[bold cyan]Deleting None files...[/bold cyan]")
-# find $HOME/ -type f -name "None" -delete
 
 console.print(f"[bold cyan]Moving Files...[/bold cyan]")
 mv --backup=numbered @(p"~/MEGA/Mobile Uploads")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
