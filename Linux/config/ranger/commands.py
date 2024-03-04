@@ -1082,3 +1082,19 @@ class file_rename_extension(Command):
         self.fm.notify("Extension renamed.")
 
 ###############################################################################
+
+class video_convert_whatsapp(Command):
+    """:Convert videos to a fomrmat that can we shared on Whatsapp"""
+
+    def execute(self):
+        cwd = self.fm.thisdir
+        cf = self.fm.thisfile
+        if not cwd or not cf:
+            self.fm.notify("Error: no file(s) selected", bad=True)
+            return
+        else:
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell video-convert-whatsapp %s")
+            self.fm.change_mode("normal")
+
+###############################################################################
