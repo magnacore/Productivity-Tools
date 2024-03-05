@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import sys
-
-walk_dir = sys.argv[1]
+import argparse
 
 def walklevel(some_dir, level=1):
     some_dir = some_dir.rstrip(os.path.sep)
@@ -15,32 +13,43 @@ def walklevel(some_dir, level=1):
         if num_sep + level <= num_sep_this:
             del dirs[:]
 
-for root, subdirs, files in walklevel(walk_dir):
-	for subdir in subdirs:
-		if(subdir[0].isdigit() and not subdir[1].isdigit()):
-			new_directory_name = "00" + subdir
-			source = os.path.join(root, subdir)
-			destination = os.path.join(root, new_directory_name)
+def rename_directories(walk_dir):
+	for root, subdirs, files in walklevel(walk_dir):
+		for subdir in subdirs:
+			if(subdir[0].isdigit() and not subdir[1].isdigit()):
+				new_directory_name = "00" + subdir
+				source = os.path.join(root, subdir)
+				destination = os.path.join(root, new_directory_name)
+				os.rename(source, destination)
+
+			if(subdir[0].isdigit() and subdir[1].isdigit()):
+				new_directory_name = "0" + subdir
+				source = os.path.join(root, subdir)
+				destination = os.path.join(root, new_directory_name)
+				os.rename(source, destination)
+
+def rename_files(walk_dir):
+	i = 1
+
+	for root, subdirs, files in walklevel(walk_dir):		
+		subdirs.sort()
+		
+		for filename in files:
+			source = os.path.join(root, filename)
+
+			new_file_name = f"{i:03d}_{filename}"
+			destination = os.path.join(root, new_file_name)
 			os.rename(source, destination)
 
-		if(subdir[0].isdigit() and subdir[1].isdigit()):
-			new_directory_name = "0" + subdir
-			source = os.path.join(root, subdir)
-			destination = os.path.join(root, new_directory_name)
-			os.rename(source, destination)
+		i += 1
 
-i = 0
+def main():
+	parser = argparse.ArgumentParser(description="Renames directories and files.")
+	parser.add_argument("directory", type=str, help="The directory to process.")
+	args = parser.parse_args()
 
-for root, subdirs, files in walklevel(walk_dir):
-	
-	subdirs.sort()
-	
-	for filename in files:
-		source = os.path.join(root, filename)
+	rename_directories(args.directory)
+	rename_files(args.directory)
 
-		new_file_name = '{0:03d}'.format(i) + "_" + filename
-		destination = os.path.join(root, new_file_name)
-
-		os.rename(source, destination)
-
-	i += 1
+if __name__ == "__main__":
+    main()
