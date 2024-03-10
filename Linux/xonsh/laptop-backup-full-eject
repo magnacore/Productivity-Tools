@@ -34,7 +34,8 @@ udisksctl power-off -b /dev/sda
 lsblk
 
 console.print(f"[bold cyan]Empty trash...")
-trash-empty -f
+#trash-empty -f
+trash-empty
 
 console.rule(style="cyan")
 
