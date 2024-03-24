@@ -151,6 +151,7 @@ net.christianbeier.Gromit-MPX
 org.blender.Blender
 org.inkscape.Inkscape
 com.valvesoftware.Steam
+com.valvesoftware.Steam.CompatibilityTool.Proton-GE
 com.discordapp.Discord
 org.gaphor.Gaphor
 com.usebottles.bottles
