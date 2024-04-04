@@ -122,6 +122,7 @@ bridge-utils
 virtinst
 libvirt-daemon
 virt-manager
+qemu-system-gui
 
 For Veracrypt:
 libwxgtk3.2-1
@@ -151,7 +152,7 @@ net.christianbeier.Gromit-MPX
 org.blender.Blender
 org.inkscape.Inkscape
 com.valvesoftware.Steam
-com.valvesoftware.Steam.CompatibilityTool.Proton-GE
+net.davidotek.pupgui2
 com.discordapp.Discord
 org.gaphor.Gaphor
 com.usebottles.bottles
