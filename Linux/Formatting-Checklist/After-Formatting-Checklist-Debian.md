@@ -123,6 +123,7 @@ virtinst
 libvirt-daemon
 virt-manager
 qemu-system-gui
+gir1.2-spiceclientgtk-3.0
 
 For Veracrypt:
 libwxgtk3.2-1
