@@ -51,11 +51,12 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     console.print(f"[bold cyan]Clean Xonsh history...[/bold cyan]")
     rm -rf @(p"~/.local/share/xonsh")/*
 
-    console.print(f"[bold cyan]Deleting logs from home folder only...[/bold cyan]")
+    console.print(f"[bold cyan]Deleting logs from home folder...[/bold cyan]")
     # rm -rf @(p"~/.var/app/fr.handbrake.ghb/config/ghb/EncodeLogs")/*
     # find the size of all the log files
     # find $HOME/ -type f -iname "*.log" -exec du -k '{}' + | awk '{ total += $1 } END { print "Total size: " total/1024 "MB" }'
     find $HOME/ -type f -iname "*.log" -delete
+    rm -rf @(p"~/.var/app/com.obsproject.Studio/config/obs-studio/logs")/*
 
     console.print(f"[bold cyan]Deleting .DS_Store files...[/bold cyan]")
     find $HOME/ -type f -iname ".DS_Store" -delete
