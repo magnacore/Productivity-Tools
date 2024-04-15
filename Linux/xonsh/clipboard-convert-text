@@ -21,7 +21,7 @@ file_name = get_valid_filename(clipboard_content[:35])
 
 if file_name:
     date_time = get_timestamp()
-    file_name = f"{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name}_{date_time}.md"
+    file_name = f"{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{file_name}_{date_time}.txt"
 
     # open file
     with open(file_name, "a+") as f:
