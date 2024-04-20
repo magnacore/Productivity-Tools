@@ -12,7 +12,7 @@ console.print(f"[bold cyan]Creating a new read only snapshot...")
 sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_B/@current/ /media/$USER/LAPTOP_BACKUP_B/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/LAPTOP_BACKUP_B/@current/
+sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/LAPTOP_BACKUP_B/@current/
 
 date > ~/Software/logs/laptop-backup-b.txt
 date > /media/$USER/LAPTOP_BACKUP_B/@current/backup_date.txt

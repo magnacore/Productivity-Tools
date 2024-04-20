@@ -6,7 +6,7 @@ console = Console()
 console.rule(f"[bold cyan]Laptop Backup A...", style="cyan")
 
 #rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
-rsync -vahi --partial --info=progress2 --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
+sudo rsync -vahi --partial --info=progress2 --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
 
 date > ~/Software/logs/laptop-backup-a.txt
 date > /media/veracrypt1/SYSTEM_BACKUP/backup_date.txt
