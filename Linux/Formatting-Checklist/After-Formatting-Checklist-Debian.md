@@ -63,8 +63,8 @@ figlet
 cpu-x
 lzip
 tango-icon-theme
-clamav
-clamtk
+#clamav
+#clamtk
 pwgen
 trash-cli
 plocate
