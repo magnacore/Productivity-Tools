@@ -1,0 +1,133 @@
+#!/usr/bin/env xonsh
+
+import os
+import re
+import argparse
+import ebooklib
+from ebooklib import epub
+from rich.console import Console
+from rich.progress import track
+from rich import print
+import fnmatch
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_filename_extension
+
+console = Console()
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Split an EPUB file into smaller parts.")
+    parser.add_argument('-s', '--sizekb', type=float, default=10.0, required=False, help="Split size in KB")
+    parser.add_argument('files', nargs='+', help="Epubs to split")
+
+    return parser.parse_args()
+
+def is_epub_html(variable):
+    return isinstance(variable, epub.EpubHtml)
+
+def split_html_by_size(html_bytes, split_after_kb):
+    html_text = html_bytes.decode('utf-8')  # Decode bytes to string
+    chunk_size_limit = split_after_kb * 1024  # Convert KB to bytes
+    chunk_list = []
+    current_chunk = ""
+
+    # Split HTML into chunks
+    for tag in re.findall(r'<[^>]+>|[^<]+', html_text):
+        tag_size = len(tag.encode('utf-8'))
+        
+        if len(current_chunk.encode('utf-8')) + tag_size <= chunk_size_limit:
+            current_chunk += tag
+        else:
+            chunk_list.append(current_chunk)
+            current_chunk = tag
+    
+    if current_chunk:
+        chunk_list.append(current_chunk)
+    
+    return [chunk.encode('utf-8') for chunk in chunk_list]
+
+def run_percentage_tag(file_name):
+    # Get a list of all files in the current directory
+    all_files = os.listdir(f'./{file_name}')
+    
+    # Filter the list to only include files starting with the input string
+    matching_files = [file for file in all_files if fnmatch.fnmatch(file, f"{file_name}*")]
+
+    # Pass full paths to file-tag-percentage
+    matching_files = [f"./{file_name}/{file}" for file in matching_files]
+    
+    # of a list as arguments to a xonsh script
+	# We are therefore calling a xonsh script from another xonsh script (which is this file)
+    file-tag-percentage @(matching_files)
+
+def process_files(args):
+    files = args.files
+    chunk_size = args.sizekb
+
+    for file in track(files, description="[bold cyan]Split : [/bold cyan]"):
+        mimestart = get_mime(file, part=1)
+        if mimestart != None:
+            if mimestart in ['epub', 'epub+zip']:
+                output_folder_name, _ = get_filename_extension(file)
+
+                mkdir -p @(output_folder_name)
+
+                book = epub.read_epub(file)
+                chapters = book.get_items_of_type(ebooklib.ITEM_DOCUMENT)
+
+                i = 0
+
+                for chapter in chapters:
+                    chapter_content = chapter.content
+                    chapter_title = chapter.get_name()
+
+                    chunks = split_html_by_size(chapter_content, chunk_size)
+
+                    for chunk in chunks:
+                        new_book = epub.EpubBook()
+                        new_chapter = epub.EpubHtml(title=chapter_title.split(".")[0], file_name=chapter_title, content=chunk)
+
+                        # Copy other elements from the original EPUB
+                        for item in book.get_items():
+                            # copy only used images
+                            if item.get_type() == ebooklib.ITEM_IMAGE:
+                                image_name = item.get_name()
+                                if image_name in chunk.decode("utf-8"):
+                                    new_book.add_item(item)
+                            
+                            # copy everything except html and images
+                            if not is_epub_html(item) and item.get_type() != ebooklib.ITEM_IMAGE:
+                                new_book.add_item(item)
+
+                        # Add the page to the epub
+                        new_book.add_item(new_chapter)
+
+                        # Set the table of contents and spine
+                        new_book.toc = [new_chapter]
+                        new_book.spine = [new_chapter]
+
+                        # Save the new EPUB
+                        output_file = os.path.join(output_folder_name, f"{output_folder_name}-{str(i+1).zfill(3)}.epub")
+                        i += 1
+                        epub.write_epub(output_file, new_book)
+
+                run_percentage_tag(output_folder_name)
+
+def main():
+    try:
+        args = parse_args()
+    except argparse.ArgumentError as err:
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        print(f"Error: {err}")
+        parser.print_help()
+        sys.exit(1)    
+    
+    process_files(args)
+
+    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    console.rule(style="cyan")
+
+if __name__ == "__main__":
+	main()

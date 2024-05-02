@@ -17,8 +17,7 @@ console = Console()
 def parse_args():
 	parser = argparse.ArgumentParser(description="Convert epub")
 
-	parser.add_argument('files', nargs='+', 
-					 	help="Epubs to process")
+	parser.add_argument('files', nargs='+', help="Epubs to process")
 
 	return parser.parse_args()
 
@@ -30,7 +29,8 @@ def process_files(args):
 	text="What is the output file format?",
 	values=[
 		("pdf", "PDF : Portable Document Format"),
-		("txt", "Plain text file")
+		("txt", "Plain text file"),
+		("split", "Split Epub")
 	],
 	style=monokai_dialog_style,
     ).run()
@@ -51,8 +51,8 @@ def process_files(args):
 			epub-convert-multiple -o 'pdf' -w 2480 -l 3508 -f 80 -m 100 @(args.files)
 	elif result == "txt":
 		epub-convert-multiple -o 'txt' @(args.files)
-
-
+	elif result == "split":
+		epub-split -s 10 @(args.files)
 
 def main():
 	try:
