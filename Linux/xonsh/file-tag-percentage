@@ -21,6 +21,8 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
+	# Do not add a comment here, as this command is used by other commands
+	# and it will break the TUI
 	# console.rule(f"[bold cyan]Adding percentage tag...", style="cyan")
 
 	total_files = len(allFiles)
