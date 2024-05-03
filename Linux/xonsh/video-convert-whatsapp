@@ -18,43 +18,42 @@ console = Console()
 
 def parse_args():
 	parser = argparse.ArgumentParser(description="Convert videos for sharing on WhatsApp")
-
+	
+	parser.add_argument('-b', '--bitrate', type=int, default=500, required=False, help="Bitrate for video conversion")
 	parser.add_argument('files', nargs='+', help="Files to process")
 
 	return parser.parse_args()
 
-def process_files(args, bitrate, timestamp):
+def process_files(args, timestamp):
 	files = args.files
-
-	mkdir f"converted-{timestamp}"
-	mkdir f"split-converted-{timestamp}"
+	bitrate = args.bitrate
 
 	for file in files:
-		filename, extension = get_filename_extension(file)		
+		filename, _ = get_filename_extension(file)
+		
+		mkdir -p f"{filename}-{timestamp}"
+		mkdir -p f"{filename}-split-{timestamp}"
 
 		# Convert full videos and store in converted folder
 		mimestart = get_mime(file)
 
 		if mimestart in ['video']:
-			filename = os.path.splitext(file)[0]+' #whatsapp.mp4'
+			full_filename = os.path.splitext(file)[0]+' #whatsapp.mp4'
 
 			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
-			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./converted-{timestamp}/{filename}"
+			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./{filename}-{timestamp}/{full_filename}"
         
-def process_split_videos(bitrate, timestamp):
-	# Convert videos in the split converted folder
-	subfolder = Path(f"./converted-{timestamp}")
-	allVideos = [str(file) for file in subfolder.rglob("*")]
+def split_converted_video(args, timestamp):
+	files = args.files
 
-	pattern = r"converted-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\/"
-	
-	for video in allVideos:		
-		filename, _ = get_filename_extension(video)
-		filename = re.sub(pattern, "", filename)
+	for file in files:
+		filename, _ = get_filename_extension(file)
 
-		ffmpeg -i @(video) -c copy -f segment -segment_time 20 -reset_timestamps 1 -map 0 @(f"./split-converted-{timestamp}/{filename} %03d.mp4")
-
-
+		subfolder = Path(f"./{filename}-{timestamp}")
+		allVideos = [str(file) for file in subfolder.rglob("*")]
+		
+		for video in allVideos:
+			ffmpeg -i @(video) -c copy -f segment -segment_time 20 -reset_timestamps 1 -map 0 @(f"./{filename}-split-{timestamp}/{filename} %03d.mp4")
 
 def main():
 	console.rule(f"[bold cyan]Convert videos for sharing on WhatsApp", style="cyan")
@@ -66,11 +65,10 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 
-	bitrate = 500
 	timestamp = get_timestamp()
     
-	process_files(args, bitrate, timestamp)
-	process_split_videos(bitrate, timestamp)
+	process_files(args, timestamp)
+	split_converted_video(args, timestamp)
 
 	rm temp_log*
 
