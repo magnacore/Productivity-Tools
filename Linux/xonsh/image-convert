@@ -36,7 +36,7 @@ if selection:
 
 	clean_file_names = set_valid_file_names(allFiles)
 
-	delete_choice = get_user_selection(["No", "Yes"], "Delete original files after splitting?")
+	delete_choice = get_user_selection(["No", "Yes"], "Delete original files after converting?")
 
 	for image in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
 		mimestart = get_mime(image)
