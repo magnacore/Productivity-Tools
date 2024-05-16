@@ -1035,7 +1035,7 @@ class audio_process(Command):
 
 ###############################################################################
 
-class media_length_academic(Command):
+class media_length_tag(Command):
     """
     : Calculate length of videos in subdirectores of selected folders
     : with a specific tag
@@ -1053,7 +1053,7 @@ class media_length_academic(Command):
         files = [f for f in self.fm.thistab.get_selection()]
 
         for f in files:
-            self.fm.execute_console(f"""shell -w media-length-academic '{f.relative_path}' """)
+            self.fm.execute_console(f"""shell -w media-length-tag '{f.relative_path}' """)
 
         self.fm.change_mode("normal")
 

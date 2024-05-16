@@ -21,6 +21,8 @@ from rich.text import Text
 from rich import box
 from rich.markdown import Markdown
 from rich.progress import track
+from prompt_toolkit.shortcuts import input_dialog
+from utilities import monokai_dialog_style
 
 from utilities import get_mime, get_duration, get_filename_extension
 
@@ -38,6 +40,11 @@ if selection:
 	allDirectories = sys.argv[1:]
 	# allDirectories.sort()
 
+	tag_text = input_dialog(
+    title='Enter tag',
+    text='Please type the tag:',
+	style=monokai_dialog_style).run()
+
 	for directory in allDirectories:
 		console.rule(f"[bold cyan]Summing media duration in {directory}", style="cyan")
 		table = Table(title="Media Duration", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
@@ -52,7 +59,7 @@ if selection:
 				mimestart = get_mime(file)
 				filename, _ = get_filename_extension(file)
 				if mimestart != None:
-					if mimestart in ['video'] and "#manuj" in filename.lower():
+					if mimestart in ['video'] and tag_text.lower() in filename.lower():
 						file_path = os.path.abspath(os.path.join(root, file))
 						duration = get_duration(file_path)
 						total_duration += duration
