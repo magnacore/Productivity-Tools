@@ -171,6 +171,7 @@ network.loki.Session
 org.filezillaproject.Filezilla
 net.sourceforge.liferea
 org.kde.kleopatra3
+io.github.dvlv.boxbuddyrs
 
 =====================================================================
 = Fonts
