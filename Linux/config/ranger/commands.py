@@ -1039,7 +1039,7 @@ class media_length_tag(Command):
     """
     : Calculate length of videos in subdirectores of selected folders
     : with a specific tag
-    : Denostrates how commands can be executed on selected folders
+    : Demonstrates how commands can be executed on selected folders
     """
 
     def execute(self):
