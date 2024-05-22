@@ -446,3 +446,11 @@ let @i ='let i = 1 | g/^/s/^/\=printf("%03d ", i)/ | let i = i+1'
 
 " Remove NA - from lines
 let @r ='ggG4lx'
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Abbreviations
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+ab mcs Manuj Chandra Sharma
+ab gai Generative AI
+ab config configuration
