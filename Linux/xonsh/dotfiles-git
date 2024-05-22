@@ -41,6 +41,9 @@ rsync --delete --progress -vahi ~/.var/app/net.christianbeier.Gromit-MPX/config/
 console.print(f"[bold cyan]Syncing Sxiv Config...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/sxiv/exec/image-info @(config_path)
 
+console.print(f"[bold cyan]Syncing Cmus Config...[/bold cyan]")
+rsync --delete --progress -vahi ~/.config/cmus/autosave @(config_path)
+
 console.print(f"[bold cyan]Syncing Xonsh scripts...[/bold cyan]")
 rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
 
