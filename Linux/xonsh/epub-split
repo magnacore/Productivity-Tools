@@ -3,7 +3,7 @@
 import os
 import re
 import argparse
-import ebooklib
+import ebooklib as eb
 from ebooklib import epub
 from rich.console import Console
 from rich.progress import track
@@ -65,6 +65,7 @@ def run_percentage_tag(file_name):
 def process_files(args):
     files = args.files
     chunk_size = args.sizekb
+    filters = [eb.ITEM_IMAGE, eb.ITEM_AUDIO, eb.ITEM_VIDEO]
 
     for file in track(files, description="[bold cyan]Split : [/bold cyan]"):
         mimestart = get_mime(file, part=1)
@@ -75,7 +76,7 @@ def process_files(args):
                 mkdir -p @(output_folder_name)
 
                 book = epub.read_epub(file)
-                chapters = book.get_items_of_type(ebooklib.ITEM_DOCUMENT)
+                chapters = book.get_items_of_type(eb.ITEM_DOCUMENT)
 
                 i = 0
 
@@ -92,13 +93,14 @@ def process_files(args):
                         # Copy other elements from the original EPUB
                         for item in book.get_items():
                             # copy only used images
-                            if item.get_type() == ebooklib.ITEM_IMAGE:
-                                image_name = item.get_name()
-                                if image_name in chunk.decode("utf-8"):
+                            if item.get_type() in filters:
+                                item_name = item.get_name()
+                                if item_name in chunk.decode("utf-8"):
                                     new_book.add_item(item)
                             
-                            # copy everything except html and images
-                            if not is_epub_html(item) and item.get_type() != ebooklib.ITEM_IMAGE:
+                            # copy everything except html and multi-media
+                            # Note: webm is not detected as VIDEO
+                            if (not is_epub_html(item)) and (item.get_type() not in filters):
                                 new_book.add_item(item)
 
                         # Add the page to the epub
