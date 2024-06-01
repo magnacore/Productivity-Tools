@@ -55,26 +55,26 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     # rm -rf @(p"~/.var/app/fr.handbrake.ghb/config/ghb/EncodeLogs")/*
     # find the size of all the log files
     # find $HOME/ -type f -iname "*.log" -exec du -k '{}' + | awk '{ total += $1 } END { print "Total size: " total/1024 "MB" }'
-    find $HOME/ -type f -iname "*.log" -delete
+    sudo find $HOME/ -type f -iname "*.log" -delete
     rm -rf @(p"~/.var/app/com.obsproject.Studio/config/obs-studio/logs")/*
 
     console.print(f"[bold cyan]Deleting .DS_Store files...[/bold cyan]")
-    find $HOME/ -type f -iname ".DS_Store" -delete
+    sudo find $HOME/ -type f -iname ".DS_Store" -delete
 
     console.print(f"[bold cyan]Deleting desktop.ini files...[/bold cyan]")
-    find $HOME/ -type f -iname "desktop.ini" -delete
+    sudo find $HOME/ -type f -iname "desktop.ini" -delete
 
     console.print(f"[bold cyan]Deleting .ipynb_checkpoints directories...[/bold cyan]")
-    find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
+    sudo find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
 
     console.print(f"[bold cyan]Deleting __pycache__ directories...[/bold cyan]")
-    find $HOME/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
+    sudo find $HOME/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
 
     console.print(f"[bold cyan]Deleting __MACOSX directories...[/bold cyan]")
-    find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
+    sudo find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
 
     console.print(f"[bold cyan]Deleting .thumbnails directories...[/bold cyan]")
-    find $HOME/ -type d -iname ".thumbnails" -prune -exec rm -rf '{}' ';'
+    sudo find $HOME/ -type d -iname ".thumbnails" -prune -exec rm -rf '{}' ';'
 
     audio-play ~/Bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg &
 
