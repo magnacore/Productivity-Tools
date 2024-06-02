@@ -133,3 +133,17 @@ def main():
 
 if __name__ == "__main__":
 	main()
+
+
+# ITEM_UNKNOWN
+# ITEM_IMAGE
+# ITEM_STYLE
+# ITEM_SCRIPT
+# ITEM_NAVIGATION
+# ITEM_VECTOR
+# ITEM_FONT
+# ITEM_VIDEO
+# ITEM_AUDIO
+# ITEM_DOCUMENT
+# ITEM_COVER
+# ITEM_SMIL
