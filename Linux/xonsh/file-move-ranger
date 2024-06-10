@@ -21,7 +21,7 @@ if selection:
 
 	console.rule(f"[bold cyan]Moving files...", style="cyan")
 
-	~/anaconda3/envs/util/bin/pymv -gip @(allFiles) @(target_dir)
+	~/anaconda3/envs/util/bin/python ~/anaconda3/envs/util/bin/pymv -gip @(allFiles) @(target_dir)
 
 	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
