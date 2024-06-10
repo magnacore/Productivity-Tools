@@ -38,9 +38,9 @@ download_from = ['YouTube', 'Other']
 choice = get_user_selection(download_from, "What is the source of the videos?")
 
 if choice == 'YouTube':
-    $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
+    $HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --write-auto-sub -a @(source)
 else:
-    $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite -a @(source)
+    $HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite -a @(source)
 
 check_incomplete_downloads(f"{destination}/NA")
 
