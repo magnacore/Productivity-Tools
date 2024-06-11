@@ -36,28 +36,28 @@ def split_html_by_size(html_bytes, split_after_kb):
     # Split HTML into chunks
     for tag in re.findall(r'<[^>]+>|[^<]+', html_text):
         tag_size = len(tag.encode('utf-8'))
-        
+
         if len(current_chunk.encode('utf-8')) + tag_size <= chunk_size_limit:
             current_chunk += tag
         else:
             chunk_list.append(current_chunk)
             current_chunk = tag
-    
+
     if current_chunk:
         chunk_list.append(current_chunk)
-    
+
     return [chunk.encode('utf-8') for chunk in chunk_list]
 
 def run_percentage_tag(file_name):
     # Get a list of all files in the current directory
     all_files = os.listdir(f'./{file_name}')
-    
+
     # Filter the list to only include files starting with the input string
     matching_files = [file for file in all_files if fnmatch.fnmatch(file, f"{file_name}*")]
 
     # Pass full paths to file-tag-percentage
     matching_files = [f"./{file_name}/{file}" for file in matching_files]
-    
+
     # of a list as arguments to a xonsh script
 	# We are therefore calling a xonsh script from another xonsh script (which is this file)
     file-tag-percentage @(matching_files)
@@ -97,7 +97,7 @@ def process_files(args):
                                 item_name = item.get_name()
                                 if item_name in chunk.decode("utf-8"):
                                     new_book.add_item(item)
-                            
+
                             # copy everything except html and multi-media
                             # Note: webm is not detected as VIDEO
                             if (not is_epub_html(item)) and (item.get_type() not in filters):
@@ -124,8 +124,8 @@ def main():
         audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
         print(f"Error: {err}")
         parser.print_help()
-        sys.exit(1)    
-    
+        sys.exit(1)
+
     process_files(args)
 
     audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
@@ -133,7 +133,6 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
 
 # ITEM_UNKNOWN
 # ITEM_IMAGE
