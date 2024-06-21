@@ -55,8 +55,7 @@ def process_files(args):
 
     for file in clean_file_names:
         mimestart = get_mime(file)
-        filename, extension = get_filename_extension(file)
-        if (mimestart in ['audio', 'video'] or extension == ".mka") and get_duration(file) > int(threshold_seconds):
+        if mimestart in ['audio', 'video'] and get_duration(file) > int(threshold_seconds):
             console.print(f"[bold green]Media of length {datetime.timedelta(seconds = round(get_duration(file),0))} found. Will split...")
             to_split = True
             break
@@ -73,9 +72,8 @@ def handle_splitting(clean_file_names, split_duration, equal):
     for file in track(clean_file_names, description="[bold cyan]Splitting : [/bold cyan]"):
         mimestart = get_mime(file)
         
-        filename, extension = get_filename_extension(file)
-
-        if mimestart in ['audio', 'video'] or extension == ".mka":
+        if mimestart in ['audio', 'video']:
+            filename, extension = get_filename_extension(file)
             new_filename = filename + f'-part' + (".mka" if (mimestart == 'audio' or extension == ".mka") else ".mkv")
 
             split_file(file, new_filename, split_duration, equal)
