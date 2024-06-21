@@ -15,7 +15,7 @@ from rich.text import Text
 from rich import box
 from rich.markdown import Markdown
 
-from utilities import get_mime, get_duration, get_filename_extension
+from utilities import get_mime, get_duration
 
 console = Console()
 
@@ -34,15 +34,13 @@ table.add_column("File name", justify="left")
 
 for file in track(allFiles, description="[bold cyan]Adding : [/bold cyan]"):
 	mimestart = get_mime(file)
-	
-	_, extension = get_filename_extension(file)
-
-	if mimestart in ['audio', 'video'] or extension == ".mka":
-		duration = get_duration(file)
-		total_duration += duration
-		table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
-	else:
-		print(f"[yellow]Skipping {file}[/yellow]")
+	if mimestart != None:
+		if mimestart in ['audio', 'video']:
+			duration = get_duration(file)
+			total_duration += duration
+			table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
+		else:
+			print(f"[yellow]Skipping {file}[/yellow]")
 
 table.add_row(u'\u2500' * 8, Markdown("---"))
 table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
