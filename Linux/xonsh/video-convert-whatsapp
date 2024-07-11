@@ -18,7 +18,7 @@ console = Console()
 
 def parse_args():
 	parser = argparse.ArgumentParser(description="Convert videos for sharing on WhatsApp")
-	
+
 	parser.add_argument('-b', '--bitrate', type=int, default=500, required=False, help="Bitrate for video conversion")
 	parser.add_argument('files', nargs='+', help="Files to process")
 
@@ -30,7 +30,7 @@ def process_files(args, timestamp):
 
 	for file in files:
 		filename, _ = get_filename_extension(file)
-		
+
 		mkdir -p f"{filename}-{timestamp}"
 		mkdir -p f"{filename}-split-{timestamp}"
 
@@ -40,9 +40,9 @@ def process_files(args, timestamp):
 		if mimestart in ['video']:
 			full_filename = os.path.splitext(file)[0]+' #whatsapp.mp4'
 
-			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
-			ffmpeg -i @(file) -c:v libx264 -b:v 300k -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./{filename}-{timestamp}/{full_filename}"
-        
+			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
+			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./{filename}-{timestamp}/{full_filename}"
+
 def split_converted_video(args, timestamp):
 	files = args.files
 
@@ -51,7 +51,7 @@ def split_converted_video(args, timestamp):
 
 		subfolder = Path(f"./{filename}-{timestamp}")
 		allVideos = [str(file) for file in subfolder.rglob("*")]
-		
+
 		for video in allVideos:
 			ffmpeg -i @(video) -c copy -f segment -segment_time 20 -reset_timestamps 1 -map 0 @(f"./{filename}-split-{timestamp}/{filename} %03d.mp4")
 
@@ -59,14 +59,14 @@ def main():
 	console.rule(f"[bold cyan]Convert videos for sharing on WhatsApp", style="cyan")
 
 	try:
-		args = parse_args()        
+		args = parse_args()
 	except argparse.ArgumentError as err:
 		print(f"Error: {err}")
 		parser.print_help()
 		sys.exit(1)
 
 	timestamp = get_timestamp()
-    
+
 	process_files(args, timestamp)
 	split_converted_video(args, timestamp)
 
