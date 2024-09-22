@@ -171,6 +171,7 @@ file_node_extensions = {
     'pp'       : '',
     'dps'      : '',
     'dpt'      : '',
+    'pcm'      : '',
     'ppt'      : '',
     'pptx'     : '',
     'pptm'     : '',
