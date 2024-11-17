@@ -1,0 +1,90 @@
+#!/usr/bin/env xonsh
+from PIL import Image, ImageDraw, ImageFont
+import math
+import argparse
+import sys
+
+def add_text_watermark(image_path, output_path, watermark_text, font_path=None, font_size=72, rotation_angle=45, spacing=50, opacity=128):
+    # Open the image
+    image = Image.open(image_path).convert('RGBA')
+
+    # Create a new image for the watermark
+    watermark = Image.new('RGBA', image.size, (255, 0, 0, 0))
+
+    # Get a drawing context
+    draw = ImageDraw.Draw(watermark, 'RGBA')
+
+    # Load a font
+    try:
+        if font_path:
+            font = ImageFont.truetype(font_path, font_size)
+        else:
+            font = ImageFont.truetype("arial.ttf", font_size)  # Use a default font if none is provided
+    except IOError:
+        print("Error: Font file not found. Using default font.")
+        font = ImageFont.load_default()
+
+    # Get the width and height of the text
+    bbox = draw.textbbox((0, 0), watermark_text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+
+    # Calculate rotation matrix
+    angle_rad = math.radians(rotation_angle)
+    cos_theta = math.cos(angle_rad)
+    sin_theta = math.sin(angle_rad)
+
+    # Calculate the spacing between tiles
+    spacing_x = int(text_width * cos_theta + text_height * sin_theta) + spacing
+    spacing_y = int(text_width * sin_theta + text_height * cos_theta) + spacing
+
+    # Draw the rotated text
+    for x in range(0, image.width, spacing_x):
+        for y in range(0, image.height, spacing_y):
+            # Create a temporary image for rotated text
+            temp_img = Image.new('RGBA', (text_width + spacing, text_height + spacing), (255, 0, 0, 0))
+            temp_draw = ImageDraw.Draw(temp_img, 'RGBA')
+            temp_draw.text((spacing // 2, spacing // 2), watermark_text, font=font, fill=(255, 0, 0, opacity))  # White text with 50% opacity
+            
+            # Rotate the text image
+            rotated_text = temp_img.rotate(rotation_angle, expand=1)
+            
+            # Paste the rotated text onto the watermark image
+            watermark.paste(rotated_text, (x, y), rotated_text)
+
+    # Combine the watermark with the original image
+    watermarked_image = Image.alpha_composite(image.convert('RGBA'), watermark)
+
+    # Save the result
+    watermarked_image.save(output_path, format='PNG')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Usage: image-watermark <input_image> <output_image> <watermark_text> <font_size> <spacing>"
+    )
+    
+    parser.add_argument("input_image", type=str, help="Path to the input image file.")
+    parser.add_argument("output_image", type=str, help="Path to save the output image file.")
+    parser.add_argument("watermark_text", type=str, help="The text to use as the watermark.")
+    parser.add_argument("font_size", type=int, help="Font size of the watermark text.", default=72)
+    parser.add_argument("spacing", type=int, help="Spacing between lines of the watermark text.", default=50)
+    parser.add_argument("opacity", type=int, help="Opacity of the watermark.", default=128)
+    
+    args = parser.parse_args()
+
+    try:
+        add_text_watermark(
+            args.input_image, 
+            args.output_image, 
+            args.watermark_text, 
+            font_size=args.font_size, 
+            spacing=args.spacing,
+            opacity=args.opacity
+        )
+        
+        #audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+        sys.exit(0)
+        
+    except Exception as e:
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        sys.exit(1)

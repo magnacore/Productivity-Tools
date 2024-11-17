@@ -1,0 +1,54 @@
+#!/usr/bin/env xonsh
+from rich.progress import track
+from rich.console import Console
+from prompt_toolkit.shortcuts import input_dialog
+
+import sys
+import os
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import (
+	get_mime,
+	get_filename_extension,
+	set_valid_file_names, 
+	handle_original_file, 
+	get_user_selection,
+	monokai_dialog_style
+	)
+
+console = Console()
+
+if len(sys.argv) >= 3:
+	allFiles = sys.argv[1:]
+	allFiles.sort()
+
+	console.rule("[bold cyan]Watermarking images....", style="cyan")
+
+	clean_file_names = set_valid_file_names(allFiles)
+
+	delete_choice = get_user_selection(["No", "Yes"], "Delete original images after watermarking?")
+
+	watermark_text = input_dialog(
+    title='Enter watermark text',
+    text='Please type the watermark text:',
+	style=monokai_dialog_style).run()
+
+	for image in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
+		mimestart = get_mime(image)
+
+		if mimestart != None:
+			if mimestart in ['image']:
+				file_name, _ = get_filename_extension(image)
+				new_filename = f"{file_name}_watermark.png"
+
+				image-watermark @(image) @(new_filename) @(watermark_text) 72 50 150
+				handle_original_file(image, delete_choice, "Images")
+
+
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+	console.print("No files selected!", style="bold red")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
