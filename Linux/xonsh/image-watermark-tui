@@ -19,7 +19,7 @@ from utilities import (
 
 console = Console()
 
-if len(sys.argv) >= 3:
+if len(sys.argv) >= 2:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
