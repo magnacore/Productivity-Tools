@@ -1211,10 +1211,8 @@ class file_select_similar(Command):
             return
 
         # remove progress pattern from the file name
-        pattern1 = r'-part-\d{1,4}-\d{1,4}r-\d{1,4}p'
-        pattern2 = r'\s+#[\w]+'
-        common_filename = re.sub(pattern1, '', highlighted_file)
-        common_filename = re.sub(pattern2, '', common_filename).strip()
+        pattern = r'(-part-\d{1,4}-\d{1,4}r-\d{1,4}p|\s+#[\w]+)'
+        common_filename = re.sub(pattern, '', highlighted_file).strip()
         name_without_ext, _ = os.path.splitext(common_filename)
 
         # select all files with that pattern in the current directory
@@ -1230,3 +1228,4 @@ class file_select_similar(Command):
         return self._tab_directory_content()
 
 ###############################################################################
+
