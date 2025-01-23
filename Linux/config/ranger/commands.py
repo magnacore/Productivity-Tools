@@ -1198,3 +1198,35 @@ class image_watermark(Command):
         
 
 ###############################################################################
+
+class file_select_similar(Command):
+    """:file_select_similar file_name"""
+
+    def execute(self):
+        import re
+        
+        highlighted_file = self.rest(1)
+        if not highlighted_file:
+            self.fm.notify("Error: No file hilighted", bad=True)
+            return
+
+        # remove progress pattern from the file name
+        pattern1 = r'-part-\d{1,4}-\d{1,4}r-\d{1,4}p'
+        pattern2 = r'\s+#[\w]+'
+        common_filename = re.sub(pattern1, '', highlighted_file)
+        common_filename = re.sub(pattern2, '', common_filename).strip()
+        name_without_ext, _ = os.path.splitext(common_filename)
+
+        # select all files with that pattern in the current directory
+        command = f"scout -m {name_without_ext}"
+        self.fm.execute_console(command)
+
+        # Change mode to normal in case visual selection mode was on
+        # self.fm.change_mode("normal")
+
+        self.fm.notify(f"Done selecting pattern {name_without_ext}")
+
+    def tab(self):
+        return self._tab_directory_content()
+
+###############################################################################
