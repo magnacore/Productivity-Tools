@@ -1211,7 +1211,7 @@ class file_select_similar(Command):
             return
 
         # remove progress pattern from the file name
-        pattern = r'(-part-\d{1,4}-\d{1,4}r-\d{1,4}p|\s+#[\w]+)'
+        pattern = r'((-part-)?\d{1,4}-\d{1,4}r-\d{1,4}p|\s+#[\w]+)'
         common_filename = re.sub(pattern, '', highlighted_file).strip()
         name_without_ext, _ = os.path.splitext(common_filename)
 
