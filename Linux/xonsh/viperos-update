@@ -47,6 +47,7 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
 
     console.print(f"[bold cyan]Clean cache...[/bold cyan]")
     rm -rf @(p"~/.cache")/*
+    rm -rf @(p"~/.var/app/net.sourceforge.liferea/cache")/*
 
     console.print(f"[bold cyan]Clean Xonsh history...[/bold cyan]")
     rm -rf @(p"~/.local/share/xonsh")/*
