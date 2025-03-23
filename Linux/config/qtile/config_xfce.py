@@ -83,6 +83,7 @@ keys = [
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
+    Key([mod], "a", lazy.spawn("amixer set Master 20%")),
 
     ## Scratchpads
     Key([mod2, mod3], "a", lazy.spawn(myTerm+f" --disable-server -e 'nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),
@@ -90,9 +91,9 @@ keys = [
 ]
 
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
-groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "Ghb", "Thunderbird", "Transmission-gtk"])]),
+groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "fr.handbrake.ghb", "thunderbird-esr", "Transmission-gtk"])]),
           Group("2", layout='bsp'),
-          Group("3", layout='bsp', matches=[Match(wm_class=['Firefox-esr'])]),
+          Group("3", layout='bsp', matches=[Match(wm_class=['firefox-esr'])]),
           Group("4", layout='max'),
           Group("5", layout='bsp'),
           Group("6", layout='bsp'),
@@ -309,6 +310,8 @@ def start_once():
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
         "flatpak run org.ferdium.Ferdium".split(),
+        "transmission-gtk",
+        "picom --experimental-backends -b".split(),
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
