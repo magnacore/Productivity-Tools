@@ -1,5 +1,6 @@
 #!/usr/bin/env xonsh
 clear
 greenclip clear
+rm /home/manuj/.cache/greenclip.history
 
 audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
