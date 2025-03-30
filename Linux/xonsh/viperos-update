@@ -62,6 +62,9 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     console.print(f"[bold cyan]Deleting .DS_Store files...[/bold cyan]")
     sudo find $HOME/ -type f -iname ".DS_Store" -delete
 
+    console.print(f"[bold cyan]Deleting .bak files...[/bold cyan]")
+    sudo find $HOME/ -type f -iname "*.bak" -delete
+
     console.print(f"[bold cyan]Deleting desktop.ini files...[/bold cyan]")
     sudo find $HOME/ -type f -iname "desktop.ini" -delete
 
