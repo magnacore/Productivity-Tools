@@ -1228,4 +1228,55 @@ class file_select_similar(Command):
         return self._tab_directory_content()
 
 ###############################################################################
+class file_copy_similar(Command):
+    """:file_copy_similar file_name"""
+
+    def execute(self):
+        import re
+        from os.path import expanduser, join, lexists
+        from os import makedirs
+
+        highlighted_file = self.rest(1)
+        if not highlighted_file:
+            self.fm.notify("Error: No file hilighted", bad=True)
+            return
+
+        # remove progress pattern from the file name
+        pattern = r'((-part-)?\d{1,4}-\d{1,4}r-\d{1,4}p|\s+#[\w]+)'
+        common_filename = re.sub(pattern, '', highlighted_file).strip()
+        name_without_ext, _ = os.path.splitext(common_filename)
+
+        # select all files with that pattern in the current directory
+        command = f"scout -m {name_without_ext}"
+        self.fm.execute_console(command)
+
+        # tag the files as seen
+        # self.fm.execute_console(f"files_tag seen")
+
+        target_dir = join(self.fm.thisdir.path, expanduser(name_without_ext))
+        if not lexists(target_dir):
+            makedirs(target_dir)
+
+        self.fm.execute_console(f"shell cp -rv --reflink=auto %s '{target_dir}'")
+
+        # self.fm.execute_console("copy")
+        # self.fm.do_cut = False
+        # self.fm.paste(dest=target_dir)
+
+        self.fm.execute_console(f"files_tag seen")
+
+        self.fm.notify(f"Done copying to {target_dir}")
+
+        #self.fm.execute_console(f"shell files-group-move %s")
+
+        # Change mode to normal in case visual selection mode was on
+        # self.fm.change_mode("normal")
+
+        #self.fm.notify(f"Done copying.")
+
+    def tab(self):
+        return self._tab_directory_content()
+
+###############################################################################
+
 
