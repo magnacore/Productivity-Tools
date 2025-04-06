@@ -2,7 +2,7 @@
 
 from rich.console import Console
 from rich.progress import Progress
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
 import sys
 import os
@@ -41,17 +41,17 @@ if selection:
 
 						file_name, _ = get_filename_extension(fname)
 
-						pdf = PdfFileReader(fname)						
+						pdf = PdfReader(fname)
 
 						text = ""
 
-						total_pages = pdf.getNumPages()
+						total_pages = len(pdf.pages)						
 
 						individual_progress = progress.add_task(f"[bold cyan]Converting {fname}: [/bold cyan]", total=total_pages)
 
 						for page in range(total_pages):
-							page_obj = pdf.getPage(page)
-							page_text = page_obj.extractText()
+							page_obj = pdf.pages[page]
+							page_text = page_obj.extract_text()
 							text += page_text
 							# convert page to text
 							progress.update(individual_progress, advance=1)
