@@ -2,7 +2,7 @@
 
 from rich.console import Console
 from rich.progress import Progress
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 import sys
 import os
@@ -58,11 +58,11 @@ if selection:
 
 						file_name, _ = get_filename_extension(fname)
 
-						pdf = PdfFileReader(fname)
+						pdf = PdfReader(fname)
 
-						pdf_writer = PdfFileWriter()
+						pdf_writer = PdfWriter()
 
-						total_pages = pdf.getNumPages()
+						total_pages = len(pdf.pages)
 
 						part = 1
 						countdown = total_pages						
@@ -70,11 +70,11 @@ if selection:
 						individual_progress = progress.add_task(f"[bold cyan]Splitting {fname}: [/bold cyan]", total=total_pages)
 
 						for page in range(total_pages):
-							pdf_writer.addPage(pdf.getPage(page))
+							pdf_writer.add_page(pdf.pages[page])
 							progress.update(individual_progress, advance=1)
 
 							# if pdf_writer contains split_page pages OR we are on the last page
-							if (pdf_writer.getNumPages() == split_page) or (page+1 == total_pages):
+							if (len(pdf_writer.pages) == split_page) or (page+1 == total_pages):
 
 								page_percent = int(((page + 1) / total_pages) * 100)
 
@@ -85,7 +85,7 @@ if selection:
 									part += 1
 									countdown -= split_page
 
-								pdf_writer = PdfFileWriter()
+								pdf_writer = PdfWriter()
 						
 						progress.remove_task(individual_progress)
 
