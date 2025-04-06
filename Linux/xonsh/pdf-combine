@@ -7,7 +7,7 @@ sys.path.append(f"{myhome}/Bin")
 
 from rich.progress import track
 from rich.console import Console
-from PyPDF2 import PdfFileReader, PdfFileMerger
+from PyPDF2 import PdfReader, PdfMerger
 
 from utilities import get_mime, get_timestamp
 
@@ -24,7 +24,7 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	merger = PdfFileMerger()
+	merger = PdfMerger()
 
 	for filename in track(allFiles, description="[bold cyan]Merging : [/bold cyan]"):
 
@@ -32,7 +32,7 @@ if selection:
 
 		if mimestart != None:			
 			if mimestart in ['pdf']:
-				merger.append(PdfFileReader(open(filename, 'rb')))
+				merger.append(PdfReader(open(filename, 'rb')))
 
 	output_filename = "combined" + "_" + get_timestamp() + ".pdf"
 	merger.write(output_filename)
