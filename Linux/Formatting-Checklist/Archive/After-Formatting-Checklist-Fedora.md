@@ -209,7 +209,7 @@ conda install -c conda-forge google-cloud-sdk
 conda install -c conda-forge google-cloud-texttospeech
 # conda install -c anaconda nltk
 conda install -c conda-forge rich
-conda install -c conda-forge pypdf2
+conda install -c conda-forge pypdf2 (depricated use pypdf)
 conda install -c anaconda pillow
 conda install -c conda-forge playsound
 conda install -c conda-forge unidecode
