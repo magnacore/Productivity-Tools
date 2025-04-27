@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.progress import track
 from rich import print
 import fnmatch
+import sys
 
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
