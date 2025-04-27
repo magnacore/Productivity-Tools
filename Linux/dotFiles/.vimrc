@@ -188,8 +188,9 @@ set clipboard+=unnamedplus
 set spelllang=en,cjk
 " Enable the line below to turn on spell checking by default
 set spell
-nnoremap <silent> <F11> :set spell!<cr>
-inoremap <silent> <F11> <C-O>:set spell!<cr>
+nnoremap <silent> <F10> :set spell!<cr>
+inoremap <silent> <F10> <C-O>:set spell!<cr>
+inoremap <C-s> <c-g>u<Esc>[s1z=`]a<c-g>u
 
 " Move selection
 vnoremap <A-j> :m '>+1<CR>gv=gv
