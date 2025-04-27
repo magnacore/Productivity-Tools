@@ -309,7 +309,7 @@ def start_once():
         [myBrowser],
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
-        "flatpak run org.ferdium.Ferdium".split(),
+        #"flatpak run org.ferdium.Ferdium".split(),
         "transmission-gtk",
         "picom --experimental-backends -b".split(),
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
