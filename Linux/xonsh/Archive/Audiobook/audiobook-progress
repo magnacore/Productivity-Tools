@@ -1,0 +1,23 @@
+#!/usr/bin/env xonsh
+
+"""
+This script is an example of how to call a script that runs in one specific environment
+from another environment.
+
+This script runs in the xonhs environment. But audiobook-distribution runs in the
+base environment.
+"""
+
+import os
+
+myhome = os.path.expanduser('~')
+
+# This example shows how to run a python script in a particular
+# environment by wrapping it in xonsh script which itself
+# runs from a xonsh environment. This keeps the libraries for
+# both the scripts seperate. 
+
+# Create audiobook histogram
+@(f"{myhome}/anaconda3/bin/python") @(f"{myhome}/Bin/audiobook-distribution")
+
+audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
