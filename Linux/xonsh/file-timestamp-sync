@@ -1,0 +1,44 @@
+#!/usr/bin/env xonsh
+
+import argparse
+import os
+import sys
+from rich.console import Console
+from rich.progress import track
+from rich import print
+
+sys.path.append(os.path.expanduser('~/Bin'))
+
+console = Console()    
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Incrementally increase files modified timestamp")
+    parser.add_argument('-g', '--gap', type=int, required=True, help="Gap in seconds between files")
+    parser.add_argument('files', nargs='+', help="Files to process")
+    return parser.parse_args()
+
+def process_files(args):
+    allFiles = args.files
+    allFiles.sort()
+    gap = args.gap   
+
+    for file in track(allFiles, description="[bold cyan]Touching : [/bold cyan]"):
+        touch @(file)
+        sleep @(gap)
+        print(f"[green]Touched {file}")
+
+def main():
+    args = parse_args()
+
+    if args.files:
+        console.rule(f"[bold cyan]Modifying files modify timestamp...", style="cyan")
+        process_files(args)
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    else:
+        console.print(f"[green]No files slected...exiting.")
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+    
+    console.rule(style="cyan")
+
+if __name__ == "__main__":
+    main()
