@@ -7,7 +7,7 @@ sys.path.append(f"{myhome}/Bin")
 
 from rich.progress import track
 from rich.console import Console
-from PyPDF2 import PdfReader, PdfMerger
+from pypdf import PdfReader, PdfWriter
 
 from utilities import get_mime, get_timestamp
 
@@ -24,7 +24,7 @@ if selection:
 	allFiles = sys.argv[1:]
 	allFiles.sort()
 
-	merger = PdfMerger()
+	merger = PdfWriter()
 
 	for filename in track(allFiles, description="[bold cyan]Merging : [/bold cyan]"):
 

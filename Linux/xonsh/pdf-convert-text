@@ -2,7 +2,7 @@
 
 from rich.console import Console
 from rich.progress import Progress
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 import sys
 import os

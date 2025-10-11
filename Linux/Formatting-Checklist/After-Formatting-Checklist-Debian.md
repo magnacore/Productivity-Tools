@@ -380,7 +380,7 @@ conda install conda-forge::num2words
 conda install conda-forge::google-cloud-sdk
 conda install conda-forge::google-cloud-texttospeech (does not require google cloud sdk)
 conda install conda-forge::rich
-conda install conda-forge::pypdf2 (deprecated)
+conda install conda-forge::pypdf
 conda install conda-forge::pillow
 conda install conda-forge::unidecode
 conda install conda-forge::prompt_toolkit
@@ -401,7 +401,7 @@ UTIL:
 Note: for scripts which are using python like pdf-split-1, we are importing a path like this:
 #!/home/manuj/anaconda3/envs/util/bin/python3
 The imports must be installed in the same environment from which we are importing python, in this case util
-conda install conda-forge::pypdf2 (deprecated)
+conda install conda-forge::pypdf
 
 conda install conda-forge::yt-dlp
 conda install conda-forge::pyperclip
