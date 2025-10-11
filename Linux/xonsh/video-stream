@@ -1,0 +1,47 @@
+#!/usr/bin/env xonsh
+
+import os
+import sys
+import argparse
+from rich.console import Console
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+console = Console()
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Play streaming video.")
+    parser.add_argument('file', help='The text file to process.')
+    return parser.parse_args()
+
+def process_files(args):
+    input_file = args.file
+
+    try:
+        # Open the specified file in read mode ('r')
+        with open(input_file, 'r') as file:
+            # Read the very first line from the file
+            first_line = file.readline()
+            
+            ~/anaconda3/envs/util/bin/yt-dlp -o - @(first_line) | mpv -
+
+                
+    except FileNotFoundError:
+        # Handle the case where the file does not exist
+        print(f"Error: The file at '{input_file}' was not found.")
+    except Exception as e:
+        # Handle other potential errors during file processing
+        print(f"An unexpected error occurred: {e}")
+
+def main():
+    args = parse_args()
+
+    if args.file:
+        process_files(args)
+    else:
+        console.print(f"[red]No file selected...exiting.")
+        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+if __name__ == "__main__":
+    main()
