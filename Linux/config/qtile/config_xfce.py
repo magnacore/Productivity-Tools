@@ -70,6 +70,7 @@ keys = [
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
     Key([mod], "y", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
+    Key([mod], "v", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
     Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
 
@@ -91,7 +92,7 @@ keys = [
 ]
 
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
-groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Ferdium", "fr.handbrake.ghb", "thunderbird-esr", "Transmission-gtk"])]),
+groups = [Group("1", layout='treetab', matches=[Match(wm_class=["Station", "Ferdium", "fr.handbrake.ghb", "thunderbird-esr", "Transmission-gtk"])]),
           Group("2", layout='bsp'),
           Group("3", layout='bsp', matches=[Match(wm_class=['firefox-esr'])]),
           Group("4", layout='max'),
@@ -309,7 +310,7 @@ def start_once():
         [myBrowser],
         "flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
-        "flatpak run org.ferdium.Ferdium".split(),
+        #"flatpak run org.ferdium.Ferdium".split(),
         "transmission-gtk",
         "picom --experimental-backends -b".split(),
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
