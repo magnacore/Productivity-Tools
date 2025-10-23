@@ -70,6 +70,7 @@ keys = [
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
     Key([mod], "y", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
+    Key([mod], "v", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
     Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
 

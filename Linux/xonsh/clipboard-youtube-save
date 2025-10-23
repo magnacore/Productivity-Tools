@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import subprocess
+import shlex
+import pyperclip as pc
+from py_utilities import find_urls, play_audio
+
+myhome = os.path.expanduser('~')
+
+clipboard_content = pc.paste()
+
+urls = find_urls(clipboard_content)
+
+toast_time_seconds = 10
+
+if len(urls)>0:
+    for url in urls:
+        # check if url contains youtu
+        if "youtu" in url:
+            # if yes, extract the name of the youtube video
+            # TODO : Handle situation when name is not received
+            result = subprocess.run(
+                f"""{myhome}/anaconda3/envs/util/bin/yt-dlp --print "%(title)s" {url}""",
+                shell=True,
+                capture_output=True,
+                text=True
+            )
+            video_name = result.stdout.strip()
+        
+            # construct the file name with videoname.youtube
+            file_name = f"{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/{video_name}.youtube"
+
+            if video_name:
+                # save the text file with the link inside it
+                # open file
+                with open(file_name, "a+") as f:
+                    f.write(url + "\n")
+                
+                play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+                # Properly escape the video name and URL for shell command
+                escaped_video_name = shlex.quote(video_name)
+                escaped_url = shlex.quote(url)
+                os.system(f"notify-send -t {toast_time_seconds*1000} {escaped_video_name} {escaped_url}")
+            
+            else:
+                play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
+
+else:
+    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
