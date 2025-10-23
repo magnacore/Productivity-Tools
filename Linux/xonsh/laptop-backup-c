@@ -3,19 +3,19 @@ from rich.console import Console
 
 console = Console()
 
-console.rule(f"[bold cyan]Laptop Backup C...", style="cyan")
+console.rule(f"[bold cyan]Laptop Backup B...", style="cyan")
 
 console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@previous
+sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_C/@previous
 
 console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/ /media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@previous
+sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_C/@current/ /media/$USER/LAPTOP_BACKUP_C/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/
+sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/LAPTOP_BACKUP_C/@current/
 
 date > ~/Software/logs/laptop-backup-c.txt
-date > /media/$USER/SAWY_01_A/LAPTOP_BACKUP_C/@current/backup_date.txt
+date > /media/$USER/LAPTOP_BACKUP_C/@current/backup_date.txt
 
 # sudo btrfs filesystem show
 
