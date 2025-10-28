@@ -153,7 +153,7 @@ file_node_extensions = {
     'mjs'      : '',
     'mka'      : '',
     'mkv'      : '',
-    'youtube'  : '',
+    'youtube'  : '',
     'ml'       : 'λ',
     'mli'      : 'λ',
     'mov'      : '',
