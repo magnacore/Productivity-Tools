@@ -44,7 +44,7 @@ xsel
 cmus
 sxiv
 zathura
-zathura-pdf-poppler (replace with zathura-pdf-mupdf)
+zathura-pdf-poppler (replace with zathura-pdf-mupdf which supports epub)
 zathura-djvu
 zathura-ps
 zathura-cb
