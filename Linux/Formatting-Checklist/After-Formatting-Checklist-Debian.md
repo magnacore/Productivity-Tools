@@ -44,7 +44,7 @@ xsel
 cmus
 sxiv
 zathura
-zathura-pdf-poppler (replace with zathura-pdf-mupdf which supports epub)
+zathura-pdf-poppler (replace with zathura-pdf-mupdf which supports epub : How to setup zathura-pdf-mupdf plugin for Zathura in Debian)
 zathura-djvu
 zathura-ps
 zathura-cb
