@@ -9,7 +9,7 @@ console.print(f"[bold cyan]Moving Relax Passive Assorted...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/A-RELAX PASSIVE ASSORTED")/* @(p"/media/$USER/QUEUE_01_A/QUEUE/RELAX PASSIVE ASSORTED/")
 
 console.print(f"[bold cyan]Moving Audio Books...")
-~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE AUDIO BOOK")/* @(p"/media/$USER/QUEUE_01_A/QUEUE/RELAX PASSIVE AUDIO BOOK/")
+~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/B-RELAX PASSIVE MAGIC")/* @(p"/media/$USER/QUEUE_01_A/QUEUE/RELAX PASSIVE MAGIC/")
 
 console.print(f"[bold cyan]Moving Trading...")
 ~/anaconda3/envs/util/bin/pymv -gip @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/C-STUDY PASSIVE TRADING")/* @(p"/media/$USER/QUEUE_01_A/QUEUE/STUDY PASSIVE TRADING/")
