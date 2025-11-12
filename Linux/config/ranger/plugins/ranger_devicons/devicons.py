@@ -73,6 +73,7 @@ file_node_extensions = {
     'deb'      : '',
     'diff'     : '',
     'dll'      : '',
+    'drawio'   : '󰇟',
     'wps'      : '',
     'wpt'      : '',
     'doc'      : '',
