@@ -64,6 +64,7 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
 
     console.print(f"[bold cyan]Deleting .bak files...[/bold cyan]")
     sudo find $HOME/ -type f -iname "*.bak" -delete
+    sudo find $HOME/ -type f -iname "*.bkp" -delete
 
     console.print(f"[bold cyan]Deleting desktop.ini files...[/bold cyan]")
     sudo find $HOME/ -type f -iname "desktop.ini" -delete
