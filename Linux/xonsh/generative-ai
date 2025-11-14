@@ -1,0 +1,47 @@
+#!/usr/bin/env xonsh
+
+import sys
+import os
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/Bin")
+
+from utilities import get_mime, get_filename_extension
+
+from rich.console import Console
+
+console = Console()
+
+# sys.argv[0] is the name of the script which will always be there
+selection = False
+
+if len(sys.argv) > 1: # No arguments passed
+	selection = True
+
+if selection:
+	selection = sys.argv[1]
+
+	console.rule(f"[bold cyan]Generative AI...", style="cyan")
+
+	mimestart = get_mime(selection)
+
+	if mimestart != None:
+		if mimestart in ['text']:
+			filename, _ = get_filename_extension(selection)
+			output_filename = f"{filename}_output.md"
+
+			# open the file
+			contents = open(selection,"r")
+
+			pattern = $(ls f"{myhome}/.config/fabric/patterns" | fzf)
+
+			echo @(contents.read()) | fabric -sp @(pattern) -o @(output_filename)
+
+			contents.close()
+	
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+	console.print("No files selected!", style="bold red")
+	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
