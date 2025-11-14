@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/Bin")
 
@@ -20,18 +21,20 @@ private_key = f"{myhome}/Documents/SENSITIVE DATA/text-to-speech-367207-50e24eed
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
 
 def text_to_audio(voice_name: str, text: str):
-    language_code = "-".join(voice_name.split("-")[:2])
-    text_input = tts.SynthesisInput(text=text)
-    voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
-    # effects_profile_id : Optional. Input only. An identifier which selects 'audio effects' profiles
+	language_code = "-".join(voice_name.split("-")[:2])
+	text = re.sub(r'[#*`]', "", text)
+	text = re.sub(r'[_]', " ", text)
+	text_input = tts.SynthesisInput(text=text)
+	voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
+	# effects_profile_id : Optional. Input only. An identifier which selects 'audio effects' profiles
 	# that are applied on (post synthesized) text to speech. Effects are applied on top of each other
 	# in the order they are given. https://cloud.google.com/text-to-speech/docs/audio-profiles
-    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8, effects_profile_id=["headphone-class-device"])
+	audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8, effects_profile_id=["headphone-class-device"])
 
-    client = tts.TextToSpeechClient()
-    response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+	client = tts.TextToSpeechClient()
+	response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
-    return response.audio_content
+	return response.audio_content
 
 # sys.argv[0] is the name of the script which will always be there
 selection = False
