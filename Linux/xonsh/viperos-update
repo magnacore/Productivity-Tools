@@ -16,6 +16,10 @@ mv --backup=numbered @(p"~/Productivity_System/02 POOL/01 CREATION ACTIVE/02 REL
 mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 mv --backup=numbered @(p"~/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/DUMP")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
 
+console.print(f"[bold cyan]Update locate database...[/bold cyan]")
+# sudo updatedb --add-single-prunepath '~/Productivity_System/04 BIN/02 PRACTICE'
+sudo updatedb
+
 console.print(f"[bold cyan]Update repositories...[/bold cyan]")
 sudo apt update -y
 
@@ -90,10 +94,6 @@ else:
     console.print(f"[bold green]Skipping cleanup.[/bold green]")
 
 hdd-size
-
-console.print(f"[bold cyan]Update locate database...[/bold cyan]")
-# sudo updatedb --add-single-prunepath '~/Productivity_System/04 BIN/02 PRACTICE'
-sudo updatedb
 
 date > ~/Software/logs/system-update.txt
 
