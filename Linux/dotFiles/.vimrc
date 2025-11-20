@@ -47,7 +47,7 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
 " For linters and fixers
-Plug 'dense-analysis/ale'
+" Plug 'dense-analysis/ale'
 
 " Autocomplete code
 " :CocCommand snippets.edit... FOR EACH FILE TYPE
