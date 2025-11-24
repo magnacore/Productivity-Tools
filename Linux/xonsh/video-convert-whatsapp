@@ -53,7 +53,7 @@ def split_converted_video(args, timestamp):
 		allVideos = [str(file) for file in subfolder.rglob("*")]
 
 		for video in allVideos:
-			ffmpeg -i @(video) -c copy -f segment -segment_time 50 -reset_timestamps 1 -map 0 @(f"./{filename}-split-{timestamp}/{filename} %03d.mp4")
+			ffmpeg -i @(video) -c copy -f segment -segment_time 80 -reset_timestamps 1 -map 0 @(f"./{filename}-split-{timestamp}/{filename} %03d.mp4")
 
 def main():
 	console.rule(f"[bold cyan]Convert videos for sharing on WhatsApp", style="cyan")
