@@ -1,14 +1,14 @@
 #!/usr/bin/env xonsh
-import datetime
+#import datetime
 
 #video-process
 viperos-update
 
 # Get today's date
-today = datetime.datetime.now()
+# today = datetime.datetime.now()
 
 # Get the day of the month
-day = today.day
+# day = today.day
 
 # # Check if it's divisible by 7
 # if day % 7 == 0:
