@@ -22,9 +22,10 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
 
 def text_to_audio(voice_name: str, text: str):
 	language_code = "-".join(voice_name.split("-")[:2])
-	text = re.sub(r'[#*`^<>]', "", text)
+	text = re.sub(r'[#*`^<>▪►]', "", text)
 	text = re.sub(r'[_]', " ", text)
 	text = re.sub(r'[Gg]en [Aa][Ii]', "Generative AI", text)
+	text = re.sub(r'©.*?ted\.', "", text)
 	text_input = tts.SynthesisInput(text=text)
 	voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
 	# effects_profile_id : Optional. Input only. An identifier which selects 'audio effects' profiles
