@@ -50,7 +50,7 @@ if selection:
 
 	console.rule(f"[bold cyan]Converting text to speech...", style="cyan")
 
-	choice = get_user_selection(["Female", "Male"])
+	choice = "Female" #get_user_selection(["Female", "Male"])
 	
 	# https://cloud.google.com/text-to-speech/docs/voices
 	# en-US-Neural2-J
