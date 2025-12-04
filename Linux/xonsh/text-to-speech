@@ -68,7 +68,7 @@ if selection:
 		if mimestart != None:
 			if mimestart in ['text']:
 				filename, _ = get_filename_extension(file)
-				output_filename = f"{filename}.opus"
+				output_filename = f"{filename}.mkv"
 
 				# open the file
 				contents = open(file,"r")
