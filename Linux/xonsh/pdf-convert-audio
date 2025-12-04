@@ -40,7 +40,7 @@ if selection:
 				# delete the text file
 				trash-put @(text_filename)
 				# rename the file
-				mv @(audio_filename) @(output_audio_filename)
+				# mv @(audio_filename) @(output_audio_filename)
 				touch -d @(modification_datetime) @(output_audio_filename)
 				
 				# if !(ebook-convert @(file) @(output_filename) --pretty-print):
