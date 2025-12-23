@@ -1,4 +1,8 @@
-#!/usr/bin/env xonsh
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
 
 import pyperclip as pc
 

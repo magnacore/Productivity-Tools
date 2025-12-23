@@ -41,8 +41,8 @@ aliases ["g"] = "git"
 
 for p in reversed([
         $HOME + "/Bin",
-        $HOME + "/anaconda3/envs/xonsh/bin/",
-        $HOME + "/anaconda3/envs/util/bin/",
+        #$HOME + "/anaconda3/envs/xonsh/bin/",
+        #$HOME + "/anaconda3/envs/util/bin/",
         $HOME + "/.local/bin",
         "/sbin/",
 ]):

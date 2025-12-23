@@ -1,4 +1,8 @@
-#!/usr/bin/env xonsh
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
 
 # For Neospeech Julie at 0, the below setting of 0.8 can be used so the audio will play well at 1.5x speed
 

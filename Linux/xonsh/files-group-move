@@ -1,4 +1,8 @@
-#!/usr/bin/env xonsh
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
 
 # No need to select individual files. Select all the files and run the script.
 # All common files will be grouped and all uncommon files will be ignored.

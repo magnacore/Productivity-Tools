@@ -1,4 +1,8 @@
-#!/usr/bin/env xonsh
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
 
 # mka container is used because not every video
 # has opus audio. ogg container only supports opus

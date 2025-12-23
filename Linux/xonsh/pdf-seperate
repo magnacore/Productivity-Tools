@@ -1,4 +1,9 @@
-#!/usr/bin/env xonsh
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
+
 cyan		= '\x1b[1;36m'
 red			= '\033[0;31m'
 no_color	= '\x1b[0m'

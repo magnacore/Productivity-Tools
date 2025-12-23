@@ -1,4 +1,8 @@
-#!/usr/bin/env xonsh
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
 # This script should not output anything other than
 # a list of file names. The output of this script
 # will become the input of the other script
