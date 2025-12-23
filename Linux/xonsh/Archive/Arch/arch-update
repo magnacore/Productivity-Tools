@@ -64,4 +64,4 @@ else:
 
 hdd-size
 
-date > ~/Software/logs/system-update.txt
+date > ~/.local/state/shortcut/system-update.txt

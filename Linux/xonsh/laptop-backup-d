@@ -19,7 +19,7 @@ sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current
 console.print(f"[bold cyan]Synchronizing...")
 sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/
 
-date > ~/Software/logs/laptop-backup-d.txt
+date > ~/.local/state/shortcut/laptop-backup-d.txt
 date > /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/backup_date.txt
 
 # sudo btrfs filesystem show

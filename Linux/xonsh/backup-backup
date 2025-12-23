@@ -19,7 +19,7 @@ sudo btrfs subvolume snapshot -r /media/$USER/BACKUP_01_B/BACKUP/@current/ /medi
 console.print(f"[bold cyan]Synchronizing...")
 rsync -vahiP --delete /media/$USER/BACKUP_01_A/ /media/$USER/BACKUP_01_B/BACKUP/@current/
 
-date > ~/Software/logs/backup-backup.txt
+date > ~/.local/state/shortcut/backup-backup.txt
 date > /media/$USER/BACKUP_01_B/BACKUP/@current/backup_date.txt
 
 # sudo btrfs filesystem show

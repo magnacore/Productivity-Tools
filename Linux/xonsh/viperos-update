@@ -99,6 +99,6 @@ else:
 
 hdd-size
 
-date > ~/Software/logs/system-update.txt
+date > ~/.local/state/shortcut/system-update.txt
 
 audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

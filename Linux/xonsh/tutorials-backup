@@ -11,7 +11,7 @@ console.rule(f"[bold cyan]Backup Tutorials...")
 
 rsync -vahiP --delete /media/$USER/LEARNING/ /media/$USER/TutsBackup/BACKUP/
 
-date > ~/Software/logs/tutorials-backup.txt
+date > ~/.local/state/shortcut/tutorials-backup.txt
 
 console.rule(style="cyan")
 

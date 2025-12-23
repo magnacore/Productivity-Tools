@@ -36,7 +36,7 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     console.print(f"[bold cyan]Synchronizing...")
     sudo rsync -vahiP --delete $HOME/ /media/$USER/laptop_backup_full/@current
 
-    date > ~/Software/logs/laptop-backup-full.txt
+    date > ~/.local/state/shortcut/laptop-backup-full.txt
     date > /media/$USER/laptop_backup_full/@current/backup_date.txt
 
     # sudo btrfs filesystem show

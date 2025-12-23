@@ -18,7 +18,7 @@ sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /m
 console.print(f"[bold cyan]Synchronizing...")
 rsync -vahiP --delete /media/$USER/SAWY_01_A/SAWY/ /media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
 
-date > ~/Software/logs/sawy-backup.txt
+date > ~/.local/state/shortcut/sawy-backup.txt
 
 console.rule(style="cyan")
 

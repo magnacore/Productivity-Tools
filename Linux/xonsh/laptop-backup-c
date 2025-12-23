@@ -20,7 +20,7 @@ console.print(f"[bold cyan]Synchronizing...")
 #sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/LAPTOP_BACKUP_C/@current/
 sudo rsync -vahiP --delete $HOME/ /media/$USER/LAPTOP_BACKUP_C/@current/
 
-date > ~/Software/logs/laptop-backup-c.txt
+date > ~/.local/state/shortcut/laptop-backup-c.txt
 date > /media/$USER/LAPTOP_BACKUP_C/@current/backup_date.txt
 
 # sudo btrfs filesystem show

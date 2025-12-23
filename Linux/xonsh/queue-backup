@@ -11,7 +11,7 @@ console.rule(f"[bold cyan]Backing up queue...")
 
 rsync -vahiP --delete /media/$USER/QUEUE_01_A/QUEUE/ /media/$USER/QUEUE_01_B/QUEUE_BACKUP/
 
-date > ~/Software/logs/queue-backup.txt
+date > ~/.local/state/shortcut/queue-backup.txt
 
 console.rule(style="cyan")
 
