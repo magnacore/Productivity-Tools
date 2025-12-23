@@ -7,7 +7,7 @@ exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
 #import datetime
 
 #video-process
-viperos-update
+shortcut-update
 
 # Get today's date
 # today = datetime.datetime.now()

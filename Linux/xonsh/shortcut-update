@@ -9,7 +9,7 @@ from rich.console import Console
 
 console = Console()
 
-console.rule(f"[bold cyan]Updating ViperOS...", style="cyan")
+console.rule(f"[bold cyan]Updating [Shortcut]...", style="cyan")
 
 console.print(f"[bold cyan]Delete old files in trash...[/bold cyan]")
 # trash-empty -f 3
