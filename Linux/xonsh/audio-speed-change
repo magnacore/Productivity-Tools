@@ -14,7 +14,7 @@ from rich.progress import track
 from rich import print
 
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
+sys.path.append(f"{myhome}/.local/bin")
 from utilities import (get_filename_extension, get_mime, handle_original_file)
 
 console = Console()

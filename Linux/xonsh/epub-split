@@ -16,7 +16,7 @@ import fnmatch
 import sys
 
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
+sys.path.append(f"{myhome}/.local/bin")
 
 from utilities import get_mime, get_filename_extension
 

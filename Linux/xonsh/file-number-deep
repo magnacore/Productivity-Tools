@@ -16,7 +16,7 @@ import os
 from rich import print
 
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
+sys.path.append(f"{myhome}/.local/bin")
 
 from rich.console import Console
 from rich.progress import track

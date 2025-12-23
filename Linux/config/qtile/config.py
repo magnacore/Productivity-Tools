@@ -78,7 +78,7 @@ keys = [
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons -dpi 1"), desc='Run Rofi Application Launcher'),
     Key([alt], "Tab", lazy.spawn("rofi -show window -dpi 1"), desc='Run Rofi Window Switcher'),
     Key([mod], "e", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
-    Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:~/.local/bin/greenclip print' -show clipboard -run-command '{cmd}' -dpi 1"), desc='Run Greenclip in Rofi'),
+    Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:/usr/local/bin/greenclip print' -show clipboard -run-command '{cmd}' -dpi 1"), desc='Run Greenclip in Rofi'),
 	
     ## Volume
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
@@ -317,7 +317,7 @@ def start_once():
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/python {myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
-        f"{myhome}/.local/bin/greenclip daemon".split(),
+        f"/usr/local/bin/greenclip daemon".split(),
         f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 

@@ -12,7 +12,7 @@ from rich import print
 from prompt_toolkit.shortcuts import radiolist_dialog
 
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
+sys.path.append(f"{myhome}/.local/bin")
 
 from utilities import monokai_dialog_style
 

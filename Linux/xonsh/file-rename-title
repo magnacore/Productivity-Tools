@@ -7,7 +7,7 @@ exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
 import sys
 import os
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
+sys.path.append(f"{myhome}/.local/bin")
 
 from utilities import get_filename_extension, title_case, set_valid_file_names
 

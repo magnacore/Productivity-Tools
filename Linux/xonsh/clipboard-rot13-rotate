@@ -12,7 +12,7 @@ console = Console()
 import sys
 import os
 myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/Bin")
+sys.path.append(f"{myhome}/.local/bin")
 
 from utilities import rot13, rot13_5
 
