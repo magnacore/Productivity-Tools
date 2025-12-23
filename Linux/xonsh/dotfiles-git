@@ -53,7 +53,7 @@ console.print(f"[bold cyan]Syncing Cmus Config...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/cmus/autosave @(config_path)
 
 console.print(f"[bold cyan]Syncing Xonsh scripts...[/bold cyan]")
-rsync --delete --progress -vahi ~/Bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
+rsync --delete --progress -vahi ~/.local/bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
 
 console.print(f"[bold cyan]Syncing Ranger scripts...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/Linux/config/ranger/
@@ -68,4 +68,4 @@ console.print(f"[bold cyan]Done.[/bold cyan]")
 
 console.rule(style="cyan")
 
-audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

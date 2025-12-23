@@ -49,7 +49,7 @@ def main():
         process_files(args)
     else:
         console.print(f"[red]No file selected...exiting.")
-        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 if __name__ == "__main__":
     main()

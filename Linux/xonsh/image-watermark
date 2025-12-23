@@ -87,9 +87,9 @@ if __name__ == "__main__":
             opacity=args.opacity
         )
         
-        #audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+        #audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
         sys.exit(0)
         
     except Exception as e:
-        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
         sys.exit(1)

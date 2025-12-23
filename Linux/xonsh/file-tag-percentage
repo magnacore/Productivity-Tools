@@ -45,6 +45,6 @@ if selection:
 		countdown -= 1
 else:
 	console.print("No files selected!", style="bold red")
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 # console.rule(style="cyan")

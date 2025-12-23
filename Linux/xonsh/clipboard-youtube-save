@@ -38,14 +38,14 @@ if len(urls)>0:
                 with open(file_name, "a+") as f:
                     f.write(url + "\n")
                 
-                play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+                play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
                 # Properly escape the video name and URL for shell command
                 escaped_video_name = shlex.quote(video_name)
                 escaped_url = shlex.quote(url)
                 os.system(f"notify-send -t {toast_time_seconds*1000} {escaped_video_name} {escaped_url}")
             
             else:
-                play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
+                play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
 
 else:
-    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
+    play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")

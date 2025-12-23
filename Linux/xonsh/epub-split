@@ -126,14 +126,14 @@ def main():
     try:
         args = parse_args()
     except argparse.ArgumentError as err:
-        audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
         print(f"Error: {err}")
         parser.print_help()
         sys.exit(1)
 
     process_files(args)
 
-    audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
     console.rule(style="cyan")
 
 if __name__ == "__main__":

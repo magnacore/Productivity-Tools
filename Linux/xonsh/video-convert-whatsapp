@@ -76,7 +76,7 @@ def main():
 
 	rm temp_log*
 
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 	console.rule(style="cyan")
 
 if __name__ == "__main__":

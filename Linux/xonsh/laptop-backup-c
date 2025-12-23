@@ -27,4 +27,4 @@ date > /media/$USER/LAPTOP_BACKUP_C/@current/backup_date.txt
 
 console.rule(style="cyan")
 
-audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

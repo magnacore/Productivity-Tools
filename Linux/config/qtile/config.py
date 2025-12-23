@@ -65,12 +65,12 @@ keys = [
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
     Key([mod, "shift"], "v", lazy.spawn(f"bash {myhome}/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
-    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open'"), desc="Launch Ranger"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/ranger-open'"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
-    Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-convert-text"), desc="Save clipboard to text"),
-    Key([mod], "y", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
-    Key([mod], "v", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/Bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
+    Key([mod], "d", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-convert-text"), desc="Save clipboard to text"),
+    Key([mod], "y", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
+    Key([mod], "v", lazy.spawn(f"{myhome}/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
     Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
 
@@ -314,11 +314,11 @@ def start_once():
         "transmission-gtk",
         "picom --experimental-backends -b".split(),
         [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh"],
-        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/ranger-open"],
+        [f"{myhome}/anaconda3/envs/qtile/bin/python", f"{myhome}/anaconda3/envs/qtile/bin/qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"{myhome}/anaconda3/envs/qtile/bin/python {myhome}/anaconda3/envs/qtile/bin/qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         f"{myhome}/.local/bin/greenclip daemon".split(),
-        f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/Bin/audio-play {myhome}/Bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
+        f"{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 
     for p in processes:

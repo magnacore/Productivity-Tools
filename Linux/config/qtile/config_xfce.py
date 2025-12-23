@@ -84,7 +84,7 @@ keys = [
 	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
-    Key([mod], "a", lazy.spawn("amixer set Master 20%")),
+    Key([mod], "a", lazy.spawn("amixer set Master 15%")),
 
     ## Scratchpads
     Key([mod2, mod3], "a", lazy.spawn(myTerm+f" --disable-server -e 'nvim {myhome}/Productivity_System/TODO.txt'"), desc="Launch TODO List"),

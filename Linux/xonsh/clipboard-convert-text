@@ -27,7 +27,7 @@ if file_name:
     with open(file_name, "a+") as f:
         f.write(clipboard_content + "\n")
 
-    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+    play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
 
 else:
-    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
+    play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")

@@ -35,9 +35,9 @@ if len(pdf_files) > 0:
 	print(f"{cyan}Combining odd PDFs...{no_color}")
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Odd.pdf odd/*.pdf
 
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
 else:
 	print(f"{red}No PDFs found...{no_color}")
-	audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
 
 print(u'\u2500' * os.get_terminal_size().columns)

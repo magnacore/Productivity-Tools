@@ -8,4 +8,4 @@ clear
 greenclip clear
 rm /home/manuj/.cache/greenclip.history
 
-audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

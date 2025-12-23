@@ -20,8 +20,8 @@ if len(urls)>0:
         # open file
         with open(url_file_name, "a+") as f:
             f.write(url + "\n")
-            play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
+            play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
             os.system(f"notify-send -t {toast_time_seconds*1000} {url_file_name} {url}")
 
 else:
-    play_audio(f"{myhome}/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
+    play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")

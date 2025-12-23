@@ -20,4 +20,4 @@ console.print(f"[bold cyan]Moving 02...")
 
 console.rule(style="cyan")
 
-audio-play ~/Bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &

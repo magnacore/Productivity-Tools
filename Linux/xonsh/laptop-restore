@@ -12,7 +12,7 @@ rsync --delete --progress -vahi @(from_path + ".gnupg/") ~/.gnupg/
 rsync --delete --progress -vahi @(from_path + ".icons/") ~/.icons/
 rsync --delete --progress -vahi @(from_path + ".password-store/") ~/.password-store/
 rsync --delete --progress -vahi @(from_path + "Backups/") ~/Backups/
-rsync --delete --progress -vahi @(from_path + "Bin/") ~/Bin/
+rsync --delete --progress -vahi @(from_path + ".local/bin/") ~/.local/bin/
 rsync --delete --progress -vahi @(from_path + "Books/") ~/Books/
 rsync --delete --progress -vahi @(from_path + "Copy_To_HDD/") ~/Copy_To_HDD/
 rsync --delete --progress -vahi @(from_path + "Desktop/") ~/Desktop/
