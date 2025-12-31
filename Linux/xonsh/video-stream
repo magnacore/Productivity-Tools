@@ -28,9 +28,9 @@ def process_files(args):
             # Read the very first line from the file
             first_line = file.readline()
             
-            ~/anaconda3/envs/util/bin/yt-dlp -o - @(first_line) | mpv -
-
-                
+            #~/anaconda3/envs/util/bin/yt-dlp -o - @(first_line) | mpv -
+            ~/anaconda3/envs/util/bin/yt-dlp -f "bestvideo[height<=?1080]+bestaudio[abr<=130]/best[height<=?1080]" --merge-output-format mkv -o - @(first_line) 2>/dev/null | mpv -
+            
     except FileNotFoundError:
         # Handle the case where the file does not exist
         print(f"Error: The file at '{input_file}' was not found.")
