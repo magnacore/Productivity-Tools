@@ -4,7 +4,7 @@
 
 Install Sprial Linux
 
-sudo apt udate && sudo apt upgrade
+sudo apt update && sudo apt upgrade
 
 autoremove twice
 
@@ -376,7 +376,6 @@ pip install isort
 
 XONSH:
 conda install conda-forge::xonsh
-conda install conda-forge::num2words
 conda install conda-forge::google-cloud-sdk
 conda install conda-forge::google-cloud-texttospeech (does not require google cloud sdk)
 conda install conda-forge::rich
@@ -401,8 +400,9 @@ UTIL:
 Note: for scripts which are using python like pdf-split-1, we are importing a path like this:
 #!/home/manuj/anaconda3/envs/util/bin/python3
 The imports must be installed in the same environment from which we are importing python, in this case util
-conda install conda-forge::pypdf
 
+conda install conda-forge::pypdf
+conda install conda-forge::num2words
 conda install conda-forge::yt-dlp
 conda install conda-forge::pyperclip
 conda install conda-forge::qrcode
