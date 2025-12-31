@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute python
+exec /home/"$USER"/anaconda3/envs/util/bin/python "$0" "$@"
+":"""
+
 # -*- coding: utf-8 -*-
 import argparse
 import math
