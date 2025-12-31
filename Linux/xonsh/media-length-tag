@@ -5,7 +5,7 @@ exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
 ":"""
 
 """
-Usage Ranger:	:shell -w media-length-academic Folder_1 Folder_2
+Usage Ranger:	:shell -w media-length-tag Folder_1 Folder_2
 Select the root folder and execute. Do not get inside the root folder.
 Else, select multiple folders and execute. Only selected folder and
 its subfolders will be processed.
