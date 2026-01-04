@@ -64,7 +64,7 @@ keys = [
 	
 	# My shortcuts
 	Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
-    Key([mod, "shift"], "v", lazy.spawn(f"bash {myhome}/Software/VVV-1.4.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
+    Key([mod, "shift"], "v", lazy.spawn(f"/usr/local/bin/VVV-1.5.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
     Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '{myhome}/anaconda3/envs/xonsh/bin/python {myhome}/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/ranger-open'"), desc="Launch Ranger"),
 	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
