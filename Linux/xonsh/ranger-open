@@ -6,4 +6,4 @@ exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
 
 source ~/.xonshrc
 
-~/anaconda3/envs/xonsh/bin/python ~/Software/ranger-master/ranger.py
+~/anaconda3/envs/xonsh/bin/python /opt/ranger-master/ranger.py
