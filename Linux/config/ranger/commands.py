@@ -1216,7 +1216,7 @@ class file_select_similar(Command):
         name_without_ext, _ = os.path.splitext(common_filename)
 
         # select all files with that pattern in the current directory
-        command = f"scout -m {name_without_ext}"
+        command = f"scout -m ^{name_without_ext}"
         self.fm.execute_console(command)
 
         # Change mode to normal in case visual selection mode was on
