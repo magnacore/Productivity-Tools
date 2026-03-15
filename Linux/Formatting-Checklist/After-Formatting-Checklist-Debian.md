@@ -413,9 +413,9 @@ conda install conda-forge::libwebp
 conda install conda-forge::rich
 conda install conda-forge::ffmpeg-normalize
 conda install conda-forge::prompt_toolkit
+conda install conda-forge::pycp
 
 conda not available:
-/home/manuj/anaconda3/envs/util/bin/pip install pycp
 /home/manuj/anaconda3/envs/util/bin/pip install passphraseme
 /home/manuj/anaconda3/envs/util/bin/pip install rofimoji
 
