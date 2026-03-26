@@ -1247,32 +1247,29 @@ class file_copy_similar(Command):
         name_without_ext, _ = os.path.splitext(common_filename)
 
         # select all files with that pattern in the current directory
-        command = f"scout -m {name_without_ext}"
-        self.fm.execute_console(command)
+        self.fm.execute_console(f"scout -m {name_without_ext}")
 
-        # tag the files as seen
-        # self.fm.execute_console(f"files_tag seen")
-
+        # Create the folder
         target_dir = join(self.fm.thisdir.path, expanduser(name_without_ext))
         if not lexists(target_dir):
             makedirs(target_dir)
 
+        # Copy the files
         self.fm.execute_console(f"shell cp -rv --reflink=auto %s '{target_dir}'")
 
-        # self.fm.execute_console("copy")
-        # self.fm.do_cut = False
-        # self.fm.paste(dest=target_dir)
+        # Reload ranger so it can see the folder
+        self.fm.thisdir.load_content(schedule=False)
 
+        # Select the folder
+        self.fm.execute_console(f"scout -m {name_without_ext}")
+
+        # Tag
         self.fm.execute_console(f"files_tag seen")
 
         self.fm.notify(f"Done copying to {target_dir}")
 
-        #self.fm.execute_console(f"shell files-group-move %s")
-
         # Change mode to normal in case visual selection mode was on
-        # self.fm.change_mode("normal")
-
-        #self.fm.notify(f"Done copying.")
+        self.fm.change_mode("normal")
 
     def tab(self):
         return self._tab_directory_content()
