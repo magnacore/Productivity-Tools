@@ -1,0 +1,53 @@
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
+
+import os
+import re
+import sys
+
+# Temporary mount point for the top-level BTRFS root
+MOUNT_POINT = "/mnt/btrfs-root"
+
+# Get the device and split off the [/@] part if it exists
+raw_dev = $(findmnt -n -o SOURCE /).strip()
+root_dev = raw_dev.split('[')[0]
+
+if not root_dev:
+    print("Error: Could not determine the root BTRFS device.")
+    sys.exit(1)
+
+print(f"Detected root device: {root_dev}")
+
+# Ensure mount point exists
+sudo mkdir -p @(MOUNT_POINT)
+
+# Attempt to mount and capture the result
+mount_result = !(sudo mount -o subvolid=5 @(root_dev) @(MOUNT_POINT))
+
+# If mounting fails, exit before doing anything else
+if mount_result.returncode != 0:
+    print(f"Failed to mount the device!\n{mount_result.errors}")
+    sys.exit(1)
+
+try:
+    # Regex pattern to match the snapper-rollback output: @YYYY-MM-DDTHH:MM
+    pattern = re.compile(r"^@\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$")
+    
+    # Find all matching subvolumes in the top-level mount
+    subvols = [d for d in os.listdir(MOUNT_POINT) if pattern.match(d)]
+    
+    if not subvols:
+        print("No snapper-rollback backup subvolumes found. Your system is clean!")
+    else:
+        for sv in subvols:
+            full_path = f"{MOUNT_POINT}/{sv}"
+            print(f"Would delete backup subvolume: {sv}...")
+            sudo btrfs subvolume delete @(full_path)
+            
+finally:
+    # Always ensure the volume is safely unmounted
+    sudo umount @(MOUNT_POINT)
+    print("Cleanup complete.")
