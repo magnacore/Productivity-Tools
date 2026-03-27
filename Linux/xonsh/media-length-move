@@ -1,0 +1,100 @@
+#!/bin/sh
+""":"
+# This block is run by /bin/sh to find and execute xonsh
+exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
+":"""
+
+import glob
+import datetime
+import sys
+import os
+import shutil
+import argparse
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/.local/bin")
+
+from rich.console import Console
+from rich.table import Table
+from rich.progress import track
+from rich import print
+from rich.text import Text
+from rich import box
+from rich.markdown import Markdown
+
+from utilities import get_mime, get_duration, get_filename_extension
+
+# Set up argument parsing
+parser = argparse.ArgumentParser(description="Bundle media files into a folder based on a duration threshold.")
+parser.add_argument("-d", "--duration", type=int, default=180, help="Target duration in minutes (default: 120)")
+args = parser.parse_args()
+
+target_duration_seconds = args.duration * 60
+
+# Determine folder name based on the duration (e.g., 2H if 120 mins, or 90M if 90 mins)
+if args.duration % 60 == 0:
+    folder_name = f"{int(args.duration / 60)}H"
+else:
+    folder_name = f"{args.duration}M"
+
+console = Console()
+console.rule(f"[bold cyan]Selecting ~{args.duration} minutes of media", style="cyan")
+
+# Find all files and sort them by ascending modified time
+allFiles = [f for f in glob.glob("*.*") if os.path.isfile(f)]
+allFiles.sort(key=lambda x: os.path.getmtime(x))
+
+total_duration = 0.0
+files_to_move = []
+
+table = Table(title=f"Media Selected for '{folder_name}' Directory", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
+table.add_column("Duration", justify="right", style="green")
+table.add_column("File name", justify="left")
+
+# Iterate over files and keep a running total of their lengths
+for file in track(allFiles, description="[bold cyan]Scanning media: [/bold cyan]"):
+    mimestart = get_mime(file)
+    _, extension = get_filename_extension(file)
+
+    if mimestart in ['audio', 'video'] or extension == ".mka":
+        duration = get_duration(file)
+        
+        files_to_move.append(file)
+        total_duration += duration
+        
+        table.add_row(str(datetime.timedelta(seconds=round(duration, 0))), file)
+
+        # Stop selecting files once we cross the duration threshold
+        if total_duration >= target_duration_seconds:
+            break
+    else:
+        # Silently skip non-media files to keep output clean, 
+        # or uncomment the next line to see skipped files.
+        # print(f"[yellow]Skipping {file}[/yellow]")
+        pass
+
+# Display summary table
+table.add_row(u'\u2500' * 8, Markdown("---"))
+table.add_row(
+    f"[bold green]{datetime.timedelta(seconds=round(total_duration, 0))}", 
+    Text.from_markup("[bold green]Total selected media duration", justify="left")
+)
+console.print(table)
+
+# Move the files if any were selected
+if files_to_move:
+    os.makedirs(folder_name, exist_ok=True)
+    for file in track(files_to_move, description=f"[bold green]Moving to {folder_name}/: [/bold green]"):
+        shutil.move(file, os.path.join(folder_name, file))
+        
+    console.print(f"\n[bold green]Success![/bold green] Moved {len(files_to_move)} files to the [cyan]{folder_name}[/cyan] directory.")
+else:
+    console.print("\n[bold yellow]No media files found to move.[/bold yellow]")
+
+console.rule(style="cyan")
+
+# Play success sound (if the binary exists on your system)
+try:
+    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+except Exception:
+    pass
