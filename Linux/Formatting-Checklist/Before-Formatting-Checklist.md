@@ -10,11 +10,7 @@ Home folder
 
 EDRIVE
 
-Anaconda quant env backup
-
 Thunderbird
-
-Balabolka dictionary
 
 Git push productivity system, passwords
 

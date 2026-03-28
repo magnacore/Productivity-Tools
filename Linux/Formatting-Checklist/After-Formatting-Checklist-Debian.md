@@ -11,6 +11,8 @@ autoremove twice
 copy laptop data
 pgp, fonts, icons, gpg, boto, password-store
 
+Take a genesis snapshot
+
 =====================================================================
 = Apt packages
 =====================================================================
