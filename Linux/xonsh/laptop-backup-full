@@ -8,6 +8,9 @@ console = Console()
 
 console.rule(f"[bold cyan]Laptop Backup Full...", style="cyan")
 
+# Remove the old log file so we start fresh
+rm -f $HOME/.local/state/shortcut/copy_log.txt
+
 console.print(f"[bold cyan]Open the container...")
 sudo cryptsetup luksOpen /dev/sda luks-laptop-backup-full
 
@@ -30,7 +33,7 @@ if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_back
     sudo btrfs subvolume snapshot -r /media/$USER/laptop_backup_full/@current /media/$USER/laptop_backup_full/@previous
 
     console.print(f"[bold cyan]Synchronizing...")
-    sudo rsync -vahiP --delete $HOME/ /media/$USER/laptop_backup_full/@current
+    sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt $HOME/ /media/$USER/laptop_backup_full/@current
 
     date > ~/.local/state/shortcut/laptop-backup-full.txt
     date > /media/$USER/laptop_backup_full/@current/backup_date.txt

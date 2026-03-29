@@ -6,6 +6,9 @@ console = Console()
 
 console.rule(f"[bold cyan]Laptop Backup D...", style="cyan")
 
+# Remove the old log file so we start fresh
+rm -f $HOME/.local/state/shortcut/copy_log.txt
+
 console.print(f"[bold cyan]Deleting previous snapshot...")
 sudo btrfs subvolume delete /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@previous
 
@@ -13,7 +16,7 @@ console.print(f"[bold cyan]Creating a new read only snapshot...")
 sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/ /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@previous
 
 console.print(f"[bold cyan]Synchronizing...")
-sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/
+sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/
 
 date > ~/.local/state/shortcut/laptop-backup-d.txt
 date > /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/backup_date.txt
