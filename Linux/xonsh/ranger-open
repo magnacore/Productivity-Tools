@@ -1,9 +1,0 @@
-#!/bin/sh
-""":"
-# This block is run by /bin/sh to find and execute xonsh
-exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
-":"""
-
-source ~/.xonshrc
-
-~/anaconda3/envs/xonsh/bin/python /opt/ranger-master/ranger.py

@@ -1,8 +1,4 @@
-#!/bin/sh
-""":"
-# This block is run by /bin/sh to find and execute xonsh
-exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
-":"""
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
 
 """
 Can also use the full channel name:
@@ -41,13 +37,13 @@ download_from = ['YouTube', 'Other']
 
 choice = get_user_selection(download_from, "What is the source of the videos?")
 
-~/anaconda3/envs/util/bin/pip install -U "yt-dlp[default,curl-cffi]"
+/opt/anaconda3/envs/util/bin/pip install -U "yt-dlp[default,curl-cffi]"
 
 if choice == 'YouTube':
     #$HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite -a @(source)
-    $HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/yt-dlp -ci --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --sleep-interval 3 --max-sleep-interval 5 --sleep-subtitles 3 --write-subs --write-auto-sub --embed-subs --embed-metadata --sub-langs "en" --compat-options no-keep-subs --convert-subs=srt --use-postprocessor srt_fix --exec "before_dl:rm $HOME/Downloads/'%(playlist)s'/*.en.srt" -a @(source)
+    /opt/anaconda3/envs/util/bin/python /opt/anaconda3/envs/util/bin/yt-dlp -ci --merge-output-format 'mkv' -f 'bestvideo[height<=1080]+bestaudio' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite --sleep-interval 3 --max-sleep-interval 5 --sleep-subtitles 3 --write-subs --write-auto-sub --embed-subs --embed-metadata --sub-langs "en" --compat-options no-keep-subs --convert-subs=srt --use-postprocessor srt_fix --exec "before_dl:rm $HOME/Downloads/'%(playlist)s'/*.en.srt" -a @(source)
 else:
-    $HOME/anaconda3/envs/util/bin/python $HOME/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite -a @(source)
+    /opt/anaconda3/envs/util/bin/python /opt/anaconda3/envs/util/bin/yt-dlp -c --merge-output-format 'mkv' -P @(destination) -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' --retries infinite -a @(source)
 
 check_incomplete_downloads(f"{destination}/NA")
 

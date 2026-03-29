@@ -1,8 +1,4 @@
-#!/bin/sh
-""":"
-# This block is run by /bin/sh to find and execute xonsh
-exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
-":"""
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
 
 import os
 import sys
@@ -45,7 +41,7 @@ def process_files(args, timestamp):
 			full_filename = os.path.splitext(file)[0]+' #whatsapp.mp4'
 
 			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
-			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -vsync vfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./{filename}-{timestamp}/{full_filename}"
+			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -fps_mode cfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./{filename}-{timestamp}/{full_filename}"
 
 def split_converted_video(args, timestamp):
 	files = args.files

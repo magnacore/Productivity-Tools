@@ -1,8 +1,4 @@
-#!/bin/sh
-""":"
-# This block is run by /bin/sh to find and execute xonsh
-exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
-":"""
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
 
 from rich.progress import track
 from rich.console import Console
@@ -34,7 +30,7 @@ if selection:
 
 		file_name, _ = get_filename_extension(file)
 
-		if !(pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Latin Modern Roman' -o @(file_name).@(extension) @(file)):
+		if !(pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Vollkorn' -o @(file_name).@(extension) @(file)):
 			print(f"[green]Converted {file} to {extension}")
 		else:
 			print(f"[bold red]Could not convert {file} to {extension}")

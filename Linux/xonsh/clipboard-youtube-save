@@ -22,7 +22,7 @@ if len(urls)>0:
             # if yes, extract the name of the youtube video
             # TODO : Handle situation when name is not received
             result = subprocess.run(
-                f"""{myhome}/anaconda3/envs/util/bin/yt-dlp --print "%(title)s" {url}""",
+                f"""/opt/anaconda3/envs/util/bin/yt-dlp --print "%(title)s" {url}""",
                 shell=True,
                 capture_output=True,
                 text=True

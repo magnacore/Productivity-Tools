@@ -1,8 +1,4 @@
-#!/bin/sh
-""":"
-# This block is run by /bin/sh to find and execute xonsh
-exec /home/"$USER"/anaconda3/envs/xonsh/bin/xonsh "$0" "$@"
-":"""
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
 
 from rich.console import Console
 
@@ -10,8 +6,11 @@ console = Console()
 
 console.rule(f"[bold cyan]Laptop Backup A...", style="cyan")
 
+# Remove the old log file so we start fresh
+rm -f $HOME/.local/state/shortcut/copy_log.txt
+
 #rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
-sudo rsync -vahi --partial --info=progress2 --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
+sudo rsync -vahi --partial --info=progress2 --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
 
 date > ~/.local/state/shortcut/laptop-backup-a.txt
 date > /media/veracrypt1/SYSTEM_BACKUP/backup_date.txt

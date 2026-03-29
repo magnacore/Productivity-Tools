@@ -1,8 +1,4 @@
-#!/bin/sh
-""":"
-# This block is run by /bin/sh to find and execute python
-exec /home/"$USER"/anaconda3/envs/util/bin/python "$0" "$@"
-":"""
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
 
 # -*- coding: utf-8 -*-
 import argparse
