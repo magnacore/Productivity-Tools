@@ -315,11 +315,10 @@ def start_once():
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         myBrowser.split(),
-        #"flatpak run --env=GTK_THEME=Adwaita:dark fr.handbrake.ghb".split(),
-
+        #"flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.Thunderbird".split(),
         "flatpak run org.ferdium.Ferdium".split(),
-        #"transmission-gtk",
+        "transmission-gtk",
         f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 
