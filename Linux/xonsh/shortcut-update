@@ -88,6 +88,10 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     console.print(f"[bold cyan]Deleting .thumbnails directories...[/bold cyan]")
     sudo find $HOME/ -type d -iname ".thumbnails" -prune -exec rm -rf '{}' ';'
 
+    console.print(f"[bold cyan]Free container space...[/bold cyan]")
+    podman system prune
+    podman system reset
+
     audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg &
 
 else:
