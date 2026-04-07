@@ -41,8 +41,9 @@ set notification-error-fg "#151515" #00
 set notification-warning-bg "#AC4142" #08
 set notification-warning-fg "#151515" #00
 
-set highlight-color "#F4BF75" #0A
-set highlight-active-color "#6A9FB5" #0D
+# The last value (0.5) controls the transparency 
+set highlight-color "rgba(255, 190, 80, 0.5)"
+set highlight-active-color "rgba(255, 190, 80, 0.5)"
 
 set completion-highlight-fg "#151515" #02
 set completion-highlight-bg "#90A959" #0C
