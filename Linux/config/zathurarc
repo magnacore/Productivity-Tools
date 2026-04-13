@@ -1,83 +1,76 @@
-# Zathura configuration file (Updated for v0.5.11)
+# Zathura configuration file
+# See man `man zathurarc'
 
-# ==========================================
-# BEHAVIOR & DOCUMENT HANDLING
-# ==========================================
-# Open document in best-fit mode by default
-set adjust-open best-fit
+# Open document in fit-width mode by default
+set adjust-open "best-fit"
 
-# Use the system clipboard for copying text
-set selection-clipboard clipboard
-
-# Zathura 0.5.x enables strict sandboxing by default. 
-# Disabling it ensures external links and 'map p print' function correctly.
-set sandbox none 
-
-# ==========================================
-# SCROLLING & ZOOM
-# ==========================================
-# Stop at page boundaries
-set scroll-page-aware true
-set scroll-full-overlap 0.01
-set scroll-step 100
-
-# Zoom settings
-set zoom-min 10
-
-# ==========================================
-# LAYOUT & UI
-# ==========================================
 # One page per row by default
 set pages-per-row 1
 
-# Shows or hides GUI elements. Empty string hides statusbar and command line.
+#stop at page boundries
+set scroll-page-aware "true"
+# set smooth-scroll "true" on by default
+set scroll-full-overlap 0.01
+set scroll-step 100
+
+#zoom settings
+set zoom-min 10
+
+# Shows  or  hides GUI elements.
+# When it contains 'c', the command line is showed. (:)
+# When it contains 's', the statusbar is showed. (C-n)
 set guioptions ""
 
-# ==========================================
-# COLORS & THEME (Dark Mode)
-# ==========================================
-set default-bg "#000000"
-set default-fg "#F7F7F6"
+set selection-clipboard clipboard
 
-set statusbar-bg "#202020"
-set statusbar-fg "#B0B0B0"
+# zathurarc-dark
 
-set inputbar-bg "#151515"
-set inputbar-fg "#FFFFFF"
+#set font "inconsolata 15"
+set default-bg "#000000" #00
+set default-fg "#F7F7F6" #01
 
-set notification-bg "#90A959"
-set notification-fg "#151515"
+set statusbar-fg "#B0B0B0" #04
+set statusbar-bg "#202020" #01
 
-set notification-error-bg "#AC4142"
-set notification-error-fg "#151515"
+set inputbar-bg "#151515" #00 currently not used
+set inputbar-fg "#FFFFFF" #02
 
-set notification-warning-bg "#AC4142"
-set notification-warning-fg "#151515"
+set notification-error-bg "#AC4142" #08
+set notification-error-fg "#151515" #00
 
-set completion-bg "#303030"
-set completion-fg "#E0E0E0"
+set notification-warning-bg "#AC4142" #08
+set notification-warning-fg "#151515" #00
 
-set completion-highlight-bg "#90A959"
-set completion-highlight-fg "#151515"
+set highlight-color "#F4BF75" #0A
+set highlight-active-color "#6A9FB5" #0D
 
-# Highlights (search results, links, etc.)
-set highlight-color "rgba(255, 190, 80, 0.3)"
-set highlight-active-color "rgba(255, 190, 80, 0.3)"
+set completion-highlight-fg "#151515" #02
+set completion-highlight-bg "#90A959" #0C
 
-# ==========================================
-# RECOLORING (PDF Dark Mode)
-# ==========================================
-set recolor true
-set recolor-lightcolor "#000000"
-set recolor-darkcolor "#E0E0E0"
-set recolor-reverse-video true
-set recolor-keephue true
+set completion-bg "#303030" #02
+set completion-fg "#E0E0E0" #0C
 
-# ==========================================
-# KEYBINDINGS
-# ==========================================
-# Toggle recolor mode (invert colors)
+set notification-bg "#90A959" #0B
+set notification-fg "#151515" #00
+
+set recolor "true"
+set recolor-lightcolor "#000000" #00
+set recolor-darkcolor "#E0E0E0" #06
+set recolor-reverse-video "true"
+
+set recolor-keephue "true"
+# map c recolor-keephue
+
+# set render-loading "false"
+# set scroll-step 50
+
+# map <C-i> recolor
 map i recolor
 
-# Print document
+# map D toggle_page_mode
+# map r reload
+# map R rotate
 map p print
+
+# f to follow links on the page
+# r to rotate a page
