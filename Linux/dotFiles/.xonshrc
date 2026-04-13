@@ -12,6 +12,7 @@ $VISUAL='/usr/bin/nvim'
 $EDITOR=$VISUAL
 #$TERMINFO='/usr/share/terminfo'
 $TERMINFO=f"/opt/anaconda3/envs/xonsh/share/terminfo"
+$PYTHONPYCACHEPREFIX = p"~/.cache/python"
 
 # =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
@@ -20,6 +21,7 @@ aliases ["sda-eject"] = "udisksctl power-off -b /dev/sda"
 aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
 aliases ["g"] = "git"
+aliases ["docker"] = "podman"
 
 # =================================== paths =================================
 # We can also source paths from bash : source-bash .profile if we want to use the same paths between xonsh and bash
