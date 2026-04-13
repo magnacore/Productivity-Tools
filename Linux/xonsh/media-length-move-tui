@@ -1,0 +1,60 @@
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
+
+import sys
+import os
+from rich.console import Console
+from rich import print
+from prompt_toolkit.shortcuts import radiolist_dialog, yes_no_dialog
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/.local/bin")
+
+# Assuming monokai_dialog_style is defined in your utilities as in the previous script
+from utilities import monokai_dialog_style
+
+console = Console()
+
+def main():
+    # 1. Dialog for duration selection
+    duration_result = radiolist_dialog(
+        title="Media Length Move",
+        text="Select the target duration for the media bundle @1.5x:",
+        values=[
+            (60,  "1 hour"),
+            (120, "2 hours"),
+            (240, "4 hours")
+        ],
+        style=monokai_dialog_style,
+    ).run()
+
+    # Exit if the user presses Cancel
+    if duration_result is None:
+        print("[bold yellow]Operation cancelled by user.[/bold yellow]")
+        sys.exit(0)
+
+    # 2. Dialog for sorting preference (Boolean)
+    sort_result = yes_no_dialog(
+        title="Sorting Preference",
+        text="Sort files by modified time?\n(Selecting 'No' will sort alphabetically by name)",
+        style=monokai_dialog_style,
+    ).run()
+
+    # Exit if the user presses Cancel
+    if sort_result is None:
+        print("[bold yellow]Operation cancelled by user.[/bold yellow]")
+        sys.exit(0)
+
+    # Convert the boolean result to the string required by our -s/--sort flag
+    sort_arg = "true" if sort_result else "false"
+
+    # 3. Execute the media-length-move script
+    # Speed multipler
+    duration_result = int(duration_result*1.5)
+
+    print(f"\n[bold cyan]Running media-length-move (Duration: {duration_result}m, Sort by modified time: {sort_result})...[/bold cyan]\n")
+    
+    # In Xonsh, you can call CLI tools directly and pass Python variables using @()
+    media-length-move -d @(duration_result) -s @(sort_arg)
+
+if __name__ == "__main__":
+    main()

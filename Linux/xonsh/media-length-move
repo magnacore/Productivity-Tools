@@ -20,9 +20,23 @@ from rich.markdown import Markdown
 
 from utilities import get_mime, get_duration, get_filename_extension
 
+def str2bool(v):
+    """Helper function to parse boolean arguments from the command line."""
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1', 'on'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0', 'off'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 # Set up argument parsing
 parser = argparse.ArgumentParser(description="Bundle media files into a folder based on a duration threshold.")
 parser.add_argument("-d", "--duration", type=int, default=180, help="Target duration in minutes (default: 120)")
+# Add sort flag, defaulting to True
+parser.add_argument("-s", "--sort", type=str2bool, nargs='?', const=True, default=True, 
+                    help="Sort by modified time (on by default). Use '-s false' to sort by name.")
 args = parser.parse_args()
 
 target_duration_seconds = args.duration * 60
@@ -36,9 +50,16 @@ else:
 console = Console()
 console.rule(f"[bold cyan]Selecting ~{args.duration} minutes of media", style="cyan")
 
-# Find all files and sort them by ascending modified time
+# Find all files
 allFiles = [f for f in glob.glob("*.*") if os.path.isfile(f)]
-allFiles.sort(key=lambda x: os.path.getmtime(x))
+
+# Sort conditionally based on the --sort flag
+if args.sort:
+    # Sort by ascending modified time
+    allFiles.sort(key=lambda x: os.path.getmtime(x))
+else:
+    # Sort by name (alphabetically)
+    allFiles.sort()
 
 total_duration = 0.0
 files_to_move = []
