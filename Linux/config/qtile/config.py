@@ -268,7 +268,7 @@ screens = [
 
             ],
             bar_size,
-            opacity=0.85
+            opacity=0.9
         ),
     ),
 ]
@@ -308,8 +308,8 @@ auto_minimize = True
 @hook.subscribe.startup_once
 def start_once():
     processes = [
+        f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
         "/usr/local/bin/greenclip daemon".split(),
-        "picom -b".split(),
         ["qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", "/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh"],
         ["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
@@ -319,7 +319,6 @@ def start_once():
         "flatpak run org.mozilla.Thunderbird".split(),
         "flatpak run org.ferdium.Ferdium".split(),
         "transmission-gtk",
-        f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
     ]
 
     for p in processes:
