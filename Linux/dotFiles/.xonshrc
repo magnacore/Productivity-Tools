@@ -8,10 +8,10 @@ $PROMPT = '🐚{env_name}{BOLD_GREEN}{user}@{hostname}{BOLD_BLUE} {cwd}{branch_c
 execx($(zoxide init xonsh), 'exec', __xonsh__.ctx, filename='zoxide')
 # =================================== exports =================================
 
-$VISUAL='/usr/bin/nvim'
+$VISUAL="/usr/bin/nvim"
 $EDITOR=$VISUAL
 #$TERMINFO='/usr/share/terminfo'
-$TERMINFO=f"/opt/anaconda3/envs/xonsh/share/terminfo"
+$TERMINFO="/opt/anaconda3/envs/xonsh/share/terminfo"
 $PYTHONPYCACHEPREFIX = p"~/.cache/python"
 
 # =================================== aliases =================================
