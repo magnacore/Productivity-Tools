@@ -12,7 +12,7 @@ sys.path.append(f"{myhome}/.local/bin")
 
 from rich.console import Console
 from rich.table import Table
-from rich.progress import track
+from rich.progress import track, Progress
 from rich import print
 from rich.text import Text
 from rich import box
@@ -68,27 +68,31 @@ table = Table(title=f"Media Selected for '{folder_name}' Directory", row_styles=
 table.add_column("Duration", justify="right", style="green")
 table.add_column("File name", justify="left")
 
-# Iterate over files and keep a running total of their lengths
-for file in track(allFiles, description="[bold cyan]Scanning media: [/bold cyan]"):
-    mimestart = get_mime(file)
-    _, extension = get_filename_extension(file)
+# Iterate over files and track progress by target duration
+with Progress() as progress:
+    scan_task = progress.add_task("[bold cyan]Scanning media: [/bold cyan]", total=target_duration_seconds)
+    
+    for file in allFiles:
+        mimestart = get_mime(file)
+        _, extension = get_filename_extension(file)
 
-    if mimestart in ['audio', 'video'] or extension == ".mka":
-        duration = get_duration(file)
-        
-        files_to_move.append(file)
-        total_duration += duration
-        
-        table.add_row(str(datetime.timedelta(seconds=round(duration, 0))), file)
+        if mimestart in ['audio', 'video'] or extension == ".mka":
+            duration = get_duration(file)
+            
+            files_to_move.append(file)
+            total_duration += duration
+            
+            table.add_row(str(datetime.timedelta(seconds=round(duration, 0))), file)
+            
+            # Update the progress bar based on the duration of the media file
+            progress.update(scan_task, completed=min(total_duration, target_duration_seconds))
 
-        # Stop selecting files once we cross the duration threshold
-        if total_duration >= target_duration_seconds:
-            break
-    else:
-        # Silently skip non-media files to keep output clean, 
-        # or uncomment the next line to see skipped files.
-        # print(f"[yellow]Skipping {file}[/yellow]")
-        pass
+            # Stop selecting files once we cross the duration threshold
+            if total_duration >= target_duration_seconds:
+                break
+        else:
+            # Silently skip non-media files to keep output clean
+            pass
 
 # Display summary table
 table.add_row(u'\u2500' * 8, Markdown("---"))
