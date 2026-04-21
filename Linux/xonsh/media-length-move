@@ -59,7 +59,7 @@ if args.sort:
     allFiles.sort(key=lambda x: os.path.getmtime(x))
 else:
     # Sort by name (alphabetically)
-    allFiles.sort()
+    allFiles.sort(key=lambda x: x.lower())
 
 total_duration = 0.0
 files_to_move = []
