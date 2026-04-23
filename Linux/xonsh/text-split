@@ -36,7 +36,7 @@ def split_text_file(fname, split_after_kb):
     file_contents = open(fname, "r").read()
     file_contents = unidecode.unidecode(file_contents)
 
-    file_name, _ = get_filename_extension(fname)
+    file_name, extension = get_filename_extension(fname)
 
     part = 1
     buffer = ""
@@ -45,7 +45,7 @@ def split_text_file(fname, split_after_kb):
     for sentence in sent_text:
         buffer += sentence + " "
         if is_buffer_size_exceeded(buffer, split_after_kb, sentence, sent_text):
-            write_buffer_to_file(buffer, file_name, part)
+            write_buffer_to_file(buffer, file_name, extension, part)
             buffer = ""
             part += 1
 
@@ -55,8 +55,8 @@ def is_buffer_size_exceeded(buffer, split_after_kb, sentence, sent_text):
     return (buffer_size_kb > split_after_kb) or (sentence == sent_text[-1])
 
 
-def write_buffer_to_file(buffer, file_name, part):
-    new_filename = file_name + "-" + str(part).zfill(4) + ".txt"
+def write_buffer_to_file(buffer, file_name, extension, part):
+    new_filename = file_name + "-" + str(part).zfill(4) + extension
     with open(new_filename, 'w') as output_file:
         output_file.write(buffer)
 
