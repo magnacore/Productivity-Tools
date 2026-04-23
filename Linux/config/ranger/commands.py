@@ -1002,16 +1002,6 @@ class file_number_remove(Command):
 
 ###############################################################################
 
-class files_group_move(Command):
-    """:groups files by name and moves them to a folder"""
-
-    def execute(self):
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell files-group-move %s")
-        self.fm.change_mode("normal")
-
-###############################################################################
-
 class audio_add_music(Command):
     """:Add background music to audio file."""
 
