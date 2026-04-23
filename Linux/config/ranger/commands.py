@@ -1207,7 +1207,7 @@ class file_select_similar(Command):
         
         highlighted_file = self.rest(1)
         if not highlighted_file:
-            self.fm.notify("Error: No file hilighted", bad=True)
+            self.fm.notify("Error: No file highlighted", bad=True)
             return
 
         # remove progress pattern from the file name
@@ -1238,7 +1238,7 @@ class file_copy_similar(Command):
 
         highlighted_file = self.rest(1)
         if not highlighted_file:
-            self.fm.notify("Error: No file hilighted", bad=True)
+            self.fm.notify("Error: No file highlighted", bad=True)
             return
 
         # remove progress pattern from the file name
