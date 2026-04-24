@@ -21,8 +21,8 @@ rsync --delete --progress -vahi ~/.xonshrc @(dotfiles_path)
 console.print(f"[bold cyan]Syncing .alacritty.yml...[/bold cyan]")
 rsync --delete --progress -vahi ~/.alacritty.yml @(dotfiles_path)
 
-console.print(f"[bold cyan]Syncing .vimrc...[/bold cyan]")
-rsync --delete --progress -vahi ~/.vimrc @(dotfiles_path)
+console.print(f"[bold cyan]Syncing init.lua...[/bold cyan]")
+rsync --delete --progress -vahi ~/.config/nvim/init.lua @(dotfiles_path)
 
 console.print(f"[bold cyan]Syncing mpv.conf...[/bold cyan]")
 rsync --delete --progress -vahi ~/.config/mpv/mpv.conf @(config_path)
