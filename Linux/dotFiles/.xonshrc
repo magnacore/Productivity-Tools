@@ -22,6 +22,7 @@ aliases ["sdb-eject"] = "udisksctl power-off -b /dev/sdb"
 aliases ["hugo-start"] = "hugo server --disableFastRender"
 aliases ["g"] = "git"
 aliases ["docker"] = "podman"
+aliases ["o"] = "podman exec -it ollama ollama"
 
 # =================================== paths =================================
 # We can also source paths from bash : source-bash .profile if we want to use the same paths between xonsh and bash
