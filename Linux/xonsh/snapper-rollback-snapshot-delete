@@ -47,3 +47,4 @@ finally:
     # Always ensure the volume is safely unmounted
     sudo umount @(MOUNT_POINT)
     print("Cleanup complete.")
+    sudo update-grub
