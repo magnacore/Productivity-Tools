@@ -13,6 +13,7 @@ $EDITOR=$VISUAL
 #$TERMINFO='/usr/share/terminfo'
 $TERMINFO="/opt/anaconda3/envs/xonsh/share/terminfo"
 $PYTHONPYCACHEPREFIX = p"~/.cache/python"
+$XONSH_SUBPROC_RAISE_ERROR = False
 
 # =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
