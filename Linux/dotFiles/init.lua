@@ -9,7 +9,7 @@ vim.g.mapleader = "\\"
 -- ==============================================================================
 -- Using vim.cmd allows seamless use of vim-plug in init.lua
 vim.cmd([[
-  call plug#begin('~/.vim/plugged')
+  call plug#begin(stdpath('data') . '/plugged')
 
   " Fuzzy finder
   Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -295,3 +295,29 @@ vim.cmd([[
   ab config configuration
 ]])
 
+-- ==============================================================================
+-- TREESITTER & MARKDOWN SETUP
+-- ==============================================================================
+
+-- 1. Initialize Treesitter and define ensure_installed
+local ts_status, ts_configs = pcall(require, "nvim-treesitter.configs")
+if ts_status then
+    ts_configs.setup({
+        -- This is where you list all the languages you want automatically installed!
+        ensure_installed = { "markdown", "markdown_inline", "python", "bash", "yaml", "json", "lua", "vim", "c_sharp" },
+
+        highlight = {
+            enable = true, -- This is the magic switch that actually turns on the colors
+            additional_vim_regex_highlighting = false,
+        },
+    })
+end
+
+-- 2. Initialize your render-markdown plugin
+local rm_status, render_markdown = pcall(require, "render-markdown")
+if rm_status then
+    render_markdown.setup({})
+
+    -- conceallevel is required by render-markdown to hide the backticks and formatting symbols
+    vim.opt.conceallevel = 2
+end
