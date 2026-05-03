@@ -305,7 +305,9 @@ if ts_status then
     ts_configs.setup({
         -- This is where you list all the languages you want automatically installed!
         ensure_installed = { "markdown", "markdown_inline", "python", "bash", "yaml", "json", "lua", "vim", "c_sharp" },
-
+        
+        auto_install = true,
+        
         highlight = {
             enable = true, -- This is the magic switch that actually turns on the colors
             additional_vim_regex_highlighting = false,
@@ -317,7 +319,7 @@ end
 local rm_status, render_markdown = pcall(require, "render-markdown")
 if rm_status then
     render_markdown.setup({})
-
+    
     -- conceallevel is required by render-markdown to hide the backticks and formatting symbols
-    vim.opt.conceallevel = 2
+    vim.opt.conceallevel = 2 
 end
