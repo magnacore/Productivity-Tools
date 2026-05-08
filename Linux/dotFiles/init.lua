@@ -304,7 +304,7 @@ local ts_status, ts_configs = pcall(require, "nvim-treesitter.configs")
 if ts_status then
     ts_configs.setup({
         -- This is where you list all the languages you want automatically installed!
-        ensure_installed = { "markdown", "markdown_inline", "python", "bash", "yaml", "json", "lua", "vim", "c_sharp" },
+        ensure_installed = { "markdown", "markdown_inline", "python", "bash", "yaml", "json", "lua", "vim", "c_sharp", "typescript" },
         
         auto_install = true,
         
