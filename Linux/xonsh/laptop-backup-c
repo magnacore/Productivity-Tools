@@ -4,25 +4,33 @@ from rich.console import Console
 
 console = Console()
 
-console.rule(f"[bold cyan]Laptop Backup B...", style="cyan")
+console.rule(f"[bold cyan]Laptop Backup C...", style="cyan")
 
 # Remove the old log file so we start fresh
 rm -f $HOME/.local/state/shortcut/copy_log.txt
 
-console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_C/@previous
+# --- SNAPSHOT ROTATION LOGIC ---
 
-console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_C/@current/ /media/$USER/LAPTOP_BACKUP_C/@previous
+# Step 1: Delete the oldest snapshot (@s_minus_2)
+console.print(f"[bold cyan]Deleting @s_minus_2 snapshot...")
+sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_C/@s_minus_2
 
-console.print(f"[bold cyan]Synchronizing...")
-#sudo rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/LAPTOP_BACKUP_C/@current/
-sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt $HOME/ /media/$USER/LAPTOP_BACKUP_C/@current/
+# Step 2: Promote the middle snapshot (@s_minus_1) to the oldest slot (@s_minus_2)
+console.print(f"[bold cyan]Promoting @s_minus_1 to @s_minus_2...")
+sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_C/@s_minus_1 /media/$USER/LAPTOP_BACKUP_C/@s_minus_2
+sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_C/@s_minus_1
 
+# Step 3: Snapshot the current working subvolume (@s_0) into the middle slot (@s_minus_1)
+console.print(f"[bold cyan]Promoting @s_0 to @s_minus_1...")
+sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_C/@s_0 /media/$USER/LAPTOP_BACKUP_C/@s_minus_1
+
+# Step 4: Synchronize the live filesystem directly into the active working subvolume (@s_0)
+console.print(f"[bold cyan]Synchronizing to @s_0...")
+sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt $HOME/ /media/$USER/LAPTOP_BACKUP_C/@s_0/
+
+# Update backup timestamps
 date > ~/.local/state/shortcut/laptop-backup-c.txt
-date > /media/$USER/LAPTOP_BACKUP_C/@current/backup_date.txt
-
-# sudo btrfs filesystem show
+date > /media/$USER/LAPTOP_BACKUP_C/@s_0/backup_date.txt
 
 console.rule(style="cyan")
 
