@@ -42,7 +42,6 @@ try:
             full_path = f"{MOUNT_POINT}/{sv}"
             print(f"Would delete backup subvolume: {sv}...")
             sudo btrfs subvolume delete @(full_path)
-        sudo update-grub
             
 finally:
     # Always ensure the volume is safely unmounted
