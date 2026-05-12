@@ -15,4 +15,6 @@ shortcut-update
 # if day % 7 == 0:
 #     audiobook-progress
 
+#systemctl --user stop ollama.service
+
 sudo shutdown -h now
