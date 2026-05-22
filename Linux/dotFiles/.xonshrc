@@ -10,8 +10,7 @@ execx($(zoxide init xonsh), 'exec', __xonsh__.ctx, filename='zoxide')
 
 $VISUAL="/usr/bin/nvim"
 $EDITOR=$VISUAL
-#$TERMINFO='/usr/share/terminfo'
-$TERMINFO="/opt/anaconda3/envs/xonsh/share/terminfo"
+$TERMINFO="/usr/share/terminfo"
 $PYTHONPYCACHEPREFIX = p"~/.cache/python"
 $XONSH_SUBPROC_RAISE_ERROR = False
 
