@@ -18,132 +18,258 @@ from utilities import get_mime, get_filename_extension
 
 console = Console()
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Split an EPUB file into smaller parts.")
-    parser.add_argument('-s', '--sizekb', type=float, default=10.0, required=False, help="Split size in KB")
-    parser.add_argument('files', nargs='+', help="Epubs to split")
+# HTML void elements -- tags that never have a closing form, so they
+# must not be pushed onto the open-tag stack.
+VOID_ELEMENTS = {
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+    'link', 'meta', 'source', 'track', 'wbr',
+}
 
-    return parser.parse_args()
+TAG_NAME_RE = re.compile(r'<\s*([A-Za-z_][A-Za-z0-9_:.\-]*)')
+
+# Attributes that reference external manifest resources. Used to decide
+# which images / audio / video to copy into a given split.
+RESOURCE_ATTR_RE = re.compile(
+    r'''(?:src|href|xlink:href|poster|data)\s*=\s*(["'])([^"']+)\1''',
+    re.IGNORECASE,
+)
+
+# Helpers for pulling title / link / script back out of the original <head>.
+# ebooklib's EpubHtml.get_content() discards the <head> from the supplied
+# content and rebuilds it from self.title + self.links + self.metas, so we
+# have to re-inject anything we want preserved.
+ATTR_RE = re.compile(r'''([\w:][\w:.\-]*)\s*=\s*(["'])(.*?)\2''')
+HEAD_RE = re.compile(r'<head\b[^>]*>(.*?)</head>', re.IGNORECASE | re.DOTALL)
+TITLE_RE = re.compile(r'<title\b[^>]*>(.*?)</title>', re.IGNORECASE | re.DOTALL)
+LINK_RE = re.compile(r'<link\b([^>]*?)/?>', re.IGNORECASE)
+SCRIPT_RE = re.compile(r'<script\b([^>]*?)(?:/>|>.*?</script>)', re.IGNORECASE | re.DOTALL)
+
 
 def is_epub_html(variable):
     return isinstance(variable, epub.EpubHtml)
 
+
 def split_html_by_size(html_bytes, split_after_kb):
-    html_text = html_bytes.decode('utf-8')  # Decode bytes to string
-    chunk_size_limit = split_after_kb * 1024  # Convert KB to bytes
-    chunk_list = []
-    current_chunk = ""
+    """Split an XHTML chapter into byte-bounded, well-formed chunks.
 
-    # Split HTML into chunks
-    for tag in re.findall(r'<[^>]+>|[^<]+', html_text):
-        tag_size = len(tag.encode('utf-8'))
+    Each returned chunk is a complete XHTML document that re-uses the original
+    document's prelude (XML decl, DOCTYPE, <html>, <head>, <body> open) and
+    its postlude (</body></html>). This keeps every chunk styled by the same
+    CSS / font <link>s as the original -- not just the first one.
 
-        if len(current_chunk.encode('utf-8')) + tag_size <= chunk_size_limit:
-            current_chunk += tag
-        else:
-            chunk_list.append(current_chunk)
-            current_chunk = tag
+    Tag balance is maintained by flushing only at element boundaries (right
+    after a closing tag) and by closing any still-open ancestor tags at the
+    end of one chunk and reopening them at the start of the next.
+    """
+    chunk_limit = int(split_after_kb * 1024)
+    text = html_bytes.decode('utf-8', errors='replace')
 
-    if current_chunk:
-        chunk_list.append(current_chunk)
+    body_open = re.search(r'<body\b[^>]*>', text, re.IGNORECASE)
+    body_close = text.rfind('</body>')
 
-    return [chunk.encode('utf-8') for chunk in chunk_list]
+    if not body_open or body_close < 0 or body_close < body_open.end():
+        # No usable body markers -- nothing safe to split, return unchanged.
+        return [html_bytes]
+
+    prelude = text[:body_open.end()]      # ... <html><head>...</head><body ...>
+    postlude = text[body_close:]          # </body>...</html>
+    body_inner = text[body_open.end():body_close]
+
+    overhead = len(prelude.encode('utf-8')) + len(postlude.encode('utf-8'))
+    available = max(chunk_limit - overhead, 1)
+
+    tokens = re.findall(r'<[^>]+>|[^<]+', body_inner)
+
+    chunks_inner = []
+    current = []
+    current_size = 0
+    open_stack = []  # list of raw opening-tag strings, used for reopen on split
+
+    for tok in tokens:
+        current.append(tok)
+        current_size += len(tok.encode('utf-8'))
+
+        if tok.startswith('</'):
+            # Closing tag -- pop the matching ancestor (best-effort by name).
+            if open_stack:
+                open_stack.pop()
+            # An element just ended: this is a safe place to flush.
+            if current_size >= available:
+                closing = ''.join(
+                    f'</{TAG_NAME_RE.match(t).group(1)}>'
+                    for t in reversed(open_stack)
+                    if TAG_NAME_RE.match(t)
+                )
+                reopening = ''.join(open_stack)
+                chunks_inner.append(''.join(current) + closing)
+                current = [reopening] if reopening else []
+                current_size = len(reopening.encode('utf-8'))
+        elif tok.startswith('<!') or tok.startswith('<?'):
+            # Comment / DOCTYPE / processing instruction -- no stack effect.
+            pass
+        elif tok.startswith('<'):
+            # Opening or self-closing tag.
+            is_self_close = tok.rstrip('>').rstrip().endswith('/')
+            m = TAG_NAME_RE.match(tok)
+            if m and not is_self_close and m.group(1).lower() not in VOID_ELEMENTS:
+                open_stack.append(tok)
+
+    if current:
+        chunks_inner.append(''.join(current))
+
+    return [(prelude + inner + postlude).encode('utf-8') for inner in chunks_inner]
+
+
+def referenced_resources(chunk_bytes):
+    """Return the set of resource paths (full path and basename) referenced
+    by src/href/xlink:href/poster/data attributes in a chunk."""
+    text = chunk_bytes.decode('utf-8', errors='replace')
+    refs = set()
+    for _, val in RESOURCE_ATTR_RE.findall(text):
+        refs.add(val)
+        refs.add(os.path.basename(val))
+    return refs
+
+
+def extract_head_metadata(html_bytes):
+    """Pull <title>, <link>, and <script src=...> out of the original
+    document's <head>. Returns (title_or_None, list_of_link_dicts).
+
+    Each link dict is suitable to splat into ebooklib's EpubHtml.add_link.
+    Script tags are returned in the same list with type='text/javascript' --
+    that's how ebooklib distinguishes them when it writes the new <head>.
+    """
+    text = html_bytes.decode('utf-8', errors='replace')
+    head_match = HEAD_RE.search(text)
+    if not head_match:
+        return None, []
+    head_inner = head_match.group(1)
+
+    title_match = TITLE_RE.search(head_inner)
+    title = title_match.group(1).strip() if title_match else None
+    if title == '':
+        title = None
+
+    def parse_attrs(s):
+        return {m.group(1): m.group(3) for m in ATTR_RE.finditer(s)}
+
+    links = []
+    for m in LINK_RE.finditer(head_inner):
+        attrs = parse_attrs(m.group(1))
+        if attrs.get('href'):
+            links.append(attrs)
+    for m in SCRIPT_RE.finditer(head_inner):
+        attrs = parse_attrs(m.group(1))
+        if attrs.get('src'):
+            attrs.setdefault('type', 'text/javascript')
+            links.append(attrs)
+
+    return title, links
+
 
 def run_percentage_tag(file_name):
     # Get a list of all files in the current directory
     all_files = os.listdir(f'./{file_name}')
 
     # Filter the list to only include files starting with the input string
-    matching_files = [file for file in all_files if fnmatch.fnmatch(file, f"{file_name}*")]
+    matching_files = [f for f in all_files if fnmatch.fnmatch(f, f"{file_name}*")]
 
     # Pass full paths to file-tag-percentage
-    matching_files = [f"./{file_name}/{file}" for file in matching_files]
+    matching_files = [f"./{file_name}/{f}" for f in matching_files]
 
-    # of a list as arguments to a xonsh script
-	# We are therefore calling a xonsh script from another xonsh script (which is this file)
+    # @() expands a list as individual CLI arguments. We are therefore
+    # calling a xonsh script from another xonsh script (this file).
     file-tag-percentage @(matching_files)
+
 
 def process_files(args):
     files = args.files
     chunk_size = args.sizekb
-    filters = [eb.ITEM_IMAGE, eb.ITEM_AUDIO, eb.ITEM_VIDEO]
+    media_filters = [eb.ITEM_IMAGE, eb.ITEM_AUDIO, eb.ITEM_VIDEO]
 
     for file in track(files, description="[bold cyan]Split : [/bold cyan]"):
         mimestart = get_mime(file, part=1)
-        if mimestart != None:
-            if mimestart in ['epub', 'epub+zip']:
-                output_folder_name, _ = get_filename_extension(file)
+        if mimestart is None or mimestart not in ['epub', 'epub+zip']:
+            continue
 
-                mkdir -p @(output_folder_name)
+        output_folder_name, _ = get_filename_extension(file)
+        mkdir -p @(output_folder_name)
 
-                book = epub.read_epub(file)
-                chapters = book.get_items_of_type(eb.ITEM_DOCUMENT)
+        book = epub.read_epub(file)
+        chapters = book.get_items_of_type(eb.ITEM_DOCUMENT)
 
-                i = 0
+        i = 0
+        for chapter in chapters:
+            chapter_content = chapter.content
+            chapter_title = chapter.get_name()
 
-                for chapter in chapters:
-                    chapter_content = chapter.content
-                    chapter_title = chapter.get_name()
+            # Pull the title + stylesheet/script links out of the original
+            # chapter's <head>. ebooklib will reconstruct the new <head> from
+            # these -- if we don't re-inject them, every chunk loses its CSS
+            # and reverts to the reader's default styling.
+            head_title, head_links = extract_head_metadata(chapter_content)
 
-                    chunks = split_html_by_size(chapter_content, chunk_size)
+            chunks = split_html_by_size(chapter_content, chunk_size)
 
-                    for chunk in chunks:
-                        new_book = epub.EpubBook()
-                        new_chapter = epub.EpubHtml(title=chapter_title.split(".")[0], file_name=chapter_title, content=chunk)
+            for chunk in chunks:
+                new_book = epub.EpubBook()
+                new_chapter = epub.EpubHtml(
+                    title=head_title or chapter_title.split(".")[0],
+                    file_name=chapter_title,
+                    content=chunk,
+                )
+                for link in head_links:
+                    new_chapter.add_link(**link)
 
-                        # Copy other elements from the original EPUB
-                        for item in book.get_items():
-                            # copy only used images
-                            if item.get_type() in filters:
-                                item_name = item.get_name()
-                                if item_name in chunk.decode("utf-8"):
-                                    new_book.add_item(item)
+                chunk_refs = referenced_resources(chunk)
 
-                            # copy everything except html and multi-media
-                            # Note: webm is not detected as VIDEO
-                            if (not is_epub_html(item)) and (item.get_type() not in filters):
-                                new_book.add_item(item)
+                # Copy non-HTML manifest items. Stylesheets / fonts / scripts /
+                # nav / etc. are copied unconditionally so every chunk renders
+                # with the same styling as the source. Media items are copied
+                # only when this chunk actually references them.
+                for item in book.get_items():
+                    if is_epub_html(item):
+                        continue
+                    if item.get_type() in media_filters:
+                        name = item.get_name()
+                        if name in chunk_refs or os.path.basename(name) in chunk_refs:
+                            new_book.add_item(item)
+                    else:
+                        new_book.add_item(item)
 
-                        # Add the page to the epub
-                        new_book.add_item(new_chapter)
+                new_book.add_item(new_chapter)
+                new_book.toc = [new_chapter]
+                new_book.spine = [new_chapter]
 
-                        # Set the table of contents and spine
-                        new_book.toc = [new_chapter]
-                        new_book.spine = [new_chapter]
+                output_file = os.path.join(
+                    output_folder_name,
+                    f"{output_folder_name}-{str(i+1).zfill(3)}.epub",
+                )
+                i += 1
+                epub.write_epub(output_file, new_book)
 
-                        # Save the new EPUB
-                        output_file = os.path.join(output_folder_name, f"{output_folder_name}-{str(i+1).zfill(3)}.epub")
-                        i += 1
-                        epub.write_epub(output_file, new_book)
+        run_percentage_tag(output_folder_name)
 
-                run_percentage_tag(output_folder_name)
 
 def main():
+    parser = argparse.ArgumentParser(description="Split an EPUB file into smaller parts.")
+    parser.add_argument('-s', '--sizekb', type=float, default=10.0, required=False, help="Split size in KB")
+    parser.add_argument('files', nargs='+', help="Epubs to split")
+
+    # argparse prints usage and exits via SystemExit on bad args; intercept
+    # that so we can still play the error sound, then let it propagate.
     try:
-        args = parse_args()
-    except argparse.ArgumentError as err:
-        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-        print(f"Error: {err}")
-        parser.print_help()
-        sys.exit(1)
+        args = parser.parse_args()
+    except SystemExit as err:
+        if err.code not in (None, 0):
+            audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        raise
 
     process_files(args)
 
     audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
     console.rule(style="cyan")
 
-if __name__ == "__main__":
-	main()
 
-# ITEM_UNKNOWN
-# ITEM_IMAGE
-# ITEM_STYLE
-# ITEM_SCRIPT
-# ITEM_NAVIGATION
-# ITEM_VECTOR
-# ITEM_FONT
-# ITEM_VIDEO
-# ITEM_AUDIO
-# ITEM_DOCUMENT
-# ITEM_COVER
-# ITEM_SMIL
+if __name__ == "__main__":
+    main()
