@@ -20,7 +20,7 @@ def add_text_watermark(image_path, output_path, watermark_text, font_path=None, 
         if font_path:
             font = ImageFont.truetype(font_path, font_size)
         else:
-            font = ImageFont.truetype("arial.ttf", font_size)  # Use a default font if none is provided
+            font = ImageFont.truetype("Cantarell-VF.otf", font_size)  # Use a default font if none is provided
     except IOError:
         print("Error: Font file not found. Using default font.")
         font = ImageFont.load_default()
