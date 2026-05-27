@@ -6,8 +6,12 @@ import re
 import subprocess
 
 from libqtile import bar, layout, widget, hook, qtile
+from libqtile import images
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
+from libqtile.images import Img
 from libqtile.lazy import lazy
+from libqtile.log_utils import logger
+from libqtile.widget import base
 # from libqtile.utils import guess_terminal
 
 myhome = os.path.expanduser('~')
@@ -126,8 +130,8 @@ for i in groups:
 
 layout_theme = {"border_width": 2, # Window lighlight width
                 "margin": 0, # Gap wetween windows
-                "border_focus": "#4f76c7",
-                "border_normal": "#3d3f4b"
+                "border_focus": "#78DCE8",
+                "border_normal": "#5B595C"
                 }
 
 layouts = [
@@ -141,19 +145,27 @@ layouts = [
     # layout.MonadWide(),
     # layout.RatioTile(),
     # layout.Tile(),
-    layout.TreeTab(),
+    layout.TreeTab(
+        bg_color = "#2D2A2E",
+        active_bg = "#78DCE8",
+        active_fg = "#2D2A2E",
+        inactive_bg = "#403E41",
+        inactive_fg = "#939293",
+        border_width = 2,
+    ),
     # layout.VerticalTile(),
     # layout.Zoomy(**layout_theme),
 ]
 
-colors = [["#272822", "#272822"], # panel background
-          ["#3d3f4b", "#434758"], # background for current screen tab
-          ["#f8f8f2", "#f8f8f2"], # font color for group names
-          ["#f92672", "#f92672"], # border line color for current tab
-          ["#74438f", "#74438f"], # border line color for 'other tabs' and color for 'odd widgets'
-          ["#4f76c7", "#4f76c7"], # color for the 'even widgets'
-          ["#e1acff", "#e1acff"], # window name
-          ["#ecbbfb", "#ecbbfb"]] # backbround for inactive screens
+# Monokai Pro (default) palette
+colors = [["#2D2A2E", "#2D2A2E"], # 0 panel background
+          ["#403E41", "#403E41"], # 1 secondary background (widget banding)
+          ["#FCFCFA", "#FCFCFA"], # 2 foreground (text / icons)
+          ["#FF6188", "#FF6188"], # 3 red accent (urgent)
+          ["#AB9DF2", "#AB9DF2"], # 4 purple accent
+          ["#78DCE8", "#78DCE8"], # 5 cyan accent (focus)
+          ["#FFD866", "#FFD866"], # 6 yellow accent
+          ["#939293", "#939293"]] # 7 dim grey (inactive text)
 
 widget_defaults = dict(
     font='RobotoMono Nerd Font',
@@ -169,65 +181,376 @@ def open_bpytop():
 widget_padding = 0
 seperator_padding = 5
 icon_font_size = 15
-bar_size = 24
+bar_size = 32
+# Non-Nerd font for rotated text in the vertical bars. RobotoMono Nerd Font has
+# tall metrics (room for icon glyphs) that leave plain text off-centre once
+# rotated; a normal-metric mono font centres cleanly. Icons/glyphs keep the
+# Nerd font via widget_defaults.
+text_font = "Liberation Mono"
+
+
+# --- Vertical-bar widget variants -------------------------------------------
+# qtile refuses to place a widget in a vertical bar unless it declares
+# ORIENTATION_BOTH, and several widgets additionally size/centre themselves
+# using bar.height (which is the full screen height in a vertical bar). The
+# subclasses below add vertical support while behaving identically to their
+# parents in a horizontal bar. The image-based ones mirror qtile's own
+# widget.Image (resize by bar.width / blit with height= when vertical).
+
+class VolumeVertical(widget.Volume):
+    """Volume widget (text mode) that is also allowed in a vertical bar."""
+
+    orientations = base.ORIENTATION_BOTH
+
+
+class CurrentLayoutIconVertical(widget.CurrentLayoutIcon):
+    """CurrentLayoutIcon that sizes/centres its icon for a vertical bar."""
+
+    orientations = base.ORIENTATION_BOTH
+
+    def _setup_images(self):
+        for names in self._get_layout_names():
+            layout_name = names[0]
+            layouts = dict.fromkeys(names)
+            for layout_cls in layouts.keys():
+                icon_file_path = self.find_icon_file_path(layout_cls)
+                if icon_file_path:
+                    break
+            else:
+                logger.warning('No icon found for layout "%s"', layout_name)
+                icon_file_path = self.find_icon_file_path("unknown")
+
+            img = Img.from_path(icon_file_path)
+            if self.bar.horizontal:
+                img.resize(height=(self.bar.height - 2) * self.scale)
+                if img.width > self.length:
+                    self.length = img.width + self.actual_padding * 2
+            else:
+                img.resize(width=(self.bar.width - 2) * self.scale)
+                if img.height > self.length:
+                    self.length = img.height + self.actual_padding * 2
+
+            self.surfaces[layout_name] = img
+
+        self.icons_loaded = True
+
+    def draw(self):
+        if not self.icons_loaded:
+            # Fallback to text (handled for both orientations by _TextBox).
+            self.text = self.current_layout[0].upper()
+            base._TextBox.draw(self)
+            return
+
+        try:
+            surface = self.surfaces[self.current_layout]
+        except KeyError:
+            logger.error("No icon for layout %s", self.current_layout)
+            return
+
+        self.drawer.clear(self.background or self.bar.background)
+        self.drawer.ctx.save()
+        self.drawer.ctx.translate(
+            (self.width - surface.width) / 2,
+            (self.height - surface.height) / 2,
+        )
+        self.drawer.ctx.set_source(surface.pattern)
+        self.drawer.ctx.paint()
+        self.drawer.ctx.restore()
+
+        if self.bar.horizontal:
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
+        else:
+            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
+
+
+class BatteryIconVertical(widget.BatteryIcon):
+    """BatteryIcon that sizes/centres its icon for a vertical bar."""
+
+    orientations = base.ORIENTATION_BOTH
+
+    def setup_images(self):
+        d_imgs = images.Loader(self.theme_path)(*self.icon_names)
+        for key, img in d_imgs.items():
+            if self.bar.horizontal:
+                img.resize(height=self.bar.height * self.scale)
+            else:
+                img.resize(width=self.bar.width * self.scale)
+            self.images[key] = img
+
+    def calculate_length(self):
+        if not self.images:
+            return 0
+        icon = self.images[self.current_icon]
+        if self.bar.horizontal:
+            return icon.width + 2 * self.padding
+        return icon.height + 2 * self.padding
+
+    def draw(self):
+        self.drawer.clear(self.background or self.bar.background)
+        image = self.images[self.current_icon]
+        self.drawer.ctx.save()
+        if self.bar.horizontal:
+            self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
+        else:
+            self.drawer.ctx.translate((self.bar.width - image.width) // 2, self.padding)
+        self.drawer.ctx.set_source(image.pattern)
+        self.drawer.ctx.paint()
+        self.drawer.ctx.restore()
+        if self.bar.horizontal:
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
+        else:
+            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
+
+
+class GroupBoxVertical(widget.GroupBox):
+    """GroupBox that stacks its group labels vertically for a vertical bar."""
+
+    orientations = base.ORIENTATION_BOTH
+
+    def box_height(self, groups):
+        _, height = self.drawer.max_layout_size(
+            [self.fmt.format(i.label) for i in groups],
+            self.font,
+            self.fontsize,
+            self.markup,
+        )
+        return height + self.padding_y * 2 + self.borderwidth * 2
+
+    def calculate_length(self):
+        if self.bar.horizontal:
+            return super().calculate_length()
+        height = self.margin_y * 2 + (len(self.groups) - 1) * self.spacing
+        for g in self.groups:
+            height += self.box_height([g])
+        return height
+
+    def button_press(self, x, y, button):
+        if self.bar.horizontal:
+            return super().button_press(x, y, button)
+        # Hit-test along the y-axis for a vertical stack.
+        self.click = y
+        base._Widget.button_press(self, x, y, button)
+
+    def get_clicked_group(self):
+        if self.bar.horizontal:
+            return super().get_clicked_group()
+        group = None
+        new_height = self.margin_y - self.spacing / 2.0
+        height = 0
+        for g in self.groups:
+            new_height += self.box_height([g]) + self.spacing
+            if height <= self.click <= new_height:
+                group = g
+                break
+            height = new_height
+        return group
+
+    def drawbox(
+        self,
+        offset,
+        text,
+        bordercolor,
+        textcolor,
+        highlight_color=None,
+        width=None,
+        rounded=False,
+        block=False,
+        line=False,
+        highlighted=False,
+    ):
+        if self.bar.horizontal:
+            return super().drawbox(
+                offset,
+                text,
+                bordercolor,
+                textcolor,
+                highlight_color,
+                width,
+                rounded,
+                block,
+                line,
+                highlighted,
+            )
+
+        self.layout.text = self.fmt.format(text)
+        self.layout.font_family = self.font
+        self.layout.font_size = self.fontsize
+        self.layout.colour = textcolor
+        # Draw each group as a square box: the layout width is forced to match
+        # the box height (capped to the bar width), and the label is centred
+        # inside it (TextLayout uses ALIGN_CENTER). This makes the active-group
+        # highlight a symmetric square centred across the bar, not a thin sliver.
+        side = min(self.layout.height + self.padding_y * 2, self.bar.width - 2)
+        self.layout.width = side
+
+        if bordercolor is None:
+            border_width = 0
+            framecolor = self.background or self.bar.background
+        else:
+            border_width = self.borderwidth
+            framecolor = bordercolor
+
+        framed = self.layout.framed(border_width, framecolor, 0, self.padding_y, highlight_color)
+        # Centre each box across the bar's width; stack down the y-axis.
+        x = (self.bar.width - framed.width) / 2
+        if block and bordercolor is not None:
+            framed.draw_fill(x, offset, rounded)
+        elif line:
+            framed.draw_line(x, offset, highlighted)
+        else:
+            framed.draw(x, offset, rounded)
+
+    def draw(self):
+        if self.bar.horizontal:
+            return super().draw()
+
+        self.drawer.clear(self.background or self.bar.background)
+
+        offset = self.margin_y
+        for i, g in enumerate(self.groups):
+            to_highlight = False
+            is_block = self.highlight_method == "block"
+            is_line = self.highlight_method == "line"
+
+            bh = self.box_height([g])
+
+            if self.group_has_urgent(g) and self.urgent_alert_method == "text":
+                text_color = self.urgent_text
+            elif g.windows:
+                text_color = self.active
+            else:
+                text_color = self.inactive
+
+            if g.screen:
+                if self.highlight_method == "text":
+                    border = None
+                    text_color = self.this_current_screen_border
+                else:
+                    if self.block_highlight_text_color:
+                        text_color = self.block_highlight_text_color
+                    if self.bar.screen.group.name == g.name:
+                        if self.qtile.current_screen == self.bar.screen:
+                            border = self.this_current_screen_border
+                            to_highlight = True
+                        else:
+                            border = self.this_screen_border
+                    else:
+                        if self.qtile.current_screen == g.screen:
+                            border = self.other_current_screen_border
+                        else:
+                            border = self.other_screen_border
+            elif self.group_has_urgent(g) and self.urgent_alert_method in (
+                "border",
+                "block",
+                "line",
+            ):
+                border = self.urgent_border
+                if self.urgent_alert_method == "block":
+                    is_block = True
+                elif self.urgent_alert_method == "line":
+                    is_line = True
+            else:
+                border = None
+
+            self.drawbox(
+                offset,
+                g.label,
+                border,
+                text_color,
+                highlight_color=self.highlight_color,
+                width=self.box_width([g]),
+                rounded=self.rounded,
+                block=is_block,
+                line=is_line,
+                highlighted=to_highlight,
+            )
+            offset += bh + self.spacing
+        self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
+
 
 screens = [
     Screen(
-        top=bar.Bar(
+        left=bar.Bar(
             [                		
                 # Layout Icon
-                widget.CurrentLayoutIcon(padding = widget_padding, scale = 0.9, background = colors[0]),
+                CurrentLayoutIconVertical(padding = 4, scale = 0.6, background = colors[0]),
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[0]),
-                widget.CurrentLayout(foreground = colors[2], background = colors[0]),
-                
+                widget.CurrentLayout(font = text_font, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[0]),
+
                 # Groupbox
-                widget.GroupBox(active = colors[2], background = colors[0], inactive = colors[1], disable_drag = True),
+                GroupBoxVertical(
+                    active = colors[2],                       # white text, groups with windows
+                    inactive = colors[7],                     # dim grey, readable inactive text
+                    background = colors[0],
+                    highlight_method = "border",
+                    this_current_screen_border = colors[2],   # white border = active workspace
+                    this_screen_border = colors[2],
+                    other_current_screen_border = colors[7],
+                    other_screen_border = colors[7],
+                    urgent_border = colors[3],
+                    borderwidth = 2,
+                    rounded = True,
+                    disable_drag = True,
+                ),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[0]),
                 
                 # # Prompt
                 # widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
                 # widget.Prompt(),
                 
-                # Window Name
-                widget.WindowName(foreground = colors[2], background = colors[0]),
-                
+                # Window Name (stretches to fill; reads from the bottom up)
+                widget.WindowName(font = text_font, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = 8, background = colors[0]),
+            ],
+            bar_size,
+            opacity=0.85
+        ),
+        # Right vertical bar: everything else, anchored to the bottom.
+        right=bar.Bar(
+            [
                 widget.Chord(
                     chords_colors={
-                        'launch': ("#f92672", "#f8f8f2"),
+                        'launch': ("#FF6188", "#FCFCFA"),
                     },
                     name_transform=lambda name: name.upper(),
                 ),
+
+                # Push the system widgets + clock to the bottom of the bar
+                widget.Spacer(background = colors[0]),
 				
                 # Temperature
                 widget.TextBox(text = " 󰈸 ", padding = widget_padding, background = colors[1], fontsize = icon_font_size),
-				widget.ThermalSensor(tag_sensor='edge', format='APU:{temp:.0f}{unit}', foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
+				widget.ThermalSensor(font = text_font, tag_sensor='edge', format='APU:{temp:.0f}{unit}', foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[1]),
 
                 # CPU
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.TextBox(text = " ", padding = widget_padding, background = colors[0], fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
-                widget.CPU(foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
+                widget.CPU(font = text_font, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 				
                 # Ram
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.TextBox(text = " ", background = colors[1], padding = widget_padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
 				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
-                widget.Memory(format = '{MemUsed:.0f}{mm}/{MemTotal:.0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1], mouse_callbacks = {'Button1': open_bpytop}),
+                widget.Memory(font = text_font, format = '{MemUsed:.0f}{mm}/{MemTotal:.0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
 
                 # Disk
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.TextBox(text = " ", background = colors[0], padding = widget_padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
 				widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
-                widget.DF(format = '{p}({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
+                widget.DF(font = text_font, format = '{p}({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Volume
 				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.TextBox(text = "󰕾 ", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.spawn(myTerm+" --disable-server -e alsamixer")}, padding = widget_padding, fontsize = icon_font_size),
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
-                widget.Volume(
+                VolumeVertical(
+                font = text_font,
                 fmt = '{} ',
                 foreground = colors[2],
                 background = colors[1],
@@ -239,7 +562,7 @@ screens = [
 
                 # Battery
                 widget.Sep(linewidth = 0, padding = 2, foreground = colors[2], background = colors[0]),
-                widget.BatteryIcon(foreground = colors[2],background = colors[0], padding = widget_padding),
+                BatteryIconVertical(foreground = colors[2],background = colors[0], padding = widget_padding),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.Battery(foreground = colors[2],background = colors[0], padding = widget_padding, charge_char='󰛃', discharge_char='󰛀', full_char='󱊣', notify_below=5),
                 widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
@@ -263,7 +586,7 @@ screens = [
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Clock
-                widget.Clock(format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': lambda : qtile.spawn(myTerm+""" --disable-server -e "sh -c 'sleep 0.1 && calcurse'" """)}),
+                widget.Clock(font = text_font, format='%d-%m-%Y %a %I:%M %p', foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': lambda : qtile.spawn(myTerm+""" --disable-server -e "sh -c 'sleep 0.1 && calcurse'" """)}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
             ],
@@ -286,7 +609,11 @@ follow_mouse_focus = True
 bring_front_click = False
 cursor_warp = False
 
-floating_layout = layout.Floating(float_rules=[
+floating_layout = layout.Floating(
+    border_focus = "#78DCE8",
+    border_normal = "#5B595C",
+    border_width = 2,
+    float_rules=[
     # Run the utility of `xprop` to see the wm class and name of an X client.
     *layout.Floating.default_float_rules,
     Match(wm_class='confirmreset'),  # gitk
