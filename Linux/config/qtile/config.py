@@ -146,16 +146,8 @@ layout_theme = {"border_width": 2, # Window highlight width
                 }
 
 layouts = [
-    # layout.Columns(border_focus_stack=['#d75f5f', '#8f3d3d'], border_width=4),
     layout.Bsp(**layout_theme),
-    # Try more layouts by unleashing below layouts.
-    # layout.Stack(num_stacks=2),
     layout.Max(),
-    # layout.Matrix(),
-    # layout.MonadTall(),
-    # layout.MonadWide(),
-    # layout.RatioTile(),
-    # layout.Tile(),
     layout.TreeTab(
         bg_color = BG,
         active_bg = CYAN,
@@ -164,8 +156,6 @@ layouts = [
         inactive_fg = GREY,
         border_width = 2,
     ),
-    # layout.VerticalTile(),
-    # layout.Zoomy(**layout_theme),
 ]
 
 # Indexed view of the palette for the bar widgets that reference colors[N].
