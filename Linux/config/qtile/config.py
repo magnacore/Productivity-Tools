@@ -61,17 +61,16 @@ keys = [
 
     Key([mod, "control"], "r", lazy.restart(), desc="Restart Qtile"),
     #Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
-	Key([mod], "c", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
 
     Key([mod], "m", lazy.layout.maximize(), desc='Toggle window between minimum and maximum sizes'),
-	Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='Toggle floating'),
-	Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
-	
-	# My shortcuts
-	Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
+    Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc='Toggle floating'),
+    Key([mod], "f", lazy.window.toggle_fullscreen(), desc='Toggle fullscreen'),
+
+    # My shortcuts
+    Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
     Key([mod, "shift"], "v", lazy.spawn(f"/opt/VVV-1.5.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
     Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open'"), desc="Launch Ranger"),
-	Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
+    Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     #Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"/opt/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-convert-text"), desc="Save clipboard to text"),
     Key([mod], "y", lazy.spawn(f"/opt/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
@@ -84,9 +83,9 @@ keys = [
     Key([alt], "Tab", lazy.spawn("rofi -show window -dpi 1"), desc='Run Rofi Window Switcher'),
     Key([mod], "e", lazy.spawn(f"/opt/anaconda3/envs/util/bin/python /opt/anaconda3/envs/util/bin/rofimoji --action copy --skin-tone 'moderate'"), desc='Run Rofi emoji picker'),
     Key([mod], "c", lazy.spawn("rofi -modi 'clipboard:/usr/local/bin/greenclip print' -show clipboard -run-command '{cmd}' -dpi 1"), desc='Run Greenclip in Rofi'),
-	
+
     ## Volume
-	Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
+    Key([], "XF86AudioMute", lazy.spawn("amixer -D pipewire sset Master toggle")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -D pipewire sset Master 1%-")),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer -D pipewire sset Master 1%+")),
     Key([mod], "a", lazy.spawn("amixer set Master 15%")),
@@ -121,17 +120,28 @@ for i in groups:
     keys.extend([
         # mod1 + letter of group = switch to group
         #Key([mod], i.name, lazy.group[i.name].toscreen()),
-        # switch to group with ability to go to prevous group if pressed again
+        # switch to group with ability to go to previous group if pressed again
         Key([mod], i.name, lazy.function(toscreen, i.name)),
 
         # mod1 + shift + letter of group = switch to & move focused window to group
         Key([mod, "shift"], i.name, lazy.window.togroup(i.name)),
     ])
 
-layout_theme = {"border_width": 2, # Window lighlight width
-                "margin": 0, # Gap wetween windows
-                "border_focus": "#78DCE8",
-                "border_normal": "#5B595C"
+# Monokai Pro (default) palette — single source of truth.
+BG      = "#2D2A2E"  # panel background
+BG2     = "#403E41"  # secondary background (widget banding)
+FG      = "#FCFCFA"  # foreground (text / icons)
+RED     = "#FF6188"  # red accent (urgent)
+PURPLE  = "#AB9DF2"  # purple accent
+CYAN    = "#78DCE8"  # cyan accent (focus / active)
+YELLOW  = "#FFD866"  # yellow accent
+GREY    = "#939293"  # dim grey (inactive text)
+GREY_DK = "#5B595C"  # muted grey (unfocused window border)
+
+layout_theme = {"border_width": 2, # Window highlight width
+                "margin": 0, # Gap between windows
+                "border_focus": CYAN,
+                "border_normal": GREY_DK
                 }
 
 layouts = [
@@ -146,26 +156,20 @@ layouts = [
     # layout.RatioTile(),
     # layout.Tile(),
     layout.TreeTab(
-        bg_color = "#2D2A2E",
-        active_bg = "#78DCE8",
-        active_fg = "#2D2A2E",
-        inactive_bg = "#403E41",
-        inactive_fg = "#939293",
+        bg_color = BG,
+        active_bg = CYAN,
+        active_fg = BG,
+        inactive_bg = BG2,
+        inactive_fg = GREY,
         border_width = 2,
     ),
     # layout.VerticalTile(),
     # layout.Zoomy(**layout_theme),
 ]
 
-# Monokai Pro (default) palette
-colors = [["#2D2A2E", "#2D2A2E"], # 0 panel background
-          ["#403E41", "#403E41"], # 1 secondary background (widget banding)
-          ["#FCFCFA", "#FCFCFA"], # 2 foreground (text / icons)
-          ["#FF6188", "#FF6188"], # 3 red accent (urgent)
-          ["#AB9DF2", "#AB9DF2"], # 4 purple accent
-          ["#78DCE8", "#78DCE8"], # 5 cyan accent (focus)
-          ["#FFD866", "#FFD866"], # 6 yellow accent
-          ["#939293", "#939293"]] # 7 dim grey (inactive text)
+# Indexed view of the palette for the bar widgets that reference colors[N].
+# 0=bg 1=bg2 2=fg 3=red 4=purple 5=cyan 6=yellow 7=grey
+colors = [BG, BG2, FG, RED, PURPLE, CYAN, YELLOW, GREY]
 
 widget_defaults = dict(
     font='RobotoMono Nerd Font',
@@ -176,7 +180,7 @@ widget_defaults = dict(
 extension_defaults = widget_defaults.copy()
 
 def open_bpytop():
-	qtile.spawn(myTerm+" --disable-server -e bpytop")
+    qtile.spawn(myTerm+" --disable-server -e bpytop")
 
 widget_padding = 0
 seperator_padding = 5
@@ -196,6 +200,8 @@ text_font = "Liberation Mono"
 # subclasses below add vertical support while behaving identically to their
 # parents in a horizontal bar. The image-based ones mirror qtile's own
 # widget.Image (resize by bar.width / blit with height= when vertical).
+# These copy/adapt qtile-internal methods; tested against qtile 0.31.0 —
+# re-verify them after a qtile upgrade.
 
 class VolumeVertical(widget.Volume):
     """Volume widget (text mode) that is also allowed in a vertical bar."""
@@ -458,7 +464,7 @@ class GroupBoxVertical(widget.GroupBox):
                 border,
                 text_color,
                 highlight_color=self.highlight_color,
-                width=self.box_width([g]),
+                width=None,  # ignored by the vertical drawbox (it computes a square)
                 rounded=self.rounded,
                 block=is_block,
                 line=is_line,
@@ -511,17 +517,17 @@ screens = [
             [
                 widget.Chord(
                     chords_colors={
-                        'launch': ("#FF6188", "#FCFCFA"),
+                        'launch': (RED, FG),
                     },
                     name_transform=lambda name: name.upper(),
                 ),
 
                 # Push the system widgets + clock to the bottom of the bar
                 widget.Spacer(background = colors[0]),
-				
+
                 # Temperature
                 widget.TextBox(text = " 󰈸 ", padding = widget_padding, background = colors[1], fontsize = icon_font_size),
-				widget.ThermalSensor(font = text_font, tag_sensor='edge', format='APU:{temp:.0f}{unit}', foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
+                widget.ThermalSensor(font = text_font, tag_sensor='edge', format='APU:{temp:.0f}{unit}', foreground = colors[2], background = colors[1], threshold = 90, padding = widget_padding),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[1]),
 
                 # CPU
@@ -530,23 +536,23 @@ screens = [
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.CPU(font = text_font, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
-				
+
                 # Ram
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.TextBox(text = " ", background = colors[1], padding = widget_padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
-				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.Memory(font = text_font, format = '{MemUsed:.0f}{mm}/{MemTotal:.0f}{mm}', measure_mem='G', foreground = colors[2], background = colors[1], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
 
                 # Disk
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.TextBox(text = " ", background = colors[0], padding = widget_padding, fontsize = icon_font_size, mouse_callbacks = {'Button1': open_bpytop}),
-				widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
                 widget.DF(font = text_font, format = '{p}({uf}{m}|{r:.0f}%)', visible_on_warn=False, foreground = colors[2], background = colors[0], mouse_callbacks = {'Button1': open_bpytop}),
                 widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
 
                 # Volume
-				widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
+                widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 widget.TextBox(text = "󰕾 ", background = colors[1], mouse_callbacks = {'Button1': lambda : qtile.spawn(myTerm+" --disable-server -e alsamixer")}, padding = widget_padding, fontsize = icon_font_size),
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
                 VolumeVertical(
@@ -610,8 +616,8 @@ bring_front_click = False
 cursor_warp = False
 
 floating_layout = layout.Floating(
-    border_focus = "#78DCE8",
-    border_normal = "#5B595C",
+    border_focus = CYAN,
+    border_normal = GREY_DK,
     border_width = 2,
     # Leave notification windows where xfce4-notifyd puts them. Otherwise qtile
     # re-centres any floating window whose edge falls in a bar's reserved zone,
