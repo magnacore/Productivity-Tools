@@ -613,6 +613,10 @@ floating_layout = layout.Floating(
     border_focus = "#78DCE8",
     border_normal = "#5B595C",
     border_width = 2,
+    # Leave notification windows where xfce4-notifyd puts them. Otherwise qtile
+    # re-centres any floating window whose edge falls in a bar's reserved zone,
+    # which sends right-anchored notifications to the middle of the screen.
+    no_reposition_rules=[Match(wm_class="xfce4-notifyd")],
     float_rules=[
     # Run the utility of `xprop` to see the wm class and name of an X client.
     *layout.Floating.default_float_rules,
