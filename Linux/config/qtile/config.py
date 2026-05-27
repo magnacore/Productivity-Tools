@@ -12,6 +12,7 @@ from libqtile.images import Img
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from libqtile.widget import base
+from libqtile.widget.battery import BatteryState
 # from libqtile.utils import guess_terminal
 
 myhome = os.path.expanduser('~')
@@ -270,9 +271,20 @@ class CurrentLayoutIconVertical(widget.CurrentLayoutIcon):
 
 
 class BatteryIconVertical(widget.BatteryIcon):
-    """BatteryIcon that sizes/centres its icon for a vertical bar."""
+    """BatteryIcon that sizes/centres its icon for a vertical bar, and hides
+    itself (zero length) unless the battery is charging or discharging."""
 
     orientations = base.ORIENTATION_BOTH
+    _show = False  # updated per-poll; collapses to zero length when False
+
+    def update(self):
+        status = self._battery.update_status()
+        show = status.state in (BatteryState.CHARGING, BatteryState.DISCHARGING)
+        icon = self._get_icon_key(status)
+        if show != self._show or icon != self.current_icon:
+            self._show = show
+            self.current_icon = icon
+            self.bar.draw()  # length may have changed -> relayout the bar
 
     def setup_images(self):
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
@@ -284,7 +296,7 @@ class BatteryIconVertical(widget.BatteryIcon):
             self.images[key] = img
 
     def calculate_length(self):
-        if not self.images:
+        if not self._show or not self.images:
             return 0
         icon = self.images[self.current_icon]
         if self.bar.horizontal:
@@ -293,19 +305,33 @@ class BatteryIconVertical(widget.BatteryIcon):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        image = self.images[self.current_icon]
-        self.drawer.ctx.save()
-        if self.bar.horizontal:
-            self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
-        else:
-            self.drawer.ctx.translate((self.bar.width - image.width) // 2, self.padding)
-        self.drawer.ctx.set_source(image.pattern)
-        self.drawer.ctx.paint()
-        self.drawer.ctx.restore()
+        if self._show:
+            image = self.images[self.current_icon]
+            self.drawer.ctx.save()
+            if self.bar.horizontal:
+                self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
+            else:
+                self.drawer.ctx.translate((self.bar.width - image.width) // 2, self.padding)
+            self.drawer.ctx.set_source(image.pattern)
+            self.drawer.ctx.paint()
+            self.drawer.ctx.restore()
         if self.bar.horizontal:
             self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         else:
             self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
+
+
+class BatteryHideIdle(widget.Battery):
+    """Battery text shown only while charging or discharging; hidden otherwise.
+    Returning '' makes a text widget collapse to zero length."""
+
+    def poll(self):
+        if self._battery.update_status().state not in (
+            BatteryState.CHARGING,
+            BatteryState.DISCHARGING,
+        ):
+            return ""
+        return super().poll()
 
 
 class GroupBoxVertical(widget.GroupBox):
@@ -566,12 +592,11 @@ screens = [
                 # volume_down_command = 'amixer -D pipewire sset Master 1%-'.split(),
                 get_volume_command = 'amixer -D pipewire get Master'.split()),
 
-                # Battery
-                widget.Sep(linewidth = 0, padding = 2, foreground = colors[2], background = colors[0]),
-                BatteryIconVertical(foreground = colors[2],background = colors[0], padding = widget_padding),
-                widget.Sep(linewidth = 0, padding = seperator_padding, foreground = colors[2], background = colors[0]),
-                widget.Battery(foreground = colors[2],background = colors[0], padding = widget_padding, charge_char='󰛃', discharge_char='󰛀', full_char='󱊣', notify_below=5),
-                widget.Sep(linewidth = 0, padding = 5, foreground = colors[2], background = colors[0]),
+                # Battery (icon + %; the whole block hides unless charging or
+                # discharging — separators folded into widget padding so it
+                # collapses cleanly, leaving no gap when hidden)
+                BatteryIconVertical(foreground = colors[2], background = colors[0], padding = 3, update_interval = 5),
+                BatteryHideIdle(foreground = colors[2], background = colors[0], padding = 3, charge_char='󰛃', discharge_char='󰛀', full_char='󱊣', notify_below=5, update_interval = 5),
 
                 # Wallpaper
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
@@ -653,7 +678,7 @@ def start_once():
         f"qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         myBrowser.split(),
         #"flatpak run fr.handbrake.ghb".split(),
-        "flatpak run org.mozilla.Thunderbird".split(),
+        "flatpak run org.mozilla.thunderbird_esr".split(),
         "flatpak run org.ferdium.Ferdium".split(),
         "transmission-gtk",
     ]
