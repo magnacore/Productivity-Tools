@@ -178,10 +178,10 @@ extension_defaults = widget_defaults.copy()
 def open_bpytop():
 	qtile.spawn(myTerm+" --disable-server -e bpytop")
 
-widget_padding = 0
+widget_padding = 2
 seperator_padding = 5
 icon_font_size = 15
-bar_size = 24
+bar_size = 26
 # Non-Nerd font for rotated text in the vertical bars. RobotoMono Nerd Font has
 # tall metrics (room for icon glyphs) that leave plain text off-centre once
 # rotated; a normal-metric mono font centres cleanly. Icons/glyphs keep the
