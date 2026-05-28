@@ -1,5 +1,7 @@
 #!/opt/anaconda3/envs/xonsh/bin/xonsh
 
+# conda install -c conda-forge google-genai
+
 import sys
 import os
 import mimetypes
@@ -20,7 +22,7 @@ from rich.progress import track
 console = Console()
 
 # 2. AUTHENTICATE
-private_key = f"{myhome}/Documents/SENSITIVE DATA/gen-lang-client-0634600367-2f74db383b96.json"
+private_key = f"{myhome}/Documents/SENSITIVE DATA/gemini-service-account-ocr.json"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
 
 # 3. INITIALIZE THE NEW CLIENT
