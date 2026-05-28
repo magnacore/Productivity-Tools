@@ -16,7 +16,7 @@ from rich.progress import track
 
 console = Console()
 
-private_key = f"{myhome}/Documents/SENSITIVE DATA/text-to-speech-367207-50e24eed4df0.json"
+private_key = f"{myhome}/Documents/SENSITIVE DATA/gemini-service-account-tts.json"
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
 
