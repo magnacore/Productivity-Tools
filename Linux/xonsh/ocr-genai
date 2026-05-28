@@ -1,0 +1,95 @@
+#!/opt/anaconda3/envs/xonsh/bin/xonsh
+
+import sys
+import os
+import mimetypes
+
+myhome = os.path.expanduser('~')
+sys.path.append(f"{myhome}/.local/bin")
+
+# 1. SDK IMPORTS
+from google import genai
+from google.genai import types
+
+from utilities import get_mime, get_filename_extension
+
+from rich.console import Console
+from rich import print
+from rich.progress import track
+
+console = Console()
+
+# 2. AUTHENTICATE
+private_key = f"{myhome}/Documents/SENSITIVE DATA/gen-lang-client-0634600367-2f74db383b96.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
+
+# 3. INITIALIZE THE NEW CLIENT
+# Tell the unified client to explicitly use Vertex AI architecture
+client = genai.Client(
+    vertexai=True, 
+    project="gen-lang-client-0634600367", 
+    location="us-central1"
+)
+
+# sys.argv[0] is the name of the script
+selection = False
+
+if len(sys.argv) > 1: 
+    selection = True
+
+if selection:
+    allFiles = sys.argv[1:]
+    allFiles.sort()
+
+    console.rule("[bold cyan]Extracting text using Vertex AI OCR...", style="cyan")
+
+    for file in track(allFiles, description="[bold cyan]OCR : [/bold cyan]"):
+        mimestart = get_mime(file, part=1)
+        
+        if mimestart != None:
+            if mimestart in ['pdf', 'image', 'jpeg', 'png']:
+                filename, _ = get_filename_extension(file)
+                text_filename = filename + '.txt'
+                
+                try:
+                    modification_datetime = $(stat -c %y @(file)).strip()
+                    
+                    mime_type, _ = mimetypes.guess_type(file)
+                    if not mime_type:
+                        mime_type = "application/pdf" if mimestart == 'pdf' else "image/jpeg"
+
+                    with open(file, "rb") as f:
+                        file_data = f.read()
+                        
+                    # 4. PACKAGE THE DATA USING THE NEW TYPES MODULE
+                    document_part = types.Part.from_bytes(
+                        data=file_data, 
+                        mime_type=mime_type
+                    )
+                    
+                    prompt = "Extract all the text from this document or image. Provide only the extracted text with proper markdown formatting. Do not add conversational filler or explanations."
+                    
+                    # 5. GENERATE CONTENT
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=[document_part, prompt]
+                    )
+                    
+                    with open(text_filename, "w", encoding="utf-8") as out:
+                        out.write(response.text)
+                    
+                    touch -d @(modification_datetime) @(text_filename)
+                    
+                    print(f"[bold green]{text_filename} created.")
+                    
+                except Exception as e:
+                    print(f"[bold red]Failed to process {file}: {e}[/bold red]")
+            else:
+                print(f"[yellow]Skipping {file}: Unsupported type '{mimestart}'[/yellow]")
+    
+    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+else:
+    console.print("No files selected!", style="bold red")
+    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+
+console.rule(style="cyan")
