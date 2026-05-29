@@ -49,7 +49,7 @@ if selection:
         mimestart = get_mime(file, part=1)
         
         if mimestart != None:
-            if mimestart in ['pdf', 'image', 'jpeg', 'png']:
+            if mimestart in ['pdf', 'image', 'jpeg', 'png', 'webp']:
                 filename, _ = get_filename_extension(file)
                 text_filename = filename + '.txt'
                 
