@@ -176,7 +176,7 @@ def open_bpytop():
 widget_padding = 0
 seperator_padding = 5
 icon_font_size = 15
-bar_size = 32
+bar_size = 30
 # Non-Nerd font for rotated text in the vertical bars. RobotoMono Nerd Font has
 # tall metrics (room for icon glyphs) that leave plain text off-centre once
 # rotated; a normal-metric mono font centres cleanly. Icons/glyphs keep the
