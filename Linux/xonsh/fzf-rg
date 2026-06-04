@@ -10,10 +10,11 @@ cmd = [
     "fzf", "--ansi", "--disabled",
     "--delimiter", ":",
     "--bind", f"start:reload(rg {rg_opts} '')",
-    "--bind", f"change:reload(rg {rg_opts} '{{q}}' || true)",
+    "--bind", f"change:reload(rg {rg_opts} {{q}} || true)",
     "--preview", "batcat --theme=ansi --color=always --style=numbers --highlight-line {2} {1} 2>/dev/null || head -n 100 {1}",
     "--preview-window", "right:60%:+{2}-5"
 ]
+
 
 # Run fzf and capture the selection
 result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
@@ -22,10 +23,10 @@ result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
 if result.returncode == 0 and result.stdout.strip():
     # Split the ripgrep output by colons
     parts = result.stdout.strip().split(':')
-    
+
     if len(parts) >= 2:
         file_name = parts[0]
         line_num = parts[1]
-        
+
         # Launch Neovim using Xonsh's native @() syntax to inject the variables
         nvim @(f"+{line_num}") @(file_name)
