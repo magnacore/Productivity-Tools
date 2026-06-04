@@ -95,7 +95,7 @@ if(day_of_week == 5 and (this_month % 2 == 0)):
     podman system prune
     podman system reset
 
-    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg &
+    #audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg &
 
 else:
     console.print(f"[bold green]Skipping cleanup.[/bold green]")
@@ -104,4 +104,4 @@ hdd-size
 
 date > ~/.local/state/shortcut/system-update.txt
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+#audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
