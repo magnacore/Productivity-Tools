@@ -585,8 +585,8 @@ screens = [
                 # Battery (icon + %; the whole block hides unless charging or
                 # discharging — separators folded into widget padding so it
                 # collapses cleanly, leaving no gap when hidden)
-                BatteryIconVertical(foreground = colors[2], background = colors[0], padding = 3, update_interval = 5),
-                BatteryHideIdle(foreground = colors[2], background = colors[0], padding = 3, charge_char='󰛃', discharge_char='󰛀', full_char='󱊣', notify_below=5, update_interval = 5),
+                BatteryIconVertical(foreground = colors[2], background = colors[0], padding = 3, update_interval = 15),
+                BatteryHideIdle(foreground = colors[2], background = colors[0], padding = 3, charge_char='󰛃', discharge_char='󰛀', full_char='󱊣', notify_below=5, update_interval = 15),
 
                 # Wallpaper
                 widget.Sep(linewidth = 0, padding = seperator_padding, background = colors[1]),
