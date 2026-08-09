@@ -25,7 +25,7 @@ def text_to_audio(voice_name: str, text: str):
 	text = re.sub(r'[#*`^<>▪►]', "", text)
 	text = re.sub(r'[_]', " ", text)
 	text = re.sub(r'[Gg]en [Aa][Ii]', "Generative AI", text)
-	text = re.sub(r'©.*?ted\.', "", text)
+	text = re.sub(r'©.*?reserved\.', "", text)
 	text = re.sub(r'(={2,}|-{2,})', "", text)
 	text_input = tts.SynthesisInput(text=text)
 	voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
