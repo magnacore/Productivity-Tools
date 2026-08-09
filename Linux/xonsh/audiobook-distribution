@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+import os
+import re
+import matplotlib
+matplotlib.use('Agg')  # Prevents Qt GUI warning
+import matplotlib.pyplot as plt
+from collections import Counter
+import numpy as np
+from py_utilities import get_timestamp 
+
+myhome = os.path.expanduser('~')
+
+# Specify the directory you want to explore
+directory = f'{myhome}/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/BIN/2 NON-FICTION'
+
+# Use os.listdir to get files in the directory
+filenames = os.listdir(directory)
+
+# Extract leading numbers that are 3 or 4 digits long
+numbers = []
+for file in filenames:
+    match = re.match(r'^(\d{3,4})(?!\d)', file)
+    if match:
+        numbers.append(int(match.group(1)))
+
+if not numbers:
+    print("No valid 3 or 4 digit prefix files found.")
+    exit()
+
+# Calculate min and max of the numbers to set the range of bins
+min_num = min(numbers)
+max_num = max(numbers)
+
+# Define bins such that each integer is in its own bin
+bins = range(min_num, max_num + 2)
+
+# Calculate the mean frequency
+counter = Counter(numbers)
+mean_freq = np.mean(list(counter.values()))
+
+# Use matplotlib to plot a histogram of the numbers
+plt.hist(numbers, bins=bins, color='#0504aa', alpha=0.7, rwidth=1, align='left')
+plt.axhline(mean_freq, color='r', linestyle='dashed', linewidth=2)  # Add mean line
+plt.grid(axis='y', alpha=0.75)
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title('Histogram of Filename Prefixes')
+
+# Set the desired figure size for 720p (1280x720 pixels)
+fig = plt.gcf()
+fig.set_size_inches(12.8, 7.2)
+
+# Save the plot
+save_path = f'{myhome}/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/audiobook-{get_timestamp()}.png'
+plt.savefig(save_path, dpi=100)
