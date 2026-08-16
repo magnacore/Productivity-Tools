@@ -22,6 +22,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
 
 def text_to_audio(voice_name: str, text: str):
 	language_code = "-".join(voice_name.split("-")[:2])
+	text = re.sub(r'C#', "CSharp", text)
 	text = re.sub(r'[#*`^<>▪►]', "", text)
 	text = re.sub(r'[_]', " ", text)
 	text = re.sub(r'[Gg]en [Aa][Ii]', "Generative AI", text)
