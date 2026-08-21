@@ -470,7 +470,7 @@ class image_convert(Command):
             dimension = 1080
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell image-convert {dimension} %s")
+        self.fm.execute_console(f"shell image-convert-tui {dimension} %s")
         self.fm.change_mode("normal")
 
 
@@ -764,16 +764,17 @@ class audio_convert_foss(Command):
     """:Convert common audio formats to foss"""
 
     def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
+        # With a bitrate given (":audio_convert_foss 32") go straight to the CLI,
+        # which now honours it. Without one, the -tui wrapper offers the use-case
+        # presets, including Lossless/FLAC.
         if self.arg(1):
             # self.rest(1) contains self.arg(1) and everything that follows
             bitrate = self.rest(1)
+            self.fm.execute_console(f"shell audio-convert-foss {bitrate} %s")
         else:
-            bitrate = 128
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell audio-convert-foss-tui %s")
 
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell audio-convert-foss {bitrate} %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -784,7 +785,7 @@ class video_convert_audio(Command):
     def execute(self):
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell video-convert-audio %s")
+        self.fm.execute_console(f"shell video-convert-audio-tui %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -795,14 +796,15 @@ class pdf_split(Command):
     def execute(self):
         # self.arg(1) is the first (space-separated) argument to the function.
         # This way you can write ":my_edit somefilename<ENTER>".
+        # With a size typed (":pdf_split 5") go straight to the CLI. Without
+        # one, the -tui wrapper asks, which is what the keybinding does.
         if self.arg(1):
             # self.rest(1) contains self.arg(1) and everything that follows
             split_after = self.rest(1)
+            self.fm.execute_console(f"shell pdf-split {split_after} %s")
         else:
-            split_after = 1
-
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell pdf-split {split_after} %s")
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell pdf-split-tui %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -813,7 +815,7 @@ class media_combine(Command):
     def execute(self):
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell media-combine %s")
+        self.fm.execute_console(f"shell media-combine-tui %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -847,14 +849,15 @@ class text_split(Command):
     def execute(self):
         # self.arg(1) is the first (space-separated) argument to the function.
         # This way you can write ":my_edit somefilename<ENTER>".
+        # With a size typed (":text_split 5") go straight to the CLI. Without
+        # one, the -tui wrapper asks, which is what the keybinding does.
         if self.arg(1):
             # self.rest(1) contains self.arg(1) and everything that follows
             split_after = self.rest(1)
+            self.fm.execute_console(f"shell text-split {split_after} %s")
         else:
-            split_after = 10
-
-        # %s sends each file as an argument
-        self.fm.execute_console(f"shell text-split {split_after} %s")
+            # %s sends each file as an argument
+            self.fm.execute_console(f"shell text-split-tui %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -912,7 +915,7 @@ class mkv_extract_track(Command):
     def execute(self):
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell mkv-extract-track %s")
+        self.fm.execute_console(f"shell mkv-extract-track-tui %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -1006,7 +1009,7 @@ class audio_add_music(Command):
     """:Add background music to audio file."""
 
     def execute(self):
-        self.fm.execute_console(f"shell audio-add-music %s")
+        self.fm.execute_console(f"shell audio-add-music-tui %s")
         self.fm.change_mode("normal")
         self.fm.notify("Background music embedded.")
 
@@ -1020,7 +1023,7 @@ class audio_process(Command):
 
     def execute(self):
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell audio-process %s")
+        self.fm.execute_console(f"shell audio-process-tui %s")
         self.fm.change_mode("normal")
 
 ###############################################################################
@@ -1043,7 +1046,7 @@ class media_length_tag(Command):
         files = [f for f in self.fm.thistab.get_selection()]
 
         for f in files:
-            self.fm.execute_console(f"""shell -w media-length-tag '{f.relative_path}' """)
+            self.fm.execute_console(f"""shell -w media-length-tag-tui '{f.relative_path}' """)
 
         self.fm.change_mode("normal")
 
@@ -1067,7 +1070,7 @@ class file_rename_extension(Command):
     def execute(self):
 
         # %s sends each file as an argument
-        self.fm.execute_console(f"shell file-rename-extension %s")
+        self.fm.execute_console(f"shell file-rename-extension-tui %s")
         self.fm.change_mode("normal")
         self.fm.notify("Extension renamed.")
 
@@ -1245,7 +1248,7 @@ class file_copy_similar(Command):
             makedirs(target_dir)
 
         # Copy the files
-        self.fm.execute_console(f"shell cp -rv --reflink=auto %s '{target_dir}'")
+        self.fm.execute_console(f"shell cp -rv --reflink=auto --preserve=timestamps %s '{target_dir}'")
 
         # Reload ranger so it can see the folder
         self.fm.thisdir.load_content(schedule=False)
