@@ -1,91 +1,88 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from PIL import Image, ImageDraw, ImageFont
-import math
-import argparse
-import sys
+// Tile rotated, semi-transparent text across an image.
+//
+//     image-watermark in.jpg out.png "DRAFT" 72 50 150
+//
+// The positional order is kept from the original so image-watermark-tui, and any
+// existing shell aliases, keep working unchanged.
 
-def add_text_watermark(image_path, output_path, watermark_text, font_path=None, font_size=72, rotation_angle=45, spacing=50, opacity=128):
-    # Open the image
-    image = Image.open(image_path).convert('RGBA')
+var a = new Args("image-watermark", "Tile a rotated text watermark across an image")
+    .Opt("-r", "--rotation", @default: "45", help: "Rotation angle of the watermark text")
+    .Opt("-c", "--colour", @default: "255,0,0", help: "Watermark colour as R,G,B")
+    .Rest("arguments", min: 3,
+          help: "input_image output_image watermark_text [font_size] [spacing] [opacity]")
+    .Parse(args);
 
-    # Create a new image for the watermark
-    watermark = Image.new('RGBA', image.size, (255, 0, 0, 0))
+var rest = a.Rest;
+var inputImage = rest[0];
+var outputImage = rest[1];
+var watermarkText = rest[2];
+int fontSize = rest.Count > 3 && int.TryParse(rest[3], out var fs) ? fs : 72;
+int spacing = rest.Count > 4 && int.TryParse(rest[4], out var sp) ? sp : 50;
+int opacity = rest.Count > 5 && int.TryParse(rest[5], out var op) ? op : 128;
 
-    # Get a drawing context
-    draw = ImageDraw.Draw(watermark, 'RGBA')
+if (!File.Exists(inputImage))
+{
+    Console.Error.WriteLine($"error: no such image: {inputImage}");
+    Snd.Error();
+    return 1;
+}
 
-    # Load a font
-    try:
-        if font_path:
-            font = ImageFont.truetype(font_path, font_size)
-        else:
-            font = ImageFont.truetype("Cantarell-VF.otf", font_size)  # Use a default font if none is provided
-    except IOError:
-        print("Error: Font file not found. Using default font.")
-        font = ImageFont.load_default()
+// Prefer the font the original hardcoded, but fall back to whatever fontconfig
+// offers rather than failing outright.
+var font = ResolveFont("Cantarell");
 
-    # Get the width and height of the text
-    bbox = draw.textbbox((0, 0), watermark_text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
+// ImageMagick wants the alpha channel as a fraction; the CLI takes 0-255.
+var alpha = (Math.Clamp(opacity, 0, 255) / 255.0).ToString("0.###", CultureInfo.InvariantCulture);
+var fill = $"rgba({a.Str("colour")},{alpha})";
 
-    # Calculate rotation matrix
-    angle_rad = math.radians(rotation_angle)
-    cos_theta = math.cos(angle_rad)
-    sin_theta = math.sin(angle_rad)
+// Render the text once into a named memory register (mpr:wm), rotate it, pad it
+// with the requested spacing, then tile that single stamp across a transparent
+// layer the size of the image and composite the layer on top. Tiling one cached
+// stamp is why this is a single command rather than a loop over positions.
+int code = Proc.Run("magick",
+[
+    inputImage, "-alpha", "set",
+        "(",
+            "-background", "none",
+            "-fill", fill,
+            "-font", font,
+            "-pointsize", fontSize.ToString(),
+            $"label:{watermarkText}",
+            "-bordercolor", "none", "-border", (spacing / 2).ToString(),
+            "-rotate", a.Str("rotation"),
+            "-write", "mpr:wm", "+delete",
+        ")",
+        "(",
+            "+clone", "-alpha", "transparent",
+            "-background", "none",
+            "-tile", "mpr:wm",
+            "-draw", "color 0,0 reset",
+        ")",
+    "-composite",
+    // Always PNG: the watermark needs an alpha channel to composite cleanly.
+    $"PNG:{outputImage}",
+]);
 
-    # Calculate the spacing between tiles
-    spacing_x = int(text_width * cos_theta + text_height * sin_theta) + spacing
-    spacing_y = int(text_width * sin_theta + text_height * cos_theta) + spacing
+if (code != 0)
+{
+    Snd.Error();
+    return 1;
+}
 
-    # Draw the rotated text
-    for x in range(0, image.width, spacing_x):
-        for y in range(0, image.height, spacing_y):
-            # Create a temporary image for rotated text
-            temp_img = Image.new('RGBA', (text_width + spacing, text_height + spacing), (255, 0, 0, 0))
-            temp_draw = ImageDraw.Draw(temp_img, 'RGBA')
-            temp_draw.text((spacing // 2, spacing // 2), watermark_text, font=font, fill=(255, 0, 0, opacity))  # White text with 50% opacity
-            
-            # Rotate the text image
-            rotated_text = temp_img.rotate(rotation_angle, expand=1)
-            
-            # Paste the rotated text onto the watermark image
-            watermark.paste(rotated_text, (x, y), rotated_text)
+// Keep the source image's date so a modified-time sort stays in the same order.
+Fs.CopyTimestamp(inputImage, outputImage);
 
-    # Combine the watermark with the original image
-    watermarked_image = Image.alpha_composite(image.convert('RGBA'), watermark)
+return 0;
 
-    # Save the result
-    watermarked_image.save(output_path, format='PNG')
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Usage: image-watermark <input_image> <output_image> <watermark_text> <font_size> <spacing>"
-    )
-    
-    parser.add_argument("input_image", type=str, help="Path to the input image file.")
-    parser.add_argument("output_image", type=str, help="Path to save the output image file.")
-    parser.add_argument("watermark_text", type=str, help="The text to use as the watermark.")
-    parser.add_argument("font_size", type=int, help="Font size of the watermark text.", default=72)
-    parser.add_argument("spacing", type=int, help="Spacing between lines of the watermark text.", default=50)
-    parser.add_argument("opacity", type=int, help="Opacity of the watermark.", default=128)
-    
-    args = parser.parse_args()
-
-    try:
-        add_text_watermark(
-            args.input_image, 
-            args.output_image, 
-            args.watermark_text, 
-            font_size=args.font_size, 
-            spacing=args.spacing,
-            opacity=args.opacity
-        )
-        
-        #audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-        sys.exit(0)
-        
-    except Exception as e:
-        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-        sys.exit(1)
+/// Find a usable font file, preferring `preferred`.
+static string ResolveFont(string preferred)
+{
+    var matched = Proc.Capture("fc-match", "-f", "%{file}", preferred);
+    return File.Exists(matched) ? matched : preferred;
+}

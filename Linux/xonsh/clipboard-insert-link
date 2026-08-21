@@ -1,27 +1,41 @@
-#!/usr/bin/env python
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import sys
-import pyperclip as pc
-from py_utilities import find_urls, play_audio
+// Scrape URLs off the clipboard and append them to the download queue that
+// video-download reads. Bound to a hotkey, this turns "copy link" into "queued".
 
-myhome = os.path.expanduser('~')
+var a = new Args("clipboard-insert-link", "Append clipboard URLs to the video download list")
+    .Parse(args);
 
-url_file_name = f"{myhome}/Backups/youtube.txt"
+var urlFileName = Path.Combine(Paths.Backups, "youtube.txt");
 
-clipboard_content = pc.paste()
+var urls = Fs.FindUrls(Clip.Paste());
 
-urls = find_urls(clipboard_content)
+if (urls.Count == 0)
+{
+    Snd.Error();
+    Snd.Notify("No URL on the clipboard");
+    return 1;
+}
 
-toast_time_seconds = 10
+foreach (var url in urls)
+{
+    try
+    {
+        File.AppendAllText(urlFileName, url + Environment.NewLine);
+        Snd.Success();
+        // A toast, because this normally runs from a hotkey with no terminal.
+        Snd.Notify(urlFileName, url);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Could not append to {urlFileName}: {ex.Message}");
+        Snd.Error();
+        return 1;
+    }
+}
 
-if len(urls)>0:
-    for url in urls:
-        # open file
-        with open(url_file_name, "a+") as f:
-            f.write(url + "\n")
-            play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg")
-            os.system(f"notify-send -t {toast_time_seconds*1000} {url_file_name} {url}")
-
-else:
-    play_audio(f"{myhome}/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg")
+return 0;

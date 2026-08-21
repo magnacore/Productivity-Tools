@@ -1,56 +1,56 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-"""
-Usage Ranger:	:shell -w file-number-deep Folder_1 Folder_2
-Select the root folder and execute. Do not get inside the root folder.
-Else, select multiple folders and execute. Only selected folder and
-its subfolders will be processed.
-"""
+// Number every video under one or more directory trees with a single running
+// counter, so a course split across chapter folders plays in the right order.
+//
+//     Usage from ranger:  :shell -w file-number-deep Folder_1 Folder_2
+//     Select the root folder and run. Do not descend into it first.
 
-import sys
-import os
-from rich import print
+var a = new Args("file-number-deep", "Number all videos under a directory tree")
+    .Rest("directories", min: 1, help: "Directories to process")
+    .Parse(args);
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+Ui.Begin("Numbering media in directory");
 
-from rich.console import Console
-from rich.progress import track
+foreach (var directory in a.Rest)
+{
+    if (!Directory.Exists(directory))
+    {
+        Ui.Warn($"Skipping {directory} (not a directory)");
+        continue;
+    }
 
-from utilities import get_mime
+    Ui.Begin($"Numbering media in {directory}");
 
-console = Console()
+    // Walk once and keep only videos. The xonsh original called listdir() inside
+    // the walk, so every file was visited once per directory level; enumerating
+    // the tree directly gives each file exactly one number.
+    var fileList = new List<string>();
+    foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+    {
+        if (Fs.IsVideo(path)) fileList.Add(path);
+        else Ui.Line($"[yellow]Skipping {Ui.Esc(Path.GetFileName(path))}[/]");
+    }
 
-console.rule(f"[bold cyan]Numbering media in directory", style="cyan")
+    // One counter across the whole tree, so ordering is global, not per-folder.
+    fileList.Sort(StringComparer.Ordinal);
 
-if len(sys.argv) > 1:
-    allDirectories = sys.argv[1:]
+    int i = 1;
+    Ui.Track(fileList, "[bold cyan]Numbering : [/]", filePath =>
+    {
+        var dirName = Path.GetDirectoryName(filePath) ?? string.Empty;
+        var baseName = Path.GetFileName(filePath);
+        var newPath = Path.Combine(dirName, $"{i:D4}-{baseName}");
 
-    for directory in allDirectories:
-        console.rule(f"[bold cyan]Numbering media in {directory}", style="cyan")
+        try { Fs.Move(filePath, newPath); }
+        catch (Exception ex) { Ui.Line($"[bold red]Could not number {Ui.Esc(baseName)}: {ex.Message}[/]"); }
 
-        # Collect directories in a list for bottom-up processing
-        file_list = []
-       
-        for root, dirs, files in os.walk(directory):
-            for file in track(os.listdir(root), description="[bold cyan]Numbering : [/bold cyan]"):
-                mimestart = get_mime(file)
-                if mimestart and  mimestart in ['video']:
-                    file_list.append(os.path.join(root, file))
-                else:
-                    print(f"[yellow]Skipping {file}[/yellow]")
+        i++;
+    });
+}
 
-        file_list.sort()
-
-        # Rename the files with the new format
-        for i, file_path in enumerate(file_list, start=1):
-            dir_name = os.path.dirname(file_path)
-            base_name = os.path.basename(file_path)
-            new_name = f"{i:04d}-{base_name}"            
-            new_file_path = os.path.join(dir_name, new_name)
-            
-            os.rename(file_path, new_file_path)
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

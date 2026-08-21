@@ -1,49 +1,52 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import time
+// Unlock the encrypted backup disk, mount it, rotate its snapshot, and mirror the
+// whole of $HOME onto it.
+//
+// This is the unfiltered backup: no exclude list, so caches and build output come
+// along too. Pair with laptop-backup-full-eject to close it down safely.
 
-from rich.console import Console
+var a = Sys.WithDryRun(new Args("laptop-backup-full", "Mirror $HOME onto the encrypted full-backup disk")).Parse(args);
+Sys.Apply(a);
 
-console = Console()
+Ui.Begin("Laptop Backup Full...");
 
-console.rule(f"[bold cyan]Laptop Backup Full...", style="cyan")
+var mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
+var current = Path.Combine(mountPoint, "@current");
+var previous = Path.Combine(mountPoint, "@previous");
 
-# Remove the old log file so we start fresh
-rm -f $HOME/.local/state/shortcut/copy_log.txt
+Sys.Remove(Sys.CopyLog);
 
-console.print(f"[bold cyan]Open the container...")
-sudo cryptsetup luksOpen /dev/sda luks-laptop-backup-full
+Ui.Info("Open the container...");
+Sys.Sudo("cryptsetup", "luksOpen", "/dev/sda", "luks-laptop-backup-full");
 
-console.print(f"[bold cyan]Mount the container...")
-sudo mkdir -p /media/$USER/laptop_backup_full
+Ui.Info("Mount the container...");
+Sys.Sudo("mkdir", "-p", mountPoint);
+Sys.Sudo("chown", $"{Paths.User}:{Paths.User}", mountPoint);
 
-# Change the owner
-sudo chown $USER:$USER /media/$USER/laptop_backup_full
+// The LVM volume is assembled asynchronously after the LUKS container opens,
+// so give the device node time to appear before mounting it.
+Ui.Info("Waiting for 5 seconds before mounting...");
+if (!Sys.DryRun) Thread.Sleep(5000);
 
-# Give some time to /dev/vg-laptop-backup-full/raid1-1 to become available
-console.print(f"[bold cyan]Waiting for 5 seconds before mounting...")
-time.sleep( 5 )
+if (Sys.Run("sudo", "mount", "/dev/vg-laptop-backup-full/raid1-1", mountPoint) != 0)
+{
+    Ui.Err("Something went wrong. Could not mount.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-# mount the directory
-if !(sudo mount p"/dev/vg-laptop-backup-full/raid1-1" p"/media/$USER/laptop_backup_full"):
-    console.print(f"[bold cyan]Deleting previous snapshot...")
-    sudo btrfs subvolume delete /media/$USER/laptop_backup_full/@previous
+Sys.RotatePreviousSnapshot(current, previous);
 
-    console.print(f"[bold cyan]Creating a new read only snapshot...")
-    sudo btrfs subvolume snapshot -r /media/$USER/laptop_backup_full/@current /media/$USER/laptop_backup_full/@previous
+Ui.Info("Synchronizing...");
+Sys.SudoRsync("-vahiP", "--delete", $"--log-file={Sys.CopyLog}", Paths.Home + "/", current);
 
-    console.print(f"[bold cyan]Synchronizing...")
-    sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt $HOME/ /media/$USER/laptop_backup_full/@current
+Sys.Stamp("laptop-backup-full");
+Sys.StampFile(Path.Combine(current, "backup_date.txt"));
 
-    date > ~/.local/state/shortcut/laptop-backup-full.txt
-    date > /media/$USER/laptop_backup_full/@current/backup_date.txt
-
-    # sudo btrfs filesystem show
-
-    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-
-else:
-    console.print(f"[bold red]Something went wrong. Could not mount.")
-    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-console.rule(style="cyan")
+return Ui.Done();

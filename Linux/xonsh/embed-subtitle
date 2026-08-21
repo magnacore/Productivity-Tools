@@ -1,111 +1,46 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import sys
+// Mux a subtitle file into a video as a single .mkv.
+//
+// Select the video and the subtitle in either order — whichever one looks like a
+// video names the output.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("embed-subtitle", "Embed a subtitle file into a video as .mkv")
+    .Rest("files", min: 2, help: "The video file and the subtitle file, in either order")
+    .Parse(args);
 
-from rich.console import Console
-from utilities import get_filename_extension, get_mime, get_timestamp
+if (a.Rest.Count != 2)
+{
+    Ui.Err("Select the video and the subtitle file.");
+    Snd.Error();
+    return 1;
+}
 
-console = Console()
+var input1 = a.Rest[0];
+var input2 = a.Rest[1];
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+Ui.Begin("Embedding subtitle in video...");
 
-if len(sys.argv) == 3:
-	selection = True
-else:
-	console.print(f"[bold red]Select the video and the subtitle file.")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+// Name the output after the video. Subtitle formats are unreliable to detect by
+// mime type, so identify the video instead and treat the other file as the sub.
+var videoInput = Fs.IsVideo(input1) ? input1 : input2;
+var newFilename = $"{Fs.SplitExt(videoInput).Name}_{Fs.Timestamp()}.mkv";
 
-if selection:
-	input_1 = sys.argv[1]
-	input_2 = sys.argv[2]
+// The order of the video and subtitle arguments does not matter to mkvmerge.
+if (Proc.Ok("mkvmerge", "-o", newFilename, input1, input2, "--chapter-language", "en"))
+{
+    // Named after the video, so it inherits the video's date, not the subtitle's.
+    Fs.CopyTimestamp(videoInput, newFilename);
 
-	console.rule(f"[bold cyan]Embedding subtitle in video...", style="cyan")
+    Ui.Ok($"Embedded in {newFilename}");
+    return Ui.Done();
+}
 
-	mimestart1 = get_mime(input_1)
-	mimestart2 = get_mime(input_2)
-
-	new_filename = get_timestamp() + ".mkv"
-
-	if mimestart1 in ['video']:
-		new_filename, _ = get_filename_extension(input_1)
-		new_filename = new_filename + "_" + get_timestamp() + '.mkv'
-	else:
-		new_filename, _ = get_filename_extension(input_2)
-		new_filename = new_filename + "_" + get_timestamp() + '.mkv'
-
-	# order of video and subtile file is unimportant
-	if !(mkvmerge -o @(new_filename) @(input_1) @(input_2) --chapter-language en):
-		console.print(f"[green]Embedded in {new_filename}")
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-	else:
-		console.print(f"[bold red]Could not embed in {new_filename}")
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-console.rule(style="cyan")
-
-"""
-Archive
-This script works fine. The reason we are using the above script is because get_mime is returning None for .srt files.
-
-#!/usr/bin/env xonsh
-import os
-import sys
-
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
-
-from rich.console import Console
-from utilities import get_filename_extension, get_mime, get_timestamp
-
-console = Console()
-
-# sys.argv[0] is the name of the script which will always be there
-selection = False
-
-if len(sys.argv) == 3:
-	selection = True
-else:
-	console.print(f"[bold red]Select the video and the subtitle file.")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-if selection:
-	video = sys.argv[1]
-	subtitle = sys.argv[2]
-
-	console.rule(f"[bold cyan]Embedding subtitle in video...", style="cyan")
-
-	mimestart1 = get_mime(video)
-	mimestart2 = get_mime(subtitle)
-
-	if (mimestart1 != None) and (mimestart2 != None):
-		if mimestart2 in ['video'] and mimestart1 in ['text']:
-			# swap
-			temp = video
-			video = subtitle
-			subtitle = temp
-
-		mimestart1 = get_mime(video)
-		mimestart2 = get_mime(subtitle)
-
-		if mimestart1 in ['video'] and mimestart2 in ['text']:
-			new_filename, _ = get_filename_extension(video)
-			new_filename = new_filename + "_" + get_timestamp() + '.mkv'
-
-			if !(mkvmerge -o @(new_filename) @(video) @(subtitle) --chapter-language en):
-				console.print(f"[green]Embedded {subtitle} in {new_filename}")
-				audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-			else:
-				console.print(f"[bold red]Could not embed {subtitle} in {new_filename}")
-				audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-		else:
-			console.print(f"[bold red]Select a valid video and subtitle file.")
-			audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-console.rule(style="cyan")
-
-"""
+Ui.Err($"Could not embed in {newFilename}");
+Snd.Error();
+Ui.End();
+return 1;

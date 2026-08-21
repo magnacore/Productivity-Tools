@@ -1,0 +1,32 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for media-combine.
+//
+// Only one question to ask: what should happen to the pieces once they have been
+// joined. The combining lives in media-combine.
+
+var a = new Args("media-combine-tui", "Ask about the originals, then run media-combine")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Files to combine")
+    .Parse(args);
+
+var deleteChoice = Dlg.DeleteOriginals("Media");
+if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+var callArgs = new List<string>();
+if (deleteChoice.Value) callArgs.Add("-d");
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]media-combine {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("media-combine", callArgs);

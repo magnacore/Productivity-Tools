@@ -1,79 +1,96 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import sys
-import glob
-import argparse
-from pathlib import Path
-import re
-from rich.console import Console
-from rich import print
+// Shrink videos to something WhatsApp will accept, then cut them into 80-second
+// segments so they fit inside a status post.
+//
+// Two-pass H.264: the first pass only measures the video, the second uses those
+// measurements to spend the bitrate where it matters.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("video-convert-whatsapp", "Convert videos for sharing on WhatsApp")
+    .Opt("-b", "--bitrate", @default: "500", help: "Bitrate for video conversion in kb/s")
+    .Rest("files", min: 1, help: "Files to process")
+    .Parse(args);
 
-from utilities import get_mime, get_timestamp, get_filename_extension
+int bitrate = a.Int("bitrate", 500);
+var timestamp = Fs.Timestamp();
 
-console = Console()
+Ui.Begin("Convert videos for sharing on WhatsApp");
 
-def parse_args():
-	parser = argparse.ArgumentParser(description="Convert videos for sharing on WhatsApp")
+foreach (var file in a.Rest)
+{
+    if (!Fs.IsVideo(file))
+    {
+        Ui.Warn($"Skipping {file}");
+        continue;
+    }
 
-	parser.add_argument('-b', '--bitrate', type=int, default=500, required=False, help="Bitrate for video conversion")
-	parser.add_argument('files', nargs='+', help="Files to process")
+    var (filename, _) = Fs.SplitExt(file);
+    var convertedDir = $"{filename}-{timestamp}";
+    var splitDir = $"{filename}-split-{timestamp}";
 
-	return parser.parse_args()
+    Directory.CreateDirectory(convertedDir);
+    Directory.CreateDirectory(splitDir);
 
-def process_files(args, timestamp):
-	files = args.files
-	bitrate = args.bitrate
+    // The tag rides along in the file name so the converted copy is obvious.
+    var fullFilename = $"{filename} #whatsapp.mp4";
 
-	for file in files:
-		filename, _ = get_filename_extension(file)
+    Ui.Info($"Converting {file} (pass 1 of 2)...");
+    bool pass1 = Proc.Ok("ffmpeg", "-i", file, "-c:v", "libx264", "-b:v", $"{bitrate}k",
+                         "-crf", "23", "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
+                         "-pass", "1", "-r", "30", "-an", "-passlogfile", "temp_log",
+                         "-f", "null", "/dev/null");
 
-		mkdir -p f"{filename}-{timestamp}"
-		mkdir -p f"{filename}-split-{timestamp}"
+    if (!pass1)
+    {
+        Ui.Err($"First pass failed for {file}");
+        Snd.Error();
+        continue;
+    }
 
-		# Convert full videos and store in converted folder
-		mimestart = get_mime(file)
+    Ui.Info($"Converting {file} (pass 2 of 2)...");
+    bool pass2 = Proc.Ok("ffmpeg", "-i", file, "-c:v", "libx264", "-b:v", $"{bitrate}k",
+                         "-crf", "23", "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
+                         "-pass", "2", "-r", "30", "-fps_mode", "cfr", "-n",
+                         "-c:a", "aac", "-b:a", "32k", "-ac", "1",
+                         "-passlogfile", "temp_log",
+                         Path.Combine(convertedDir, fullFilename));
 
-		if mimestart in ['video']:
-			full_filename = os.path.splitext(file)[0]+' #whatsapp.mp4'
+    if (!pass2)
+    {
+        Ui.Err($"Second pass failed for {file}");
+        Snd.Error();
+        continue;
+    }
 
-			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 1 -r 30 -an -passlogfile temp_log -f null /dev/null and \
-			ffmpeg -i @(file) -c:v libx264 -b:v @(f"{bitrate}k") -crf 23 -maxrate @(f"{bitrate}k") -bufsize @(f"{bitrate*2}k") -pass 2 -r 30 -fps_mode cfr -n -c:a aac -b:a 32k -ac 1 -passlogfile temp_log f"./{filename}-{timestamp}/{full_filename}"
+    // The converted copy carries the source's date.
+    Fs.CopyTimestamp(file, Path.Combine(convertedDir, fullFilename));
 
-def split_converted_video(args, timestamp):
-	files = args.files
+    // Segment the converted copy. -c copy, so this is a cut, not another encode.
+    foreach (var video in Directory.EnumerateFiles(convertedDir, "*", SearchOption.AllDirectories))
+    {
+        Proc.Ok("ffmpeg", "-i", video, "-c", "copy", "-f", "segment",
+                "-segment_time", "80", "-reset_timestamps", "1", "-map", "0",
+                Path.Combine(splitDir, $"{filename} %03d.mp4"));
+    }
 
-	for file in files:
-		filename, _ = get_filename_extension(file)
+    // The segments are one source split many ways, so each needs a distinct stamp:
+    // an identical one across all of them leaves a date-sorted listing with nothing
+    // to order them by, and a file manager's tie-break can show 003 before 001.
+    int segment = 0;
+    foreach (var part in Directory.GetFiles(splitDir).OrderBy(f => f, StringComparer.Ordinal))
+        Fs.CopyTimestamp(file, part, segment++);
 
-		subfolder = Path(f"./{filename}-{timestamp}")
-		allVideos = [str(file) for file in subfolder.rglob("*")]
+    Ui.Ok($"Converted and split {file}");
+}
 
-		for video in allVideos:
-			ffmpeg -i @(video) -c copy -f segment -segment_time 80 -reset_timestamps 1 -map 0 @(f"./{filename}-split-{timestamp}/{filename} %03d.mp4")
+// The two-pass log files are scratch data and are of no use once pass 2 is done.
+foreach (var log in Directory.GetFiles(".", "temp_log*"))
+{
+    try { File.Delete(log); } catch { /* a leftover log is harmless */ }
+}
 
-def main():
-	console.rule(f"[bold cyan]Convert videos for sharing on WhatsApp", style="cyan")
-
-	try:
-		args = parse_args()
-	except argparse.ArgumentError as err:
-		print(f"Error: {err}")
-		parser.print_help()
-		sys.exit(1)
-
-	timestamp = get_timestamp()
-
-	process_files(args, timestamp)
-	split_converted_video(args, timestamp)
-
-	rm temp_log*
-
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-	console.rule(style="cyan")
-
-if __name__ == "__main__":
-	main()
+return Ui.Done();

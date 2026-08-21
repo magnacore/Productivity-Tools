@@ -1,0 +1,51 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for audio-convert-foss.
+//
+// Picks a use case, which is really a (bitrate, codec) pair, and hands those over.
+// All the converting lives in audio-convert-foss.
+
+var a = new Args("audio-convert-foss-tui", "Choose a use case in a dialog, then run audio-convert-foss")
+    .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Audio/")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Files to convert")
+    .Parse(args);
+
+// (label, bitrate, codec) — the presets the menu used to hold.
+(string Label, int Bitrate, string Codec)[] useCases =
+[
+    ("VoIP (24k)",                        24, "opus"),
+    ("Audiobooks / Podcasts (32k)",       32, "opus"),
+    ("Music Storage, 2 channels (128k)", 128, "opus"),
+    ("Music Storage, 5.1 surround (256k)", 256, "opus"),
+    ("Music Storage, 7.1 surround (450k)", 450, "opus"),
+    ("Lossless (FLAC)",                  128, "flac"),
+];
+
+var chosen = Dlg.Choose("Audio Convert", "Choose a use case:", [.. useCases.Select(u => u.Label)]);
+
+if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+var pick = useCases[chosen.Value];
+
+var callArgs = new List<string> { pick.Bitrate.ToString(), "-c", pick.Codec };
+if (a.Flag("delete")) callArgs.Add("-d");
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]audio-convert-foss {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("audio-convert-foss", callArgs);

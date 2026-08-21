@@ -1,62 +1,59 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-# -*- coding: utf-8 -*-
-import argparse
-import math
-from num2words import num2words
+// How long would a diceware passphrase survive a well-funded attacker?
+//
+// The threat model: someone spending $1,000,000,000 per day on AWS instances,
+// each managing 193,900 guesses per second. Brute force finds the answer after
+// searching half the keyspace on average, so that is what gets reported.
 
-def seconds_to_printable(seconds):
-    seconds = math.floor(seconds)
-    minutes = seconds // 60
-    hours = minutes // 60
-    days = hours // 24
-    years = days // 365
+using System.Numerics;
 
-    if years == 0 and days == 0 and hours == 0 and minutes == 0:
-        return f"{num2words(seconds)} seconds"
-    elif years == 0 and days == 0 and hours == 0:
-        return f"{num2words(minutes)} minutes"
-    elif years == 0 and days == 0:
-        return f"{num2words(hours)} hours"
-    elif years == 0:
-        return f"{num2words(days)} days"
-    else:
-        return f"{num2words(years)} years"
+var a = new Args("get-passphrase-strength", "Report passphrase entropy and time to brute force")
+    .Pos("size", "Number of words in wordlist")
+    .Pos("seedphrase_size", "Number of words in passphrase")
+    .Parse(args);
 
+int wordlistSize = a.Int("size");
+int passphraseSize = a.Int("seedphrase_size");
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("size", metavar="size", type=int, help="Number of words in wordlist" )
-    parser.add_argument("seedphrase_size", metavar="seedphrase_size", type=int, help="Number of words in passphrase" )
-    args = parser.parse_args()
+if (wordlistSize < 2 || passphraseSize < 1)
+{
+    Console.Error.WriteLine("error: size must be >= 2 and seedphrase_size >= 1");
+    return 2;
+}
 
-    # Here's what we know
-    wordlist_size = args.size
-    passphrase_size = args.seedphrase_size
-    entropy_per_word = math.log(wordlist_size, 2)
-    aws_guesses_per_second_per_instance = 193900
-    aws_instance_cost_per_hour = 24.48
-    aws_instance_cost_per_day = aws_instance_cost_per_hour * 24
-    attacker_budget_per_day = 1000000000
-    total_aws_instances = math.floor(attacker_budget_per_day / aws_instance_cost_per_day)
-    total_aws_guesses_per_second = (aws_guesses_per_second_per_instance * total_aws_instances)
+double entropyPerWord = Math.Log2(wordlistSize);
 
-    # Display these details
-    print(f"Number of words: {wordlist_size}")
-    print(f"Entropy per word: {entropy_per_word}")
-    print(f"Each AWS instance has these many guesses per second: {num2words(aws_guesses_per_second_per_instance)}")
-    print(f"Attacker can afford this many AWS instances: {num2words(total_aws_instances)}")
-    print(f"Attacker's total guesses per second: {num2words(total_aws_guesses_per_second)}")
-    print("")
+const long AwsGuessesPerSecondPerInstance = 193_900;
+const double AwsInstanceCostPerHour = 24.48;
+const double AttackerBudgetPerDay = 1_000_000_000;
 
-    total_keyspace = wordlist_size ** passphrase_size
-    time_seconds = total_keyspace / total_aws_guesses_per_second
-    # attacks have to search half the keyspace on average
-    avg_time_seconds = (time_seconds / 2)
+double awsInstanceCostPerDay = AwsInstanceCostPerHour * 24;
+long totalAwsInstances = (long)Math.Floor(AttackerBudgetPerDay / awsInstanceCostPerDay);
+BigInteger totalGuessesPerSecond = new BigInteger(AwsGuessesPerSecondPerInstance) * totalAwsInstances;
 
-    print(f"Number of words: {passphrase_size}")
-    print(f"Entropy: {round(passphrase_size * entropy_per_word, 1)}")
-    print(f"Average time to brute force: {seconds_to_printable(avg_time_seconds)}")
+Console.WriteLine($"Number of words: {wordlistSize}");
+Console.WriteLine($"Entropy per word: {entropyPerWord}");
+Console.WriteLine($"Each AWS instance has these many guesses per second: {Num.ToWords(AwsGuessesPerSecondPerInstance)}");
+Console.WriteLine($"Attacker can afford this many AWS instances: {Num.ToWords(totalAwsInstances)}");
+Console.WriteLine($"Attacker's total guesses per second: {Num.ToWords(totalGuessesPerSecond)}");
+Console.WriteLine();
 
-if __name__ == "__main__":
-    main()
+// The keyspace is wordlist^length, which is far past any fixed-width integer.
+// Divide exactly rather than through a double: at these magnitudes a double has
+// already discarded everything past the sixteenth digit, and the answer is
+// reported down to the last one.
+//
+// Brute force finds the key after searching half the keyspace on average.
+BigInteger totalKeyspace = BigInteger.Pow(wordlistSize, passphraseSize);
+BigInteger avgTimeSeconds = totalKeyspace / (totalGuessesPerSecond * 2);
+
+Console.WriteLine($"Number of words: {passphraseSize}");
+Console.WriteLine($"Entropy: {Math.Round(passphraseSize * entropyPerWord, 1, MidpointRounding.ToEven)}");
+Console.WriteLine($"Average time to brute force: {Num.HumanizeSeconds(avgTimeSeconds)}");
+
+return 0;

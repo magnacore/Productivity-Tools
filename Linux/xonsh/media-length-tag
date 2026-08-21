@@ -1,82 +1,88 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-"""
-Usage Ranger:	:shell -w media-length-tag Folder_1 Folder_2
-Select the root folder and execute. Do not get inside the root folder.
-Else, select multiple folders and execute. Only selected folder and
-its subfolders will be processed.
-"""
+// Sum the duration of every video whose name contains a tag, across one or more
+// directory trees — "how much Linux material is left in here?"
+//
+//     Usage from ranger:  :shell -w media-length-tag -t linux Folder_1 Folder_2
+//     Select the root folder and run. Do not descend into it first.
+//
+// Takes the tag as an argument and never prompts. media-length-tag-tui asks for it
+// in a dialog and calls this.
 
-import datetime
+var a = new Args("media-length-tag", "Sum the duration of tagged videos in directory trees")
+    .Opt("-t", "--tag", required: true, help: "The tag to look for")
+    .Rest("directories", min: 1, help: "Directories to search")
+    .Parse(args);
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+Ui.Begin("Summing media duration in directory");
 
-from rich.console import Console
-from rich.table import Table
-from rich import print
-from rich.text import Text
-from rich import box
-from rich.markdown import Markdown
-from rich.progress import track
-from prompt_toolkit.shortcuts import input_dialog
-from utilities import monokai_dialog_style
+var tagText = a.Str("tag");
 
-from utilities import get_mime, get_duration, get_filename_extension
+foreach (var directory in a.Rest)
+{
+    if (!Directory.Exists(directory))
+    {
+        Ui.Warn($"Skipping {directory} (not a directory)");
+        continue;
+    }
 
-console = Console()
+    Ui.Begin($"Summing media duration in {directory}");
 
-console.rule(f"[bold cyan]Summing media duration in directory", style="cyan")
+    // Match on the file name only, so a tag in a parent folder does not sweep in
+    // everything beneath it.
+    var matches = new List<string>();
+    foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+    {
+        var name = Fs.SplitExt(Path.GetFileName(path)).Name;
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+        if (Fs.IsVideo(path) && name.Contains(tagText, StringComparison.OrdinalIgnoreCase))
+            matches.Add(path);
+        else
+            Ui.Line($"[yellow]Skipping {Ui.Esc(Path.GetFileName(path))}[/]");
+    }
 
-if len(sys.argv) > 1: # arguments passed
-	selection = True
+    matches.Sort(StringComparer.Ordinal);
 
-if selection:
-	allDirectories = sys.argv[1:]
-	# allDirectories.sort()
+    var durations = Ui.TrackParallel(matches, "[bold cyan]Adding : [/]", Media.Duration);
 
-	tag_text = input_dialog(
-    title='Enter tag',
-    text='Please type the tag:',
-	style=monokai_dialog_style).run()
+    var table = Ui.NewTable("Media Duration", "Duration", "File name");
+    table.Columns[0].RightAligned();
+    table.Columns[1].LeftAligned();
 
-	for directory in allDirectories:
-		console.rule(f"[bold cyan]Summing media duration in {directory}", style="cyan")
-		table = Table(title="Media Duration", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
+    double totalDuration = 0.0;
+    for (int i = 0; i < matches.Count; i++)
+    {
+        totalDuration += durations[i];
+        table.AddRow(
+            Ui.Dim(i, $"[green]{Media.Hms(durations[i])}[/]"),
+            Ui.Dim(i, Ui.Esc(Path.GetFileName(matches[i]))));
+    }
 
-		table.add_column("Duration", justify="right", style="green")
-		table.add_column("File name", justify="left")
+    Ui.AddSeparator(table);
 
-		total_duration = 0.0
+    var speeds = new (double Divisor, string Label)[]
+    {
+        (1.0,  "Total media duration"),
+        (1.5,  "Total media duration @1.5x"),
+        (1.65, "Total media duration @1.65x"),
+        (1.82, "Total media duration @1.82x"),
+        (2.0,  "Total media duration @2x"),
+    };
 
-		for root, dirs, files in os.walk(directory):
-			for file in track(files, description="[bold cyan]Adding : [/bold cyan]"):
-				mimestart = get_mime(file)
-				filename, _ = get_filename_extension(file)
-				if mimestart != None:
-					if mimestart in ['video'] and tag_text.lower() in filename.lower():
-						file_path = os.path.abspath(os.path.join(root, file))
-						duration = get_duration(file_path)
-						total_duration += duration
-						table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
-					else:
-						print(f"[yellow]Skipping {file}[/yellow]")
+    for (int i = 0; i < speeds.Length; i++)
+    {
+        // Alternate the summary rows too, so the block reads with the same banding
+        // as the file list above it.
+        table.AddRow(
+            Ui.Dim(i, $"[bold green]{Media.Hms(totalDuration / speeds[i].Divisor)}[/]"),
+            Ui.Dim(i, $"[bold green]{speeds[i].Label}[/]"));
+    }
 
-		table.add_row(u'\u2500' * 8, Markdown("---"))
-		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
-		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}",	Text.from_markup("[bold green]Total media duration @1.5x", justify="left"))
-		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}",	Text.from_markup("[bold green]Total media duration @1.65x", justify="left"))
-		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.82,0))}",	Text.from_markup("[bold green]Total media duration @1.82x", justify="left"))
-		table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/2,0))}",		Text.from_markup("[bold green]Total media duration @2x", justify="left"))
+    Ui.Show(table);
+}
 
-
-		console.print(table)
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

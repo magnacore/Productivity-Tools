@@ -1,91 +1,120 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
-import os
-import argparse
-from rich.progress import track
-from rich.console import Console
-from rich import print
+// Convert EPUBs to PDF or plain text with Calibre.
+//
+// The PDF defaults are a small, e-reader-shaped page with large type, which is
+// what makes the output readable in a file manager's preview pane rather than
+// being a print-shaped document nobody reads on screen.
+//
+// https://manual.calibre-ebook.com/generated/en/ebook-convert.html#pdf-output-options
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = Jobs.Add(new Args("epub-convert-multiple", "Convert EPUBs to PDF or text")
+    .Opt("-w", "--width", @default: "946", help: "Width of the PDF, in points")
+    .Opt("-l", "--length", @default: "968", help: "Height of the PDF, in points")
+    .Opt("-f", "--font_size", @default: "32", help: "Font size of the PDF")
+    .Opt("-m", "--margin", @default: "10", help: "Margin of the PDF")
+    .Opt("-o", "--output_format", @default: "pdf", choices: ["pdf", "txt"],
+         help: "Output format")
+    .Rest("files", min: 1, help: "Epubs to process"))
+    .Parse(args);
 
-from utilities import get_mime, get_filename_extension
+var allFiles = Fs.SortedFiles(a.Rest);
 
-console = Console()
+var outputFormat = a.Str("output_format");
+var dimension = $"{a.Int("width", 946)}x{a.Int("length", 968)}";
+var fontSize = a.Str("font_size");
+var margin = a.Str("margin");
 
-def parse_args():
-	parser = argparse.ArgumentParser(description="Convert epub")
+Ui.Begin($"Converting epub to {outputFormat}...");
 
-	parser.add_argument('-w', '--width', type=int, required=False,
-						help="Width of the PDF")
-	parser.add_argument('-l', '--length', type=int, required=False,
-						help="Height of the PDF")
-	parser.add_argument('-f', '--font_size', type=int, required=False,
-						help="Font size of the PDF")
-	parser.add_argument('-m', '--margin', type=int, default=10, required=False,
-						help="Margin of the PDF")
-	parser.add_argument('files', nargs='+', 
-					 	help="Epubs to process")
-	parser.add_argument('-o', '--output_format', choices=['pdf', 'txt'], required=True,
-						help="Output format (pdf or txt)")
+int failures = 0;
 
-	parser.set_defaults(width=946, length=968, font_size=32, margin=10, output_format="pdf")
+var epubs = allFiles.Where(Fs.IsEpub).ToList();
+foreach (var skipped in allFiles.Where(f => !Fs.IsEpub(f)))
+    Ui.Line($"[yellow]Skipping {Ui.Esc(skipped)}[/]");
 
-	return parser.parse_args()
+if (epubs.Count == 0) return Ui.NoFiles("No EPUBs selected!");
 
-def process_files(args):
-	files = args.files
-	output_format = args.output_format
-	width=args.width
-	length=args.length
-	dimension = f"{width}x{length}"
-	font_size = args.font_size
-	margin = args.margin
+// Each book is a separate ebook-convert run and they never touch each other's
+// files, so convert several at once. Memory is the limit rather than cores here:
+// PDF output drives a headless browser engine per book, which is far heavier than
+// an ffmpeg fork — hence -j defaulting to what the free memory allows.
+//
+// A bar per book with the overall bar pinned underneath, so which books are in
+// flight is visible rather than just how many are done.
+Ui.Track2(epubs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Convert {epubs.Count} epub(s):"))}[/]",
+          (file, addBar) =>
+{
+    var outputFilename = $"{Fs.SplitExt(file).Name}.{outputFormat}";
 
-	for file in track(files, description="[bold cyan]Convert : [/bold cyan]"):
-		mimestart = get_mime(file, part=1)
-		if mimestart != None:
-			if mimestart in ['epub', 'epub+zip']:
-				output_filename, _ = get_filename_extension(file)
-				output_filename = output_filename + f'.{output_format}'
+    var convertArgs = new List<string> { file, outputFilename };
 
-				if output_format == "txt":					
-					if !(ebook-convert @(file) @(output_filename)):
-						print(f"[green]Converted {file}")
-					else:
-						print(f"[bold red]Could not convert {file}")
-				elif output_format == "pdf":
-					# https://manual.calibre-ebook.com/generated/en/ebook-convert.html#pdf-output-options
-					# if custom-size is specified paper-size will be ignored
-					if !(ebook-convert @(file) @(output_filename) \
-						--custom-size @(dimension) \
-						--unit point \
-						--pdf-default-font-size @(font_size) \
-						--paper-size a4 \
-						--preserve-cover-aspect-ratio \
-						--pretty-print \
-						--pdf-page-margin-bottom @(margin) \
-						--pdf-page-margin-top @(margin) \
-						--pdf-page-margin-left @(margin) \
-						--pdf-page-margin-right @(margin)):
-						print(f"[green]Converted {file}")
-					else:
-						print(f"[bold red]Could not convert {file}")
+    if (outputFormat == "pdf")
+    {
+        // --custom-size overrides --paper-size; both are passed because Calibre
+        // falls back to the paper size for anything the custom size leaves open.
+        convertArgs.AddRange([
+            "--custom-size", dimension,
+            "--unit", "point",
+            "--pdf-default-font-size", fontSize,
+            "--paper-size", "a4",
+            "--preserve-cover-aspect-ratio",
+            "--pretty-print",
+            "--pdf-page-margin-bottom", margin,
+            "--pdf-page-margin-top", margin,
+            "--pdf-page-margin-left", margin,
+            "--pdf-page-margin-right", margin,
+        ]);
+    }
 
-def main():
-	try:
-		args = parse_args()
-	except argparse.ArgumentError as err:
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-		print(f"Error: {err}")
-		parser.print_help()
-		sys.exit(1)    
-    
-	process_files(args)
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-	console.rule(style="cyan")
+    // ebook-convert reports its own progress on stdout — "34% Running transforms
+    // on e-book..." — so the bar tracks the real conversion rather than guessing.
+    // The scale is a percentage; advance by the difference since the last report.
+    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
+    int reported = 0;
 
-if __name__ == "__main__":
-	main()
- 
+    bool ok = Proc.OkStreaming("ebook-convert", convertArgs, line =>
+    {
+        var percent = ProgressPercent(line);
+        if (percent > reported)
+        {
+            advance(percent - reported);
+            reported = percent;
+        }
+    });
+
+    if (ok)
+    {
+        // A txt conversion reports far fewer stages than a PDF one, so top the bar
+        // up rather than leaving it short of the end.
+        if (reported < 100) advance(100 - reported);
+
+        // Keep the book's own date so a modified-time sort of the library still
+        // matches the order the epubs were in. These finish in arbitrary order, so
+        // without this the output is a jumble under that sort.
+        Fs.CopyTimestamp(file, outputFilename);
+    }
+    else
+    {
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(file)}[/]");
+        Interlocked.Increment(ref failures);
+    }
+}, Jobs.From(a));
+
+return Ui.Done(failures);
+
+/// The leading percentage of an ebook-convert progress line, or 0 for anything else.
+static int ProgressPercent(string line)
+{
+    int end = 0;
+    while (end < line.Length && char.IsAsciiDigit(line[end])) end++;
+
+    return end > 0 && end < line.Length && line[end] == '%'
+           && int.TryParse(line.AsSpan(0, end), out var percent)
+        ? Math.Clamp(percent, 0, 100)
+        : 0;
+}

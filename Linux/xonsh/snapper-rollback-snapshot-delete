@@ -1,49 +1,100 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import re
-import sys
+// Clean up the subvolumes snapper-rollback leaves behind.
+//
+// Every rollback renames the old root out of the way as @YYYY-MM-DDTHH:MM and
+// never removes it, so they pile up and quietly consume the disk. This finds them
+// at the btrfs top level (subvolid=5, where they are visible) and deletes them.
+//
+// It only ever matches that exact timestamp shape, so @, @home and any subvolume
+// you created yourself are untouched.
 
-# Temporary mount point for the top-level BTRFS root
-MOUNT_POINT = "/mnt/btrfs-root"
+using System.Text.RegularExpressions;
 
-# Get the device and split off the [/@] part if it exists
-raw_dev = $(findmnt -n -o SOURCE /).strip()
-root_dev = raw_dev.split('[')[0]
+var a = Sys.WithDryRun(new Args("snapper-rollback-snapshot-delete",
+                                "Delete leftover snapper-rollback backup subvolumes")).Parse(args);
+Sys.Apply(a);
 
-if not root_dev:
-    print("Error: Could not determine the root BTRFS device.")
-    sys.exit(1)
+// Temporary mount point for the top-level BTRFS root.
+const string MountPoint = "/mnt/btrfs-root";
 
-print(f"Detected root device: {root_dev}")
+Ui.Begin("Deleting snapper-rollback leftovers...");
 
-# Ensure mount point exists
-sudo mkdir -p @(MOUNT_POINT)
+// findmnt reports the source as "/dev/sda2[/@]"; the subvolume part must go.
+var rawDev = Proc.Capture("findmnt", "-n", "-o", "SOURCE", "/").Trim();
+var rootDev = rawDev.Split('[')[0];
 
-# Attempt to mount and capture the result
-mount_result = !(sudo mount -o subvolid=5 @(root_dev) @(MOUNT_POINT))
+if (string.IsNullOrEmpty(rootDev))
+{
+    Ui.Err("Error: Could not determine the root BTRFS device.");
+    Ui.End();
+    return 1;
+}
 
-# If mounting fails, exit before doing anything else
-if mount_result.returncode != 0:
-    print(f"Failed to mount the device!\n{mount_result.errors}")
-    sys.exit(1)
+Ui.Line($"Detected root device: {Ui.Esc(rootDev)}");
 
-try:
-    # Regex pattern to match the snapper-rollback output: @YYYY-MM-DDTHH:MM
-    pattern = re.compile(r"^@\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$")
-    
-    # Find all matching subvolumes in the top-level mount
-    subvols = [d for d in os.listdir(MOUNT_POINT) if pattern.match(d)]
-    
-    if not subvols:
-        print("No snapper-rollback backup subvolumes found. Your system is clean!")
-    else:
-        for sv in subvols:
-            full_path = f"{MOUNT_POINT}/{sv}"
-            print(f"Would delete backup subvolume: {sv}...")
-            sudo btrfs subvolume delete @(full_path)
-            
-finally:
-    # Always ensure the volume is safely unmounted
-    sudo umount @(MOUNT_POINT)
-    print("Cleanup complete.")
+Sys.Sudo("mkdir", "-p", MountPoint);
+
+// subvolid=5 is the btrfs top level, the only place these leftovers are visible.
+if (Sys.Run("sudo", "mount", "-o", "subvolid=5", rootDev, MountPoint) != 0)
+{
+    Ui.Err("Failed to mount the device!");
+    Ui.End();
+    return 1;
+}
+
+try
+{
+    // Exactly what snapper-rollback names them: @2026-08-15T14:32
+
+    var subvols = Directory.Exists(MountPoint)
+        ? Directory.GetDirectories(MountPoint)
+            .Select(Path.GetFileName)
+            .Where(name => name is not null && Pattern.RollbackSubvolume().IsMatch(name))
+            .Select(name => name!)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToList()
+        : [];
+
+    if (subvols.Count == 0)
+    {
+        Ui.Ok("No snapper-rollback backup subvolumes found. Your system is clean!");
+    }
+    else
+    {
+        foreach (var sv in subvols)
+        {
+            // The xonsh original said "Would delete" but deleted regardless —
+            // leftover dry-run wording on a destructive operation. Now the
+            // message tells the truth, and --dry-run is what holds back.
+            Ui.Line(Sys.DryRun
+                ? $"Would delete backup subvolume: {Ui.Esc(sv)}..."
+                : $"Deleting backup subvolume: {Ui.Esc(sv)}...");
+
+            Sys.DeleteSubvolume(Path.Combine(MountPoint, sv));
+        }
+    }
+}
+finally
+{
+    // Always unmount, even if a delete threw: leaving the btrfs top level
+    // mounted is a trap for whatever runs next.
+    Sys.Sudo("umount", MountPoint);
+    Ui.Line("Cleanup complete.");
+}
+
+Ui.End();
+return 0;
+
+/// Source-generated matchers. Emitted at build time, so nothing parses a pattern
+/// at startup — which matters for a program that runs for well under a second.
+internal static partial class Pattern
+{
+    /// Exactly what snapper-rollback names its leftovers: @2026-08-15T14:32
+    [GeneratedRegex(@"^@\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$")]
+    internal static partial Regex RollbackSubvolume();
+}

@@ -1,0 +1,62 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for text-split.
+//
+// Asks the part size and what to do with the originals. All the splitting lives in
+// text-split.
+
+var a = new Args("text-split-tui", "Choose a part size in a dialog, then run text-split")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Text files to split")
+    .Parse(args);
+
+// The presets the original menu carried. 4 KB is for text headed to Google TTS,
+// which caps a single request at 5000 bytes.
+(string Label, string Kb)[] sizes =
+[
+    ("Google TTS API (4 KB)", "4"),
+    ("10 KB",                "10"),
+    ("18 KB",                "18"),
+    ("Custom...",            ""),
+];
+
+var chosen = Dlg.Choose("Split Text", "How large should each part be?",
+                        [.. sizes.Select(s => s.Label)]);
+if (chosen is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+var kb = sizes[chosen.Value].Kb;
+
+if (kb.Length == 0)
+{
+    var typed = Dlg.Input("Part size", "How many kilobytes per part?", "10");
+    if (typed is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+    if (!double.TryParse(typed.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) || n < 1)
+    {
+        Ui.Err($"'{typed}' is not a size in kilobytes.");
+        Snd.Error();
+        return 2;
+    }
+    kb = n.ToString(CultureInfo.InvariantCulture);
+}
+
+var deleteChoice = Dlg.DeleteOriginals("Texts");
+if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+var callArgs = new List<string> { kb };
+if (deleteChoice.Value) callArgs.Add("-d");
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]text-split {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("text-split", callArgs);

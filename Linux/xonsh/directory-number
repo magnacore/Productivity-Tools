@@ -1,55 +1,56 @@
-#!/usr/bin/env python3
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import argparse
+// Zero-pad numeric directory names one level down ("1 Intro" -> "001 Intro"), then
+// prefix the files in each with that directory's index, so a course numbers itself.
 
-def walklevel(some_dir, level=1):
-    some_dir = some_dir.rstrip(os.path.sep)
-    assert os.path.isdir(some_dir)
-    num_sep = some_dir.count(os.path.sep)
-    for root, dirs, files in os.walk(some_dir):
-        yield root, dirs, files
-        num_sep_this = root.count(os.path.sep)
-        if num_sep + level <= num_sep_this:
-            del dirs[:]
+var a = new Args("directory-number", "Zero-pad numbered directories and number their files")
+    .Pos("directory", "The directory to process")
+    .Parse(args);
 
-def rename_directories(walk_dir):
-	for root, subdirs, files in walklevel(walk_dir):
-		for subdir in subdirs:
-			if(subdir[0].isdigit() and not subdir[1].isdigit()):
-				new_directory_name = "00" + subdir
-				source = os.path.join(root, subdir)
-				destination = os.path.join(root, new_directory_name)
-				os.rename(source, destination)
+var walkDir = a.Str("directory").TrimEnd('/');
 
-			if(subdir[0].isdigit() and subdir[1].isdigit()):
-				new_directory_name = "0" + subdir
-				source = os.path.join(root, subdir)
-				destination = os.path.join(root, new_directory_name)
-				os.rename(source, destination)
+if (!Directory.Exists(walkDir))
+{
+    Console.Error.WriteLine($"error: not a directory: {walkDir}");
+    return 1;
+}
 
-def rename_files(walk_dir):
-	i = 0
+Ui.Begin($"Numbering directories and files in {walkDir}");
 
-	for root, subdirs, files in walklevel(walk_dir):		
-		subdirs.sort()
-		
-		for filename in files:
-			source = os.path.join(root, filename)
+// --- Pad numeric prefixes to three digits -----------------------------------
+foreach (var subdir in Directory.GetDirectories(walkDir).OrderBy(d => d, StringComparer.Ordinal))
+{
+    var name = Path.GetFileName(subdir);
+    if (name.Length < 2 || !char.IsDigit(name[0])) continue;
 
-			new_file_name = f"{i:03d}_{filename}"
-			destination = os.path.join(root, new_file_name)
-			os.rename(source, destination)
+    // One leading digit needs two zeros, two need one, three or more are done.
+    var padded = char.IsDigit(name[1]) ? (name.Length > 2 && char.IsDigit(name[2]) ? null : "0" + name)
+                                       : "00" + name;
+    if (padded is null) continue;
 
-		i += 1
+    try { Fs.Move(subdir, Path.Combine(walkDir, padded)); }
+    catch (Exception ex) { Ui.Warn($"Could not rename {name}: {ex.Message}"); }
+}
 
-def main():
-	parser = argparse.ArgumentParser(description="Renames directories and files.")
-	parser.add_argument("directory", type=str, help="The directory to process.")
-	args = parser.parse_args()
+// --- Prefix files with the index of the directory holding them ---------------
+// The top directory is index 0, then each immediate subdirectory in name order.
+var roots = new List<string> { walkDir };
+roots.AddRange(Directory.GetDirectories(walkDir).OrderBy(d => d, StringComparer.Ordinal));
 
-	rename_directories(args.directory)
-	rename_files(args.directory)
+int i = 0;
+foreach (var root in roots)
+{
+    foreach (var file in Directory.GetFiles(root).OrderBy(f => f, StringComparer.Ordinal))
+    {
+        var newName = $"{i:D3}_{Path.GetFileName(file)}";
+        try { Fs.Move(file, Path.Combine(root, newName)); }
+        catch (Exception ex) { Ui.Warn($"Could not rename {Path.GetFileName(file)}: {ex.Message}"); }
+    }
+    i++;
+}
 
-if __name__ == "__main__":
-    main()
+return Ui.Done();

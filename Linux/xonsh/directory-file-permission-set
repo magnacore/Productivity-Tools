@@ -1,79 +1,66 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import argparse
-import os
-import sys
-from rich.console import Console
-from rich import print
+// Set permissions recursively, with separate modes for directories and files —
+// directories need the execute bit to be traversable, files almost never do.
 
-console = Console()    
+var a = new Args("directory-file-permission-set", "Set directory and file permissions recursively")
+    .Opt("-d", "--directory_octal_permission", @default: "700",
+         help: "Octal permission of the directories (e.g., 755)")
+    .Opt("-f", "--file_octal_permission", @default: "600",
+         help: "Octal permission of the files (e.g., 644)")
+    .Flag("-n", "--dry-run", help: "Print what would be done without changing anything")
+    .Rest("folder", min: 1, help: "Input directory to process")
+    .Parse(args);
 
-def is_valid_permission(permission):
-   """Checks if a given integer is a valid permission code.
+var dirPermission = a.Str("directory_octal_permission");
+var filePermission = a.Str("file_octal_permission");
+bool dryRun = a.Flag("dry-run");
 
-   Args:
-       permission: The integer to check.
+foreach (var (permission, what) in new[] { (dirPermission, "directory"), (filePermission, "file") })
+{
+    if (!IsValidPermission(permission))
+    {
+        Console.Error.WriteLine(
+            $"error: {permission} is not a valid {what} permission " +
+            "(exactly 3 digits, none above 7)");
+        return 2;
+    }
+}
 
-   Returns:
-       The input integer if it's a valid permission code.
+foreach (var folder in a.Rest)
+{
+    if (!Directory.Exists(folder))
+    {
+        Ui.Warn($"Skipping {folder} (not a directory)");
+        continue;
+    }
 
-   Raises:
-       ArgumentTypeError: If the permission code is invalid.
-   """
+    Ui.Begin($"Setting permissions in {folder}");
 
-   permission_str = str(permission)
+    // The path is used as given. The xonsh original prefixed "./", which quietly
+    // limited it to folders directly below the working directory.
+    foreach (var (type, permission) in new[] { ("d", dirPermission), ("f", filePermission) })
+    {
+        var label = type == "d" ? "directory" : "file";
+        Ui.Line($"Setting {label} permissions in {Ui.Esc(folder)}...");
 
-   if len(permission_str) != 3:
-       raise argparse.ArgumentTypeError(f"{permission} should contain exactly 3 digits")
+        if (dryRun)
+        {
+            Ui.Line($"[dim]find {Ui.Esc(folder)} -type {type} -exec chmod {permission} {{}} ;[/]");
+            continue;
+        }
 
-   if any(int(digit) > 7 for digit in permission_str):
-       raise argparse.ArgumentTypeError(f"{permission} : Individual digits in permission code cannot exceed 7")
+        Proc.Run("find", folder, "-type", type, "-exec", "chmod", permission, "{}", ";");
+    }
+}
 
-   return permission
+Ui.End();
+return 0;
 
-
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Set directories and file permissions")
-
-    parser.add_argument ('-d', '--directory_octal_permission', type=is_valid_permission, required=False,
-                        help="Octal permission of the directories (e.g., 755)",
-                        )
-    parser.add_argument ('-f', '--file_octal_permission', type=is_valid_permission, required=False,
-                        help="Octal permission of the files (e.g., 644)",
-                        )
-    parser.add_argument('directory', metavar='folder', type=str, nargs='+', help='Input directory to process')
-
-    parser.set_defaults(directory_octal_permission=700, file_octal_permission=600)
-
-    return parser.parse_args()
-
-
-def process_directory(args):
-    directories = args.directory
-
-    for folder in directories:
-        console.rule(f"[bold cyan]Setting permissions in {folder}", style="cyan")
-        
-        print(f"Setting directory permissions in {folder}...")
-        find @(f"./{folder}") -type d -exec chmod @(args.directory_octal_permission) '{}' ';'
-        
-        print(f"Setting file permissions in {folder}...")
-        find @(f"./{folder}") -type f -exec chmod @(args.file_octal_permission) '{}' ';'
-
-def main():
-    try:
-        args = parse_args()        
-    except argparse.ArgumentError as err:
-        print(f"Error: {err}")
-        parser.print_help()
-        sys.exit(1)    
-    
-    process_directory(args)
-
-    console.rule(style="cyan")
-
-if __name__ == "__main__":
-    main()
-
+/// A permission code is exactly three octal digits.
+static bool IsValidPermission(string permission)
+    => permission.Length == 3 && permission.All(c => c is >= '0' and <= '7');

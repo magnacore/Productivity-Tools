@@ -1,0 +1,43 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for video-download.
+//
+// Picks the download profile, then hands it over. The downloading lives there.
+
+var a = new Args("video-download-tui", "Choose a download profile in a dialog, then run video-download")
+    .Flag("-u", "--no-update", help: "Skip the yt-dlp self-update")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Parse(args);
+
+// (flag value, label)
+(string Value, string Label)[] sources =
+[
+    ("youtube", "YouTube (subtitles, rate limiting, 1080p cap)"),
+    ("other",   "Other (plain download)"),
+];
+
+var chosen = Dlg.Choose("Video Download", "What is the source of the videos?",
+                        [.. sources.Select(s => s.Label)]);
+
+if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+var callArgs = new List<string> { "-s", sources[chosen.Value].Value };
+if (a.Flag("no-update")) callArgs.Add("-u");
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]video-download {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("video-download", callArgs);

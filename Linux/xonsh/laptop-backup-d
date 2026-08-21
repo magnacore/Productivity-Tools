@@ -1,28 +1,29 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Mirror $HOME onto LAPTOP_BACKUP_D, which lives on the Sawy drive.
 
-console = Console()
+var a = Sys.WithDryRun(new Args("laptop-backup-d", "Mirror $HOME onto LAPTOP_BACKUP_D")).Parse(args);
+Sys.Apply(a);
 
-console.rule(f"[bold cyan]Laptop Backup D...", style="cyan")
+Ui.Begin("Laptop Backup D...");
 
-# Remove the old log file so we start fresh
-rm -f $HOME/.local/state/shortcut/copy_log.txt
+var root = Path.Combine(Paths.Media, "SAWY_01_B", "LAPTOP_BACKUP_D");
+var current = Path.Combine(root, "@current");
 
-console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@previous
+Sys.Remove(Sys.CopyLog);
+Sys.RotatePreviousSnapshot(current + "/", Path.Combine(root, "@previous"));
 
-console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/ /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@previous
+Ui.Info("Synchronizing...");
+Sys.SudoRsync("-vahiP", "--delete",
+              $"--log-file={Sys.CopyLog}",
+              $"--exclude-from={Sys.HomeExcludes}",
+              Paths.Home + "/", current + "/");
 
-console.print(f"[bold cyan]Synchronizing...")
-sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/
+Sys.Stamp("laptop-backup-d");
+Sys.StampFile(Path.Combine(current, "backup_date.txt"));
 
-date > ~/.local/state/shortcut/laptop-backup-d.txt
-date > /media/$USER/SAWY_01_B/LAPTOP_BACKUP_D/@current/backup_date.txt
-
-# sudo btrfs filesystem show
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

@@ -1,69 +1,137 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
 
-import sys
-import os
-import argparse
-from rich.console import Console
-from rich import print
-from prompt_toolkit.shortcuts import radiolist_dialog
+// Dialog front end for epub-convert-multiple and epub-split.
+//
+// Picks the output shape, then delegates. Nothing is converted here.
+//
+// epub-split is the one xonsh script kept as-is: its chapter chunking —
+// splitting XHTML on tag boundaries, reopening the ancestors it cut through,
+// re-injecting the <head> metadata ebooklib drops, copying only referenced
+// media — works, and reimplementing it would risk subtly broken books. It is
+// invoked through the xonsh interpreter explicitly, so it does not matter
+// whether the file happens to be executable.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("epub-convert-multiple-tui", "Choose an EPUB conversion in a dialog, then run it")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Epubs to process")
+    .Parse(args);
 
-from utilities import monokai_dialog_style
+var files = a.Rest;
 
-console = Console()
+var format = Dlg.Choose(
+    "Convert epub", "What is the output file format?",
+    "PDF : Portable Document Format",
+    "Plain text file",
+    "Split Epub");
 
-def parse_args():
-	parser = argparse.ArgumentParser(description="Convert epub")
+if (format is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
 
-	parser.add_argument('files', nargs='+', help="Epubs to process")
+List<string> callArgs;
+string program;
 
-	return parser.parse_args()
+switch (format.Value)
+{
+    case 0:
+        var size = Dlg.Choose(
+            "Choose page size", "What is the output file dimensions?",
+            "Ranger preview",
+            "A4 page @300 DPI");
 
-def process_files(args):
-	files = args.files
+        if (size is null)
+        {
+            Ui.Warn("Operation cancelled by user.");
+            return 0;
+        }
 
-	result = radiolist_dialog(
-	title="Convert epub",
-	text="What is the output file format?",
-	values=[
-		("pdf", "PDF : Portable Document Format"),
-		("txt", "Plain text file"),
-		("split", "Split Epub")
-	],
-	style=monokai_dialog_style,
-    ).run()
+        program = "epub-convert-multiple";
+        callArgs = size.Value == 0
+            // Small e-reader page: readable in a file manager's preview pane.
+            ? ["-o", "pdf"]
+            // A4 at 300 DPI, for printing: 2480x3508 points with proportionate type.
+            : ["-o", "pdf", "-w", "2480", "-l", "3508", "-f", "80", "-m", "100"];
+        break;
 
-	if result == "pdf":
-		dimension_result = radiolist_dialog(
-			title="Choose page size",
-			text="What is the output file dimensions?",
-			values=[
-				("ranger", "Ranger preview"),
-				("a4", "A4 page @300 DPI")
-			],
-			style=monokai_dialog_style,
-			).run()
-		if dimension_result=="ranger":
-			epub-convert-multiple -o 'pdf' @(args.files)
-		elif dimension_result=="a4":
-			epub-convert-multiple -o 'pdf' -w 2480 -l 3508 -f 80 -m 100 @(args.files)
-	elif result == "txt":
-		epub-convert-multiple -o 'txt' @(args.files)
-	elif result == "split":
-		epub-split -s 10 @(args.files)
+    case 1:
+        program = "epub-convert-multiple";
+        callArgs = ["-o", "txt"];
+        break;
 
-def main():
-	try:
-		args = parse_args()
-	except argparse.ArgumentError as err:
-		print(f"Error: {err}")
-		parser.print_help()
-		sys.exit(1)    
-    
-	process_files(args)
+    default:
+        program = "epub-split";
+        callArgs = ["-s", "10"];
+        break;
+}
 
-if __name__ == "__main__":
-	main()
- 
+callArgs.AddRange(files);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]{program} {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+// epub-split is xonsh, so run it under xonsh. Everything else here is a sibling
+// C# program and goes through the normal PATH/sibling lookup.
+if (program == "epub-split")
+{
+    var script = FindXonsh("epub-split");
+    if (script is null)
+    {
+        Ui.Err("Could not find the xonsh epub-split.");
+        Ui.Line("[dim]Looked beside this script and in ~/.local/bin.[/]");
+        Snd.Error();
+        return 1;
+    }
+
+    int code = Proc.Run("/opt/anaconda3/envs/xonsh/bin/xonsh", [script, .. callArgs]);
+
+    // The notification is played here rather than inside the xonsh script.
+    // Backgrounded from xonsh, a helper process writes terminfo escapes to the
+    // terminal after the script has exited, landing in a file manager's redrawn
+    // UI. Snd goes straight to ffplay from this foreground process instead.
+    if (code == 0) Snd.Success(); else Snd.Error();
+    return code;
+}
+
+return Proc.Call(program, callArgs);
+
+/// Locate a xonsh script, checking that it really is one.
+///
+/// The shebang check matters because a C# program of the same name may sit in the
+/// same directory: handing a C# file to xonsh gets a SyntaxError on its first
+/// // comment.
+static string? FindXonsh(string name)
+{
+    foreach (var candidate in new[]
+             {
+                 Path.Combine(Paths.ScriptDir, name),
+                 Path.Combine(Paths.ScriptDir, "..", "Xonsh", name),
+                 Path.Combine(Paths.LocalBin, name),
+             })
+    {
+        string full;
+        try { full = Path.GetFullPath(candidate); }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex)) { continue; }
+
+        if (!File.Exists(full)) continue;
+
+        try
+        {
+            var shebang = File.ReadLines(full).FirstOrDefault() ?? string.Empty;
+            if (shebang.Contains("xonsh", StringComparison.OrdinalIgnoreCase)) return full;
+        }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex)) { }
+    }
+
+    return null;
+}

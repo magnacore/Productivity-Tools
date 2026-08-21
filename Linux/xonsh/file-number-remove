@@ -1,24 +1,45 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import argparse
-import re
+// Strip a leading number from file names — the inverse of file-number and
+// file-number-deep.
 
-def rename_files(files):
-    for file in files:
-        directory = os.path.dirname(file)
-        old_name = os.path.basename(file)
-        new_name = re.sub(r'^\d{3,}[-\s_]', '', old_name)
-        if old_name != new_name:
-            os.rename(file, os.path.join(directory, new_name))
+using System.Text.RegularExpressions;
 
-def main():
-    parser = argparse.ArgumentParser(description='Remove leading digits from file names.')
-    parser.add_argument('files', metavar='F', type=str, nargs='+',
-                        help='an integer for the accumulator')
+var a = new Args("file-number-remove", "Remove leading digits from file names")
+    .Rest("files", min: 1, help: "Files to process")
+    .Parse(args);
 
-    args = parser.parse_args()
-    rename_files(args.files)
+var files = Fs.SortedFiles(a.Rest);
 
-if __name__ == "__main__":
-    main()
+// Three or more digits followed by a separator, so "2001 A Space Odyssey.mkv"
+// keeps its title but "001 intro.mkv" loses its prefix.
+
+Ui.Begin("Removing leading numbers...");
+
+Ui.Track(files, "[bold cyan]Renumbering : [/]", file =>
+{
+    var directory = Path.GetDirectoryName(file) ?? string.Empty;
+    var oldName = Path.GetFileName(file);
+    var newName = Pattern.LeadingNumber().Replace(oldName, string.Empty, 1);
+
+    if (oldName == newName) return;
+
+    try { Fs.Move(file, Path.Combine(directory, newName)); }
+    catch (Exception ex) { Ui.Line($"[bold red]Could not rename {Ui.Esc(file)}: {ex.Message}[/]"); }
+});
+
+return Ui.Done();
+
+/// Source-generated matchers. Emitted at build time, so nothing parses a pattern
+/// at startup — which matters for a program that runs for well under a second.
+internal static partial class Pattern
+{
+    /// Three or more digits and a separator, so "2001 A Space Odyssey.mkv" keeps
+/// its title while "001 intro.mkv" loses its prefix.
+    [GeneratedRegex(@"^\d{3,}[-\s_]")]
+    internal static partial Regex LeadingNumber();
+}

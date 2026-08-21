@@ -1,90 +1,115 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Google.Cloud.TextToSpeech.V1@3.18.0
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
-import os
-import re
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+// Read text files aloud with Google's Wavenet voices and save the result as
+// Opus audio in an .mkv container.
+//
+// The text is scrubbed first: markup, decoration and boilerplate that reads
+// badly out loud is either removed or rewritten into something speakable.
 
-from google.cloud import texttospeech as tts
+using System.Text.RegularExpressions;
+using Google.Cloud.TextToSpeech.V1;
 
-from utilities import get_mime, get_filename_extension, get_user_selection
+var a = new Args("text-to-speech", "Convert text files to speech with Google Cloud TTS")
+    .Opt("-v", "--voice", @default: "Female", choices: ["Female", "Male"], help: "Which voice to use")
+    .Rest("files", min: 1, help: "Text files to convert")
+    .Parse(args);
 
-from rich.console import Console
-from rich import print
-from rich.progress import track
+var allFiles = Fs.SortedFiles(a.Rest);
 
-console = Console()
+var privateKey = Path.Combine(Paths.SensitiveData, "gemini-service-account-tts.json");
+if (!File.Exists(privateKey))
+{
+    Ui.Err($"Missing service account key: {privateKey}");
+    Snd.Error();
+    return 1;
+}
+Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", privateKey);
 
-private_key = f"{myhome}/Documents/SENSITIVE DATA/gemini-service-account-tts.json"
+Ui.Begin("Converting text to speech...");
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private_key
+// https://cloud.google.com/text-to-speech/docs/voices
+var voiceName = a.Str("voice") == "Male" ? "en-US-Wavenet-D" : "en-US-Wavenet-C";
 
-def text_to_audio(voice_name: str, text: str):
-	language_code = "-".join(voice_name.split("-")[:2])
-	text = re.sub(r'C#', "CSharp", text)
-	text = re.sub(r'[#*`^<>▪►]', "", text)
-	text = re.sub(r'[_]', " ", text)
-	text = re.sub(r'[Gg]en [Aa][Ii]', "Generative AI", text)
-	text = re.sub(r'©.*?reserved\.', "", text)
-	text = re.sub(r'(={2,}|-{2,})', "", text)
-	text_input = tts.SynthesisInput(text=text)
-	voice_params = tts.VoiceSelectionParams(language_code=language_code, name=voice_name)
-	# effects_profile_id : Optional. Input only. An identifier which selects 'audio effects' profiles
-	# that are applied on (post synthesized) text to speech. Effects are applied on top of each other
-	# in the order they are given. https://cloud.google.com/text-to-speech/docs/audio-profiles
-	audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.OGG_OPUS, speaking_rate=0.8, effects_profile_id=["headphone-class-device"])
+TextToSpeechClient client;
+try
+{
+    client = TextToSpeechClient.Create();
+}
+catch (Exception ex)
+{
+    Ui.Err($"Could not reach the text-to-speech service: {ex.Message}");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-	client = tts.TextToSpeechClient()
-	response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+Ui.Track(allFiles, "[bold cyan]TTS : [/]", file =>
+{
+    if (!Fs.IsText(file)) return;
 
-	return response.audio_content
+    var outputFilename = Fs.SplitExt(file).Name + ".mkv";
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+    try
+    {
+        var audio = Synthesize(client, voiceName, File.ReadAllText(file));
+        File.WriteAllBytes(outputFilename, audio);
 
-if len(sys.argv) > 1: # No arguments passed
-	selection = True
+        // Keep the source's date so the audiobook sorts with its text.
+        Fs.CopyTimestamp(file, outputFilename);
 
-if selection:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+        Ui.Line($"[bold green]{Ui.Esc(outputFilename)} created.[/]");
+    }
+    catch (Exception ex)
+    {
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(file)}: {ex.Message}[/]");
+        Snd.Error();
+    }
+});
 
-	console.rule(f"[bold cyan]Converting text to speech...", style="cyan")
+return Ui.Done();
 
-	choice = "Female" #get_user_selection(["Female", "Male"])
-	
-	# https://cloud.google.com/text-to-speech/docs/voices
-	# en-US-Neural2-J
-	# en-US-Neural2-F
-	# en-US-Wavenet-F # Female
-	voice = "en-US-Wavenet-C"
+static byte[] Synthesize(TextToSpeechClient client, string voiceName, string text)
+{
+    // "en-US-Wavenet-C" -> "en-US"
+    var languageCode = string.Join("-", voiceName.Split('-').Take(2));
 
-	if choice == "Male":
-		voice = "en-US-Wavenet-D"
+    text = Clean(text);
 
-	for file in track(allFiles, description="[bold cyan]TTS : [/bold cyan]"):
-		mimestart = get_mime(file)
-		modification_datetime=$(stat -c %y @(file))
+    var response = client.SynthesizeSpeech(new SynthesizeSpeechRequest
+    {
+        Input = new SynthesisInput { Text = text },
+        Voice = new VoiceSelectionParams { LanguageCode = languageCode, Name = voiceName },
+        AudioConfig = new AudioConfig
+        {
+            AudioEncoding = AudioEncoding.OggOpus,
+            // Slightly slow, because this audio gets listened to at 1.5x or more.
+            SpeakingRate = 0.8,
+            // https://cloud.google.com/text-to-speech/docs/audio-profiles
+            EffectsProfileId = { "headphone-class-device" },
+        },
+    });
 
-		if mimestart != None:
-			if mimestart in ['text']:
-				filename, _ = get_filename_extension(file)
-				output_filename = f"{filename}.mkv"
+    return response.AudioContent.ToByteArray();
+}
 
-				# open the file
-				contents = open(file,"r")
-
-				with open(output_filename, "wb") as out:
-					out.write(text_to_audio(voice, contents.read()))
-					touch -d @(modification_datetime) @(output_filename)
-					print(f"[bold green]{output_filename} created.")
-
-				contents.close()
-	
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print("No files selected!", style="bold red")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-console.rule(style="cyan")
+/// Rewrite the things that read badly when spoken aloud.
+static string Clean(string text)
+{
+    // "C#" is otherwise read as "C hash".
+    text = Regex.Replace(text, "C#", "CSharp");
+    // Markdown and bullet decoration carries no meaning in audio.
+    text = Regex.Replace(text, "[#*`^<>▪►]", string.Empty);
+    // Underscores in identifiers should become word breaks, not "underscore".
+    text = Regex.Replace(text, "[_]", " ");
+    text = Regex.Replace(text, "[Gg]en [Aa][Ii]", "Generative AI");
+    // Copyright footers repeat on every page and are pure noise.
+    text = Regex.Replace(text, @"©.*?reserved\.", string.Empty);
+    // Rules drawn out of = or - characters.
+    text = Regex.Replace(text, "(={2,}|-{2,})", string.Empty);
+    return text;
+}

@@ -1,14 +1,20 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
-console = Console()
+// Mirror the tutorials drive onto its backup.
 
-console.rule(f"[bold cyan]Backup Tutorials...")
+var a = Sys.WithDryRun(new Args("tutorials-backup", "Mirror the LEARNING drive onto TutsBackup")).Parse(args);
+Sys.Apply(a);
 
-rsync -vahiP --delete /media/$USER/LEARNING/ /media/$USER/TutsBackup/BACKUP/
+Ui.Begin("Backup Tutorials...");
 
-date > ~/.local/state/shortcut/tutorials-backup.txt
+Sys.Rsync("-vahiP", "--delete",
+          Path.Combine(Paths.Media, "LEARNING") + "/",
+          Path.Combine(Paths.Media, "TutsBackup", "BACKUP") + "/");
 
-console.rule(style="cyan")
+Sys.Stamp("tutorials-backup");
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

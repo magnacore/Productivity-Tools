@@ -1,56 +1,85 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import pyperclip as pc
+// Vigenere-encrypt the clipboard in place, using the keyword stored in
+// ~/Documents/SENSITIVE DATA/vigenere_master_password.txt.
+//
+// A Vigenere cipher is trivially breakable by anyone who tries. This is for
+// keeping notes unreadable at a glance, not for protecting secrets.
 
-from rich.console import Console
-console = Console()
+var a = new Args("clipboard-vigenere-encrypt", "Vigenere-encrypt the clipboard in place")
+    .Parse(args);
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+Ui.Begin("Encrypting clipboard using Vigenere Cipher...");
 
-from utilities import generateKey, cipherText, originalText
+var keyFile = Path.Combine(Paths.SensitiveData, "vigenere_master_password.txt");
 
-console.rule(f"[bold cyan]Encrypting clipboard using Vigenere Cipher...", style="cyan")
+if (!File.Exists(keyFile))
+{
+    Ui.Err($"Missing keyword file: {keyFile}");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-with open(p'~/Documents/SENSITIVE DATA/vigenere_master_password.txt') as f:
-    lines = f.readlines()
+var keyword = File.ReadLines(keyFile).FirstOrDefault()?.Trim();
 
-# Use raw strings
-# Python cannot handle \ as the last character in a raw string. It can be at the start or middle.
-# What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
+if (string.IsNullOrEmpty(keyword))
+{
+    Ui.Err("The keyword file is empty.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-clipboard_content = pc.paste()
-keyword = lines[0].strip()
+var clipboardContent = Clip.Paste();
 
-key = generateKey(clipboard_content, keyword)
+if (clipboardContent.Length == 0)
+{
+    Ui.Err("Clipboard is empty.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-if clipboard_content.endswith("\n") or clipboard_content.endswith("\r"):
-		console.print('[bold red]Error: Content ends with a newline. Remove newline and try again.')
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-else:
-	cipher_text = cipherText(clipboard_content,key)
+// A trailing newline shifts every position on decryption, so refuse it outright
+// rather than silently producing something that will not come back.
+if (clipboardContent.EndsWith('\n') || clipboardContent.EndsWith('\r'))
+{
+    Ui.Err("Error: Content ends with a newline. Remove newline and try again.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-	pc.copy(cipher_text)
+var key = Crypto.VigenereKey(clipboardContent, keyword);
+var cipherText = Crypto.Encrypt(clipboardContent, key);
 
-	## Check
-	clipboard_content_check = pc.paste()
-	plain_text = originalText(clipboard_content_check, key)
+Clip.Copy(cipherText);
 
-	if plain_text == clipboard_content:
-		console.print(f"Copied: Vigenere encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
+// Decrypt what actually landed on the clipboard, so a mangled round trip is
+// caught here rather than when the text is needed back.
+var plainText = Crypto.Decrypt(Clip.Paste(), key);
 
-		warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
+if (plainText != clipboardContent)
+{
+    Ui.Err("ERROR!");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-		if cipher_text[0] == " ":
-			console.print(f"[bold red]Warning: Ciphertext contains a leading space! {warning_cipher_text}")
-		elif cipher_text[-1] == " ":
-			console.print(f"[bold red]Warning: Ciphertext contains a trailing space! {warning_cipher_text}")
+Ui.Line($"Copied: Vigenere encryption of [bold cyan]{Ui.Esc(clipboardContent)}[/] " +
+        $"is [bold green]{Ui.Esc(cipherText)}[/]");
 
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-	else:
-		console.print('ERROR!')
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+// Edge spaces are invisible when pasted and silently break decryption.
+var visible = cipherText.Replace(" ", "<SPACE>");
+if (cipherText[0] == ' ')
+    Ui.Err($"Warning: Ciphertext contains a leading space! {visible}");
+else if (cipherText[^1] == ' ')
+    Ui.Err($"Warning: Ciphertext contains a trailing space! {visible}");
 
-console.rule(style="cyan")
+return Ui.Done();

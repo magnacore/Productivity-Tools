@@ -1,0 +1,42 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for media-length-tag.
+//
+// Asks for the tag, then hands it over. All the scanning and summing lives there.
+
+var a = new Args("media-length-tag-tui", "Type a tag in a dialog, then run media-length-tag")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("directories", min: 1, help: "Directories to search")
+    .Parse(args);
+
+var tagText = Dlg.Input("Enter tag", "Please type the tag:");
+
+if (tagText is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+if (tagText.Trim().Length == 0)
+{
+    Ui.Err("No tag given.");
+    Snd.Error();
+    return 1;
+}
+
+var callArgs = new List<string> { "-t", tagText.Trim() };
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]media-length-tag {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("media-length-tag", callArgs);

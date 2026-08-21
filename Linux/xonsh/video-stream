@@ -1,47 +1,54 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import sys
-import argparse
-from rich.console import Console
+// Play the video whose URL sits on the first line of a text file, streaming it
+// straight into mpv without ever writing it to disk.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("video-stream", "Stream the video URL on the first line of a text file")
+    .Pos("file", "The text file to process")
+    .Parse(args);
 
-console = Console()
+var inputFile = a.Str("file");
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Play streaming video.")
-    parser.add_argument('file', help='The text file to process.')
-    return parser.parse_args()
+if (!File.Exists(inputFile))
+{
+    Console.Error.WriteLine($"Error: The file at '{inputFile}' was not found.");
+    Snd.Error();
+    return 1;
+}
 
-def process_files(args):
-    input_file = args.file
+string? firstLine;
+try
+{
+    firstLine = File.ReadLines(inputFile).FirstOrDefault()?.Trim();
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"An unexpected error occurred: {ex.Message}");
+    Snd.Error();
+    return 1;
+}
 
-    try:
-        # Open the specified file in read mode ('r')
-        with open(input_file, 'r') as file:
-            # Read the very first line from the file
-            first_line = file.readline()
-            
-            #/opt/anaconda3/envs/util/bin/yt-dlp -o - @(first_line) | mpv -
-            /opt/anaconda3/envs/util/bin/yt-dlp -f "bestvideo[height<=?1080]+bestaudio[abr<=130]/best[height<=?1080]" --merge-output-format mkv -o - @(first_line) 2>/dev/null | mpv -
-            
-    except FileNotFoundError:
-        # Handle the case where the file does not exist
-        print(f"Error: The file at '{input_file}' was not found.")
-    except Exception as e:
-        # Handle other potential errors during file processing
-        print(f"An unexpected error occurred: {e}")
+if (string.IsNullOrWhiteSpace(firstLine))
+{
+    Console.Error.WriteLine($"Error: '{inputFile}' has no URL on its first line.");
+    Snd.Error();
+    return 1;
+}
 
-def main():
-    args = parse_args()
+Ui.Begin("Streaming video...");
 
-    if args.file:
-        process_files(args)
-    else:
-        console.print(f"[red]No file selected...exiting.")
-        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+// yt-dlp muxes to stdout and mpv reads from stdin, so nothing is stored. The
+// format cap keeps the stream at a bitrate that plays smoothly while downloading.
+// A pipe is the mechanism here, so this genuinely needs a shell.
+var quoted = firstLine.Replace("'", @"'\''");
+int code = Proc.Shell(
+    "/opt/anaconda3/envs/util/bin/yt-dlp " +
+    "-f \"bestvideo[height<=?1080]+bestaudio[abr<=130]/best[height<=?1080]\" " +
+    $"--merge-output-format mkv -o - '{quoted}' 2>/dev/null | mpv -");
 
-if __name__ == "__main__":
-    main()
+Ui.End();
+return code;

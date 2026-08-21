@@ -1,19 +1,29 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
-console = Console()
+// Move staged tutorials from the laptop onto the learning drive, keeping the
+// already-converted ones apart from those still waiting, and preserving the
+// urgency split within the latter.
 
-console.rule(f"[bold cyan]Move Tutorials...")
+var a = Sys.WithDryRun(new Args("tutorials-move", "Move staged tutorials onto the learning drive")).Parse(args);
+Sys.Apply(a);
 
-console.print(f"[bold cyan]Moving Converted...")
-/opt/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/01 CONVERTED")/* @(p"/media/$USER/LEARNING/VIDEO TUTORIALS/CONVERTED/0 TO SORT/")
+Ui.Begin("Moving tutorials...");
 
-console.print(f"[bold cyan]Moving 01...")
-/opt/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/02 TO CONVERT/01")/* @(p"/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/01 IMP UR/")
+var staging = Path.Combine(Paths.Home, "Copy_To_HDD");
+var tutorials = Path.Combine(Paths.Media, "LEARNING", "VIDEO TUTORIALS");
 
-console.print(f"[bold cyan]Moving 02...")
-/opt/anaconda3/envs/util/bin/pymv -gip @(p"~/Copy_To_HDD/02 TO CONVERT/02")/* @(p"/media/$USER/LEARNING/VIDEO TUTORIALS/NOT CONVERTED/02 IMP NOT URGENT/")
+(string From, string To)[] moves =
+[
+    ("01 CONVERTED",   "CONVERTED/0 TO SORT"),
+    ("02 TO CONVERT/01", "NOT CONVERTED/01 IMP UR"),
+    ("02 TO CONVERT/02", "NOT CONVERTED/02 IMP NOT URGENT"),
+];
 
-console.rule(style="cyan")
+foreach (var (from, to) in moves)
+    Sys.MoveContents(Path.Combine(staging, from), Path.Combine(tutorials, to) + "/");
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

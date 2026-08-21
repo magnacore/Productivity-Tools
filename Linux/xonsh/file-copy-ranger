@@ -1,32 +1,36 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
-from rich.console import Console
+// Copy the files ranger has selected into its other pane, with a progress bar.
+//
+// Ranger's calling convention, which sets the argument layout: everything but
+// the last argument is a selected file (%s / %c), and the last is the target
+// directory (%d).
 
-console = Console()
+var a = new Args("file-copy-ranger", "Copy ranger-selected files to a target directory")
+    .Rest("files_and_target", min: 2, help: "Files to copy, followed by the target directory")
+    .Parse(args);
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+var allFiles = a.Rest.Take(a.Rest.Count - 1).ToList();
+var targetDir = a.Rest[^1];
 
-if len(sys.argv) >1:
-	# If no file is selected, the highlighted file is sent as the %s
-	selection = True
+Ui.Begin("Copying files...");
 
-if selection:
-	# The first element in the list is the current file name 
-	# The second element onwards are the %c sent from Ranger
-	# We also sent a %d so that is the last item in the list
-	allFiles = sys.argv[1:-1]
+// pycp gives a real progress bar and interactive overwrite prompts, which is
+// the whole reason this is not a plain cp.
+var pycpArgs = new List<string> { "/opt/anaconda3/envs/util/bin/pycp", "-gip" };
+pycpArgs.AddRange(allFiles);
+pycpArgs.Add(targetDir);
 
-	target_dir = sys.argv[-1]
+int code = Proc.Run("/opt/anaconda3/envs/util/bin/python", pycpArgs);
 
-	console.rule(f"[bold cyan]Copying files...", style="cyan")
+if (code != 0)
+{
+    Ui.Err("Copy failed.");
+    return Ui.NoFiles("Copy failed.");
+}
 
-	/opt/anaconda3/envs/util/bin/python /opt/anaconda3/envs/util/bin/pycp -gip @(allFiles) @(target_dir)
-
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-	console.print(f"[bold red]No file selected!")
-
-console.rule(style="cyan")
+return Ui.Done();

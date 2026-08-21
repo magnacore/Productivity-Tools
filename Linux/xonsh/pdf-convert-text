@@ -1,77 +1,65 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
-from rich.progress import Progress
-from pypdf import PdfReader
+// Extract the text of PDFs into sibling .txt files.
+//
+// This uses poppler's pdftotext rather than a PDF library: on real typeset books
+// it gets column order, ligatures and hyphenation right, which is what makes the
+// output worth feeding to text-to-speech.
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = Jobs.Add(new Args("pdf-convert-text", "Extract text from PDFs into .txt files")
+    .Flag("-l", "--layout", help: "Preserve the original physical layout")
+    .Rest("files", min: 1, help: "PDFs to convert"))
+    .Parse(args);
 
-from utilities import get_mime, get_filename_extension
+var allFiles = Fs.SortedFiles(a.Rest);
 
-console = Console()
+Ui.Begin("Converting PDFs to text...");
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+var pdfs = allFiles.Where(Fs.IsPdf).ToList();
+if (pdfs.Count == 0) return Ui.NoFiles("No PDFs selected!");
 
-if len(sys.argv) >= 2:
-	selection = True
+if (!Proc.Exists("pdftotext"))
+{
+    Ui.Err("pdftotext is not installed (it ships with poppler-utils).");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-if selection:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+int failures = 0;
 
-	console.rule(f"[bold cyan]Converting PDFs to text...")
+Ui.Track2(pdfs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {pdfs.Count} PDF(s):"))}[/]",
+          (fname, addBar) =>
+{
+    // No progress to read out of this tool, so the bar is one step: the spinner
+    // shows the file is in flight, and a failure leaves the bar visibly unfilled.
+    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{fname}:"))}[/]", 1);
 
-	with Progress() as progress:
+    var outputFilename = Fs.SplitExt(fname).Name + ".txt";
 
-		overall_progress = progress.add_task(f"[bold cyan]Converting {len(allFiles)} PDF(s)...", total=len(allFiles))
+    var pdftotextArgs = new List<string>();
+    if (a.Flag("layout")) pdftotextArgs.Add("-layout");
+    pdftotextArgs.Add(fname);
+    pdftotextArgs.Add(outputFilename);
 
-		while not progress.finished:
+    if (Proc.Ok("pdftotext", pdftotextArgs))
+    {
+        // Give the text the PDF's own date. These run concurrently, so creation
+        // order is arbitrary — without this, a folder sorted by modified time
+        // shows the extracted text in a jumble instead of following the PDFs.
+        advance(1);
+        Fs.CopyTimestamp(fname, outputFilename);
+        Ui.Line($"[green]Converted {Ui.Esc(fname)}[/]");
+    }
+    else
+    {
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(fname)}[/]");
+        Interlocked.Increment(ref failures);
+    }
+}, Jobs.From(a));
 
-			for fname in allFiles:				
-
-				mimestart = get_mime(fname, 1)
-
-				if mimestart != None:
-					
-					if mimestart in ['pdf']:
-
-						file_name, _ = get_filename_extension(fname)
-
-						pdf = PdfReader(fname)
-
-						text = ""
-
-						total_pages = len(pdf.pages)						
-
-						individual_progress = progress.add_task(f"[bold cyan]Converting {fname}: [/bold cyan]", total=total_pages)
-
-						for page in range(total_pages):
-							page_obj = pdf.pages[page]
-							page_text = page_obj.extract_text()
-							text += page_text
-							# convert page to text
-							progress.update(individual_progress, advance=1)
-
-							# if we are on the last page
-							if (page+1 == total_pages):
-								output_filename = file_name + ".txt"
-
-								with open(output_filename, 'w') as out:
-									out.write(text)
-									text = ""
-						
-						progress.remove_task(individual_progress)
-
-				progress.update(overall_progress, advance=1)
-
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-
-else:
-	console.print(f"[bold red]No file selected...exiting.")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-console.rule(style="cyan")
+return Ui.Done(failures);

@@ -1,59 +1,61 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import glob
-import datetime
+// Sum the duration of every media file in the current directory, and show what
+// that total costs at the playback speeds actually used for listening.
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+Ui.Begin("Summing media duration");
 
-from rich.console import Console
-from rich.table import Table
-from rich.progress import track
-from rich import print
-from rich.text import Text
-from rich import box
-from rich.markdown import Markdown
+var allFiles = Fs.CurrentDirFiles();
 
-from utilities import get_mime, get_duration, get_filename_extension
+// Split first so the "Skipping" notices are not interleaved with the progress bar.
+var mediaFiles = new List<string>();
+foreach (var file in allFiles)
+{
+    if (Fs.IsMedia(file)) mediaFiles.Add(file);
+    else Ui.Line($"[yellow]Skipping {Ui.Esc(file)}[/]");
+}
 
-console = Console()
+// ffprobe is a fork per file, so ask for them all at once.
+var durations = Ui.TrackParallel(mediaFiles, "[bold cyan]Adding : [/]", Media.Duration);
 
-console.rule(f"[bold cyan]Summing media duration", style="cyan")
+var table = Ui.NewTable("Media Duration", "Duration", "File name");
+table.Columns[0].RightAligned();
+table.Columns[1].LeftAligned();
 
-allFiles = glob.glob("*.*")
-# allFiles.sort()
+double totalDuration = 0.0;
+for (int i = 0; i < mediaFiles.Count; i++)
+{
+    totalDuration += durations[i];
+    table.AddRow(
+        Ui.Dim(i, $"[green]{Media.Hms(durations[i])}[/]"),
+        Ui.Dim(i, Ui.Esc(mediaFiles[i])));
+}
 
-total_duration = 0.0
+Ui.AddSeparator(table);
 
-# https://rich.readthedocs.io/en/latest/appendix/box.html#appendix-box
-table = Table(title="Media Duration", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
+// The speeds are the ones this collection is habitually listened at.
+var speeds = new (double Divisor, string Label)[]
+{
+    (1.0,  "Total media duration"),
+    (1.5,  "Total media duration @1.5x"),
+    (1.65, "Total media duration @1.65x"),
+    (1.82, "Total media duration @1.82x"),
+    (2.0,  "Total media duration @2x"),
+};
 
-table.add_column("Duration", justify="right", style="green")
-table.add_column("File name", justify="left")
+for (int i = 0; i < speeds.Length; i++)
+{
+    // Alternate the summary rows too, so the block reads with the same banding as
+    // the file list above it.
+    table.AddRow(
+        Ui.Dim(i, $"[bold green]{Media.Hms(totalDuration / speeds[i].Divisor)}[/]"),
+        Ui.Dim(i, $"[bold green]{speeds[i].Label}[/]"));
+}
 
-for file in track(allFiles, description="[bold cyan]Adding : [/bold cyan]"):
-	mimestart = get_mime(file)
-	
-	_, extension = get_filename_extension(file)
+Ui.Show(table);
 
-	if mimestart in ['audio', 'video'] or extension == ".mka":
-		duration = get_duration(file)
-		total_duration += duration
-		table.add_row(str(datetime.timedelta(seconds = round(duration,0))), file)
-	else:
-		print(f"[yellow]Skipping {file}[/yellow]")
-
-table.add_row(u'\u2500' * 8, Markdown("---"))
-table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration,0))}",		Text.from_markup("[bold green]Total media duration", justify="left"))
-table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.5,0))}",	Text.from_markup("[bold green]Total media duration @1.5x", justify="left"))
-table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.65,0))}",	Text.from_markup("[bold green]Total media duration @1.65x", justify="left"))
-table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/1.82,0))}",	Text.from_markup("[bold green]Total media duration @1.82x", justify="left"))
-table.add_row(f"[bold green]{datetime.timedelta(seconds = round(total_duration/2,0))}",		Text.from_markup("[bold green]Total media duration @2x", justify="left"))
-
-console.print(table)
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

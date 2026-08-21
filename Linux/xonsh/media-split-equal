@@ -1,121 +1,181 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import datetime
-import math
-import argparse
-import os
-import sys
-import fnmatch
-from rich.console import Console
-from rich.progress import track
-from rich import print
+// Split long media into session-sized parts, then tag the parts with their
+// position in the set so progress is visible from the file name alone.
+//
+// Nothing is split unless something is longer than the threshold, so this is safe
+// to run across a whole folder.
 
-sys.path.append(os.path.expanduser('~/.local/bin'))
+var a = new Args("media-split-equal", "Split media files into parts")
+    .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
+    .Opt("-t", "--threshold_seconds", required: true,
+         help: "Threshold in seconds beyond which the media should be split")
+    .Flag("-e", "--equal", help: "Create approximately equal parts")
+    .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
+    .Rest("files", min: 1, help: "Files to process")
+    .Parse(args);
 
-from utilities import (
-    get_mime,
-    get_duration,
-    get_filename_extension,
-    set_valid_file_names,
-    get_user_selection,
-    handle_original_file
-)
+int splitDuration = a.Int("split_duration");
+int thresholdSeconds = a.Int("threshold_seconds");
+bool equal = a.Flag("equal");
 
-console = Console()    
+if (splitDuration <= 0)
+{
+    Console.Error.WriteLine("error: --split_duration must be positive");
+    return 2;
+}
 
-def run_percentage_tag(file_name):
-    # Get a list of all files in the current directory
-    all_files = os.listdir('.')
-    
-    # Filter the list to only include files starting with the input string
-    matching_files = [file for file in all_files if fnmatch.fnmatch(file, f"{file_name}*")]
-    
-    # of a list as arguments to a xonsh script
-	# We are therefore calling a xonsh script from another xonsh script (which is this file)
-    file-tag-percentage @(matching_files)
+// Slugify first: mkvmerge's --split writes sibling files, and awkward characters
+// in the stem make the generated part names hard to work with.
+var cleanFileNames = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Split media files")
-    parser.add_argument('-s', '--split_duration', type=int, required=True, help="Duration in seconds to split the media")
-    parser.add_argument('-t', '--threshold_seconds', type=int, required=True, help="Threshold in seconds beyond which the media should be split")
-    parser.add_argument('-e', '--equal', action='store_true', help="Create approximately equal parts")
-    parser.add_argument('files', nargs='+', help="Files to process")
-    return parser.parse_args()
+Ui.Begin("Splitting media...");
+Ui.Info($"Looking for media longer than threshold of {thresholdSeconds / 60} minutes...");
 
-def process_files(args):
-    allFiles = args.files
-    allFiles.sort()
-    split_duration = args.split_duration
-    threshold_seconds = args.threshold_seconds
-    clean_file_names = set_valid_file_names(allFiles)
-    to_split = False
+// One pass to decide whether there is anything worth splitting at all.
+bool toSplit = false;
+foreach (var file in cleanFileNames)
+{
+    if (!Fs.IsMedia(file)) continue;
 
-    console.rule(f"[bold cyan]Splitting media...", style="cyan")
-    console.print(f"[bold cyan]Looking for media longer than threshold of {int(threshold_seconds)//60} minutes...")
+    var duration = Media.Duration(file);
+    if (duration > thresholdSeconds)
+    {
+        Ui.Good($"Media of length {Media.Hms(duration)} found. Will split...");
+        toSplit = true;
+        break;
+    }
+}
 
-    for file in clean_file_names:
-        mimestart = get_mime(file)
-        filename, extension = get_filename_extension(file)
-        if (mimestart in ['audio', 'video'] or extension == ".mka") and get_duration(file) > int(threshold_seconds):
-            console.print(f"[bold green]Media of length {datetime.timedelta(seconds = round(get_duration(file),0))} found. Will split...")
-            to_split = True
-            break
+if (!toSplit)
+{
+    Ui.Ok("Nothing to split...exiting.");
+    Snd.Error();
+    Ui.End();
+    return 0;
+}
 
-    if to_split:
-        handle_splitting(clean_file_names, split_duration, args.equal)
-    else:
-        console.print(f"[green]Nothing to split...exiting.")
-        audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+bool deleteOriginals = a.Flag("delete");
 
-def handle_splitting(clean_file_names, split_duration, equal):
-    delete_choice = get_user_selection(["No", "Yes"], "Delete original files after splitting?")
-    
-    for file in track(clean_file_names, description="[bold cyan]Splitting : [/bold cyan]"):
-        mimestart = get_mime(file)
-        
-        filename, extension = get_filename_extension(file)
+Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
+{
+    if (!Fs.IsMedia(file))
+    {
+        Ui.Line($"[yellow]Skipping {Ui.Esc(file)}[/]");
+        return;
+    }
 
-        if mimestart in ['audio', 'video'] or extension == ".mka":
-            new_filename = filename + f'-part' + (".mka" if (mimestart == 'audio' or extension == ".mka") else ".mkv")
+    var (filename, _) = Fs.SplitExt(file);
+    var newFilename = filename + "-part" + (Fs.IsVideo(file) ? ".mkv" : ".mka");
 
-            split_file(file, new_filename, split_duration, equal)
-            handle_original_file(file, delete_choice, "Media")
-            run_percentage_tag(filename)
-        else:
-            print(f"[yellow]Skipping {file}")
-    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    SplitFile(file, newFilename, splitDuration, equal);
 
-def split_file(file, new_filename, split_duration, equal):
-    duration = get_duration(file)
-    parts=int(duration//split_duration)
+    // Stamp the parts with the source's date before the source is moved away, so
+    // the whole group keeps its place in a modified-time sort. Each part is offset
+    // by a millisecond so they also keep their order within that group.
+    // The source itself no longer matches PartsOf, but the guard costs nothing and
+    // keeps this correct if that ever loosens again.
+    int sequence = 0;
+    foreach (var part in PartsOf(filename))
+        if (part != Path.GetFileName(file)) Fs.CopyTimestamp(file, part, sequence++);
 
-    if (parts != 0):
-        remaining = duration%split_duration
-        excess = math.ceil(remaining/parts)
-        
-        if equal:
-            split_duration_with_excess = int(split_duration + excess)
-            
-            mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_with_excess)+'s')
-        else:
-            if excess < 30:
-                split_duration_with_excess = int(split_duration + excess)
-            else:
-                split_duration_with_excess = int(split_duration)
-            mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration_with_excess)+'s')
-    
-    else:
-        ## This path is used when the media's duration is less than split duration
-        mkvmerge -q -o @(new_filename) @(file) --split duration:@(str(split_duration)+'s')
+    Fs.HandleOriginal(file, deleteOriginals, "Media");
+    RunPercentageTag(filename);
+});
 
+return Ui.Done();
 
-def main():
-    args = parse_args()
+/// Split one file, absorbing the leftover tail into the parts rather than
+/// leaving a stub at the end.
+static void SplitFile(string file, string newFilename, int splitDuration, bool equal)
+{
+    var duration = Media.Duration(file);
+    int parts = (int)(duration / splitDuration);
 
-    if args.files:
-        process_files(args)
-    
-    console.rule(style="cyan")
+    int effectiveDuration;
+    if (parts == 0)
+    {
+        // Shorter than one part: mkvmerge just copies it.
+        effectiveDuration = splitDuration;
+    }
+    else
+    {
+        // Spread the remainder over the parts so none is much shorter.
+        double remaining = duration % splitDuration;
+        int excess = (int)Math.Ceiling(remaining / parts);
 
-if __name__ == "__main__":
-    main()
+        // Without --equal, only absorb a remainder small enough not to distort
+        // the part length noticeably.
+        effectiveDuration = (equal || excess < 30) ? splitDuration + excess : splitDuration;
+    }
+
+    if (!Proc.Ok("mkvmerge", "-q", "-o", newFilename, file, "--split", $"duration:{effectiveDuration}s"))
+        Ui.Line($"[bold red]Could not split {Ui.Esc(file)}[/]");
+}
+
+/// The part files mkvmerge just wrote for this source, in order.
+///
+/// Matched on the exact shape mkvmerge produces — "<stem>-part-NNN.<ext>" — and not
+/// on a bare "name starts with the stem". A bare prefix also picks up a *different*
+/// source's parts whenever one stem is a prefix of another: splitting "intro.mkv"
+/// and "intro-extra.mkv" in one run would hand "intro" the whole of
+/// "intro-extra-part-*" as well, stamping one group with the other's date and
+/// computing both groups' percentage tags over the combined count.
+static List<string> PartsOf(string fileName)
+    => Directory.GetFiles(".")
+        .Select(Path.GetFileName)
+        .OfType<string>()
+        .Where(f => IsPartOf(f, fileName))
+        .OrderBy(f => f, StringComparer.Ordinal)
+        .ToList();
+
+/// True when a name is one of fileName's split parts: the stem, then "-part", then
+/// mkvmerge's "-NNN" counter, then nothing but the extension.
+static bool IsPartOf(string candidate, string fileName)
+{
+    const string marker = "-part";
+
+    var rest = candidate.AsSpan();
+    if (!rest.StartsWith(fileName, StringComparison.Ordinal)) return false;
+    rest = rest[fileName.Length..];
+
+    if (!rest.StartsWith(marker, StringComparison.Ordinal)) return false;
+    rest = rest[marker.Length..];
+
+    // mkvmerge numbers the parts whenever --split is given, but accept an
+    // unnumbered name too rather than lean on that.
+    if (rest.Length > 0 && rest[0] == '-')
+    {
+        rest = rest[1..];
+
+        int digits = 0;
+        while (digits < rest.Length && char.IsAsciiDigit(rest[digits])) digits++;
+        if (digits == 0) return false;
+
+        rest = rest[digits..];
+    }
+
+    // Only the extension may be left. This is also what excludes anything already
+    // carrying a "-003r-033p" tag from an earlier run.
+    return rest.Length > 1 && rest[0] == '.' && !rest[1..].Contains('.');
+}
+
+/// Hand the freshly written parts to file-tag-percentage.
+///
+/// Kept as a separate process on purpose: these scripts are meant to compose, and
+/// tagging stays useful on its own.
+///
+/// No need to exclude the source here: PartsOf cannot match it. Before that was
+/// true this only worked because HandleOriginal had already moved the source out of
+/// the directory by the time we got here.
+static void RunPercentageTag(string fileName)
+{
+    var matchingFiles = PartsOf(fileName);
+    if (matchingFiles.Count == 0) return;
+
+    Proc.Call("file-tag-percentage", matchingFiles, quiet: true);
+}

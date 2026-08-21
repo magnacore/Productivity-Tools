@@ -1,66 +1,80 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-# No need to select individual files. Select all the files and run the script.
-# All common files will be grouped and all uncommon files will be ignored.
+// Group files that share a name stem and move each group into a folder named
+// after it. Select everything and run — files with no siblings are left alone.
+//
+//     lecture-part-01.mkv, lecture-part-02.mkv  ->  lecture/lecture-part-0*.mkv
+//     stray.mkv                                 ->  untouched
 
-import os
-import re
-import shutil
-from collections import defaultdict
-import argparse
+using System.Text.RegularExpressions;
 
-def longest_common_prefix(strs):
-    """
-    Function to find the longest common prefix in a list of strings
-    """
-    if not strs:
-        return ""
+var a = new Args("files-group-move", "Move files into folders named after their common prefix")
+    .Rest("files", min: 1, help: "Files to group")
+    .Parse(args);
 
-    shortest_str = min(strs, key=len)
-    for i, char in enumerate(shortest_str):
-        for other in strs:
-            if other[i] != char:
-                return shortest_str[:i]
-    return shortest_str
+// Candidate groups: files in the same directory whose names match once digits
+// and dots are removed, so "ep01.mkv" and "ep02.mkv" land together.
+var groups = new Dictionary<(string Key, string Dir), List<string>>();
 
-def clean_prefix(prefix):
-    """
-    Strip trailing part-numbering patterns (e.g. -part-00, -ep-0, -chapter-00)
-    and any trailing incomplete numeric segments from the common prefix.
-    """
-    prefix = re.sub(
-        r'[-_]*(part)?[-_]*\d*$',
-        '',
-        prefix,
-        flags=re.IGNORECASE
-    )
-    prefix = prefix.rstrip('-_')
-    return prefix
+foreach (var filePath in a.Rest)
+{
+    var directory = Path.GetDirectoryName(filePath) ?? string.Empty;
+    var file = Path.GetFileName(filePath);
+    var key = new string(file.Where(ch => !char.IsDigit(ch) && ch != '.').ToArray());
 
-def move_files_based_on_prefix(file_paths):
-    # Group files based on the prefix before the first digit or underscore
-    file_groups = defaultdict(list)
-    for file_path in file_paths:
-        directory, file = os.path.split(file_path)
-        # prefix = ''.join(char for char in file if not char.isdigit() and not char == '_')
-        prefix = ''.join(char for char in file if not char.isdigit() and not char == '.')
-        file_groups[(prefix, directory)].append(file)
+    if (!groups.TryGetValue((key, directory), out var list))
+        groups[(key, directory)] = list = [];
+    list.Add(file);
+}
 
-    # For each group of files, find the longest common prefix and move the files into that folder
-    for (prefix, directory), group in file_groups.items():
-        common_prefix = longest_common_prefix(group)
-        common_prefix = clean_prefix(common_prefix)
-        folder_path = os.path.join(directory, common_prefix)
+Ui.Begin("Grouping files...");
 
-        if len(group) > 1:
-            os.makedirs(folder_path, exist_ok=True)
-            for file in group:
-                shutil.move(os.path.join(directory, file), folder_path)
+foreach (var (key, group) in groups)
+{
+    // A group of one is just a file; there is nothing to gather.
+    if (group.Count <= 1) continue;
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Move files based on common prefix.')
-    parser.add_argument('files', metavar='F', type=str, nargs='+',
-                        help='a list of file paths to process')
+    var folderName = CleanPrefix(LongestCommonPrefix(group));
+    if (folderName.Length == 0)
+    {
+        Ui.Warn($"Skipping {group.Count} files with no usable common prefix.");
+        continue;
+    }
 
-    args = parser.parse_args()
-    move_files_based_on_prefix(args.files)
+    var folderPath = Path.Combine(key.Dir, folderName);
+    Directory.CreateDirectory(folderPath);
+
+    foreach (var file in group)
+    {
+        try { Fs.Move(Path.Combine(key.Dir, file), Path.Combine(folderPath, file)); }
+        catch (Exception ex) { Ui.Err($"Could not move {file}: {ex.Message}"); }
+    }
+
+    Ui.Ok($"Moved {group.Count} files into {folderName}/");
+}
+
+return Ui.Done();
+
+static string LongestCommonPrefix(List<string> strings)
+{
+    if (strings.Count == 0) return string.Empty;
+
+    var shortest = strings.MinBy(s => s.Length)!;
+    for (int i = 0; i < shortest.Length; i++)
+        foreach (var other in strings)
+            if (other[i] != shortest[i]) return shortest[..i];
+
+    return shortest;
+}
+
+/// Drop the part-numbering tail the common prefix inevitably ends with, so
+/// "lecture-part-0" becomes "lecture".
+static string CleanPrefix(string prefix)
+{
+    prefix = Regex.Replace(prefix, @"[-_]*(part)?[-_]*\d*$", string.Empty, RegexOptions.IgnoreCase);
+    return prefix.TrimEnd('-', '_');
+}

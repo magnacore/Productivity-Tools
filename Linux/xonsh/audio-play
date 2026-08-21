@@ -1,10 +1,43 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; exec /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@" >/dev/null
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
+// This one program writes NOTHING to the terminal, which is why its header
+// redirects stdout to /dev/null and skips the usual terminal reset.
+//
+// Every caller backgrounds it ("audio-play ... &"). A backgrounded .NET process
+// takes a moment to start, and by the time its runtime emits terminfo's smkx the
+// foreground command has already finished and a file manager has redrawn the
+// screen — so those escapes land in the middle of its UI and reset the keypad
+// mode it just set for itself. Sending stdout to /dev/null keeps all of it off
+// the terminal. Errors still go to stderr.
+//
+// Play a sound file, quietly and with no window — the suite's notification beep.
+//
+// C# scripts do NOT call this; they use Snd.Success() / Snd.Error(), which reach
+// ffplay directly and skip a whole process start. This command exists for the
+// callers outside the suite: ranger bindings, .desktop actions and shell aliases.
+//
+// Every one of those callers backgrounds it ("audio-play ... &"), so the default
+// here is to detach and return at once. Pass -w to wait for playback instead.
 
-if len(sys.argv) > 1:
-	audio_to_play = sys.argv[1]
+var a = new Args("audio-play", "Play a sound file quietly, with no window")
+    .Flag("-w", "--wait", help: "Wait for playback to finish instead of detaching")
+    .Rest("file", min: 1, help: "Audio file to play")
+    .Parse(args);
 
-	# Send std out to /dev/null to prevent fflay from creating an extra
-	# line on the terminal
-	ffplay -loglevel quiet -autoexit -nodisp @(audio_to_play) out>/dev/null
+var file = a.Rest[0];
+
+if (!File.Exists(file))
+{
+    Console.Error.WriteLine($"audio-play: no such file: {file}");
+    return 1;
+}
+
+if (a.Flag("wait"))
+    return Proc.Run("ffplay", ["-loglevel", "quiet", "-autoexit", "-nodisp", file], quiet: true);
+
+Snd.Play(file);
+return 0;

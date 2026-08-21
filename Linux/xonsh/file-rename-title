@@ -1,32 +1,44 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+// Slugify file names, then put them back into Title Case — turning
+// "pocket_some ARTICLE.html" into "Some Article.html".
 
-from utilities import get_filename_extension, title_case, set_valid_file_names
+var a = new Args("file-rename-title", "Rename files to Title Case")
+    .Rest("files", min: 1, help: "Files to rename")
+    .Parse(args);
 
-# sys.argv[0] is the name of the script which will always be there
-if len(sys.argv) > 1:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+// Slugify first so accents, punctuation and odd spacing are gone, then title-case
+// the clean result.
+var files = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
-	allFiles = set_valid_file_names(allFiles)
+foreach (var file in files)
+{
+    var (name, ext) = Fs.SplitExt(file);
+    var titled = Fs.TitleCase(name);
 
-	for file in allFiles:
-		file_name, extension = get_filename_extension(file)		
+    string clean;
+    if (ext.Length == 0)
+    {
+        // No extension means a directory.
+        clean = titled;
+    }
+    else
+    {
+        clean = titled + ext;
+        // Pocket exports carry the service name in front of every article.
+        clean = clean.Replace("Pocket ", string.Empty);
+        // TitleCase capitalises after the dot; ".tar" must stay lowercase.
+        clean = clean.Replace(".Tar", ".tar");
+    }
 
-		valid_file_name = title_case(file_name)
+    if (file == clean) continue;
 
-		clean_file_name = ""
+    try { Fs.Move(file, clean); }
+    catch (Exception ex) { Ui.Err($"Could not rename {file}: {ex.Message}"); }
+}
 
-		# We are dealing with folder if extension is null
-		if extension == "":
-			clean_file_name = valid_file_name
-		else: # We are dealing with files
-			clean_file_name = f"{valid_file_name}{extension}"
-			clean_file_name = clean_file_name.replace("Pocket ", "")
-			clean_file_name = clean_file_name.replace(".Tar", ".tar")
-
-		os.rename(file, clean_file_name)
+return 0;

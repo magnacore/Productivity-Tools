@@ -1,14 +1,21 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
-console = Console()
+// Mirror the queue drive. No snapshots here: the queue is a staging area whose
+// contents are meant to be consumed and moved on, not preserved.
 
-console.rule(f"[bold cyan]Backing up queue...")
+var a = Sys.WithDryRun(new Args("queue-backup", "Mirror QUEUE_01_A onto QUEUE_01_B")).Parse(args);
+Sys.Apply(a);
 
-rsync -vahiP --delete /media/$USER/QUEUE_01_A/QUEUE/ /media/$USER/QUEUE_01_B/QUEUE_BACKUP/
+Ui.Begin("Backing up queue...");
 
-date > ~/.local/state/shortcut/queue-backup.txt
+Sys.Rsync("-vahiP", "--delete",
+          Path.Combine(Paths.Media, "QUEUE_01_A", "QUEUE") + "/",
+          Path.Combine(Paths.Media, "QUEUE_01_B", "QUEUE_BACKUP") + "/");
 
-console.rule(style="cyan")
+Sys.Stamp("queue-backup");
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

@@ -1,75 +1,118 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import sys
-import json
-from rich.console import Console
-from rich import print_json
+// Lay a looped background track under a spoken recording.
+//
+// The music is slowed by the factor you intend to listen at, so that when the
+// result is played back at that speed the music comes out at its natural tempo.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
-from utilities import (get_filename_extension, get_mime, get_timestamp, get_user_selection)
+using System.Text.Json;
 
-console = Console()
+var a = new Args("audio-add-music", "Mix looped background music under a spoken audio file")
+    .Opt("-v", "--volume", @default: "0.4",
+         help: "Background music level, 0.1 to 1.0")
+    .Opt("-s", "--speed", @default: "1.5",
+         help: "Playback speed you will listen at, so the music comes out at natural tempo")
+    .Opt("-m", "--music", required: true,
+         help: "Which of the two files is the background music")
+    .Rest("files", min: 2, help: "The spoken audio file and the background music, in either order")
+    .Parse(args);
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+if (a.Rest.Count != 2)
+{
+    Ui.Err("Select two files: the audio and the background music.");
+    Snd.Error();
+    return 1;
+}
 
-if len(sys.argv) == 3:
-	selection = True
-else:
-	console.print(f"[bold red]Select two files: the audio and the background music.")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+var input1 = a.Rest[0];
+var input2 = a.Rest[1];
 
-if selection:
-	input_1, input_2 = sys.argv[1:3]
+Ui.Begin("Adding background music to audio...");
 
-	console.rule(f"[bold cyan]Adding background music to audio...", style="cyan")
+if (!Fs.IsAudio(input1) && !Fs.IsAudio(input2))
+{
+    Ui.Err("Select the audio and the background music.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-	if get_mime(input_1) in ['audio'] or get_mime(input_2) in ['audio']:
+double volume = Math.Clamp(a.Dbl("volume", 0.4), 0.01, 1.0);
 
-		volume_selection = ['0.4', '0.3', '0.2', '0.1', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0'] # most used first
-		volume = float(get_user_selection(volume_selection, "Choose volume of background music in %..."))
+// The mpv playback speeds this collection is listened at.
+double playbackSpeed = Math.Clamp(a.Dbl("speed", 1.5), 0.5, 4.0);
 
-		playback_speed_selection = ['1.5', '1.65', '1.82', '2.0', '1.0'] # mpv defaults
-		playback_speed = float(get_user_selection(playback_speed_selection, "Choose the speed at which you will listen to the audio..."))
+// --music names one of the two inputs; whichever it is, the other is the speech.
+var backgroundMusic = a.Str("music");
 
-		selected_files = [input_1, input_2]
-		background_music = get_user_selection(selected_files, "Which file is the background music?")
-		
-		if background_music == input_1:
-			# if the background music is the first input, then swap the files
-			input_1, input_2 = input_2, input_1
+if (backgroundMusic != input1 && backgroundMusic != input2)
+{
+    Ui.Err($"--music must be one of the two files given: {input1} or {input2}");
+    Snd.Error();
+    Ui.End();
+    return 2;
+}
 
-		new_filename, _ = get_filename_extension(input_1)
-		new_filename = new_filename + "-" + get_timestamp() + '.opus'		
+// From here on input1 is the speech and input2 is the music.
+if (backgroundMusic == input1) (input1, input2) = (input2, input1);
 
-		# Command to get audio file details
-		# Do not use fstring in subprocess
-		bitrate_json = $(ffprobe -v quiet -print_format json -show_streams @(input_2))
-		print_json(bitrate_json)
+var newFilename = $"{Fs.SplitExt(input1).Name}-{Fs.Timestamp()}.opus";
 
-		# Parse JSON output
-		details = json.loads(bitrate_json)
+// Match the music's own bitrate so the mix does not become the weakest link.
+int bitrate = 0;
+var bitrateJson = Proc.Capture("ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", input2);
 
-		# Fetch the bitrate
-		for stream in details['streams']:
-			if stream['codec_type'] == 'audio':
-				bitrate = int(stream.get('bit_rate', '0')) // 1000  # Bitrate in kbps
-				break
+try
+{
+    using var doc = JsonDocument.Parse(bitrateJson);
+    foreach (var stream in doc.RootElement.GetProperty("streams").EnumerateArray())
+    {
+        if (stream.TryGetProperty("codec_type", out var type) && type.GetString() == "audio")
+        {
+            if (stream.TryGetProperty("bit_rate", out var br) &&
+                int.TryParse(br.GetString(), out var bps))
+                bitrate = bps / 1000;
+            break;
+        }
+    }
+}
+catch (Exception ex)
+{
+    Ui.Warn($"Could not read the music's bitrate ({ex.Message}); falling back to 128k.");
+}
 
-		if bitrate == 0:
-			bitrate = 128
+if (bitrate == 0) bitrate = 128;
 
-		console.print(f"[green]Target Bitrate {bitrate}kbps")
+Ui.Ok($"Target Bitrate {bitrate}kbps");
 
-		ffmpeg -i @(input_1) -stream_loop -1 -i @(input_2) -filter_complex f"[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=1.0[a0]; [1:a]atempo={1/playback_speed},aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume={volume}[a1]; [a0][a1]amix=inputs=2:duration=first:dropout_transition=2,pan=stereo|c0<c0+c2|c1<c1+c3[aout]" -map "[aout]" -c:a libopus -b:a @(f"{bitrate}k") @(new_filename)
+// [0:a] speech at full volume; [1:a] music looped, slowed to 1/playback speed and
+// attenuated; amix ends with the speech (duration=first), and the pan folds the
+// mix back down to plain stereo.
+var filter =
+    "[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=1.0[a0]; " +
+    $"[1:a]atempo={(1 / playbackSpeed).ToString(CultureInfo.InvariantCulture)}," +
+    "aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo," +
+    $"volume={volume.ToString(CultureInfo.InvariantCulture)}[a1]; " +
+    "[a0][a1]amix=inputs=2:duration=first:dropout_transition=2," +
+    "pan=stereo|c0<c0+c2|c1<c1+c3[aout]";
 
-		console.print(f"[green]Added background music to {new_filename}")
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-	else:
-		console.print(f"[bold red]Select the audio and the background music.")
-		audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+if (Proc.Ok("ffmpeg", "-i", input1, "-stream_loop", "-1", "-i", input2,
+            "-filter_complex", filter, "-map", "[aout]",
+            "-c:a", "libopus", "-b:a", $"{bitrate}k", newFilename))
+{
+    // Named after the speech track, so it inherits that file's date rather than
+    // the music's.
+    Fs.CopyTimestamp(input1, newFilename);
 
-console.rule(style="cyan")
+    Ui.Ok($"Added background music to {newFilename}");
+    return Ui.Done();
+}
 
+Ui.Err($"Could not add background music to {newFilename}");
+Snd.Error();
+Ui.End();
+return 1;

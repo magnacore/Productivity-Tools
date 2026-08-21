@@ -3,16 +3,40 @@
 import os
 import re
 import argparse
+import subprocess
+import warnings
+
+# ebooklib asks lxml for '//xmlns:rootfile[@media-type]', which lxml warns about on
+# every read_epub. That is one multi-line FutureWarning per book, on stderr, landing
+# in the middle of the live progress display and breaking it. Nothing here acts on
+# FutureWarnings, so switch them off before ebooklib is imported.
+warnings.simplefilter("ignore", FutureWarning)
+
 import ebooklib as eb
 from ebooklib import epub
-from rich.console import Console
-from rich.progress import track
+from rich.console import Console, Group
+from rich.live import Live
+from rich.progress import (
+    Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn,
+)
 from rich import print
-import fnmatch
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 
 myhome = os.path.expanduser('~')
 sys.path.append(f"{myhome}/.local/bin")
+
+# No notification sound is played from here, deliberately.
+#
+# This script used to end with "audio-play ... &". Backgrounded from xonsh, that
+# child writes terminfo escapes to the terminal a moment AFTER this script has
+# exited — by which time a file manager has redrawn its UI, so they land in the
+# middle of it and reset the keypad mode it just set for itself. (Backgrounded
+# from /bin/sh the same command is silent; it is xonsh's job control that lets it
+# through.)
+#
+# epub-convert-multiple-tui plays the sound instead, in the foreground, once this
+# has finished.
 
 from utilities import get_mime, get_filename_extension
 
@@ -168,92 +192,270 @@ def extract_head_metadata(html_bytes):
 
 
 def run_percentage_tag(file_name):
-    # Get a list of all files in the current directory
+    """Hand this book's freshly written parts to file-tag-percentage.
+
+    A plain subprocess with its output discarded, rather than xonsh's
+    "file-tag-percentage @(files)" form, for two reasons. It draws its own progress
+    bar, which fought the live display here and left a trail of half-drawn "Tagging"
+    bars down the screen. And xonsh's subprocess syntax is not safe to call from a
+    worker thread, which is where this now runs.
+    """
     all_files = os.listdir(f'./{file_name}')
 
-    # Filter the list to only include files starting with the input string
-    matching_files = [f for f in all_files if fnmatch.fnmatch(f, f"{file_name}*")]
+    # Matched on the exact shape the writer above produces -- "<stem>-NNN.epub" --
+    # and NOT with fnmatch, which reads its pattern as a glob. A book whose title
+    # contains glob punctuation therefore matched nothing: for
+    # "Animal Rights [2nd Edition]" the brackets became a character class, the list
+    # came back empty, and that book went untagged. It looked random only because it
+    # depended on which titles happened to be selected.
+    matching_files = sorted(f for f in all_files if is_part_of(f, file_name))
 
-    # Pass full paths to file-tag-percentage
+    if not matching_files:
+        print(f"[bold red]No parts found to tag in {file_name}[/bold red]")
+        return 1
+
     matching_files = [f"./{file_name}/{f}" for f in matching_files]
 
-    # @() expands a list as individual CLI arguments. We are therefore
-    # calling a xonsh script from another xonsh script (this file).
-    file-tag-percentage @(matching_files)
+    # Output captured rather than discarded, and the exit code checked. Discarding
+    # both is what let the failure above go unnoticed.
+    result = subprocess.run(['file-tag-percentage'] + matching_files,
+                            capture_output=True, text=True, check=False)
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or '').strip().splitlines()
+        print(f"[bold red]Could not tag the parts of {file_name}[/bold red]")
+        for line in detail[:3]:
+            print(f"[dim]    {line}[/dim]")
+        return 1
+
+    return 0
+
+
+PART_RE = re.compile(r'-\d{3,}\.epub$', re.IGNORECASE)
+
+
+def is_part_of(candidate, stem):
+    """True when `candidate` is one of `stem`'s parts: the stem, then "-NNN.epub".
+
+    A plain prefix test would also accept a different book whose title merely starts
+    with this one's.
+    """
+    if not candidate.startswith(stem):
+        return False
+
+    return PART_RE.fullmatch(candidate[len(stem):]) is not None
+
+
+def fit(text, width):
+    """Pad or middle-truncate to exactly `width` characters.
+
+    Every bar description is passed through this so they are all the same width,
+    which keeps the bars starting in the same column however long a book's name is.
+    Cut from the middle: two long titles are as often told apart by their tails as
+    their heads, and this keeps the extension and trailing colon.
+    """
+    if len(text) <= width:
+        return text.ljust(width)
+
+    keep = width - 1                       # one character for the ellipsis
+    head = (keep + 1) // 2                 # odd character to the head
+    return text[:head] + '\u2026' + text[len(text) - (keep - head):]
+
+
+def description_width():
+    """Two fifths of the terminal, bounded so the name is neither squeezed to
+    nothing nor allowed to crowd out the bar. Mirrors the C# programs."""
+    try:
+        columns = os.get_terminal_size().columns
+    except OSError:
+        columns = 100
+    return max(20, min(columns * 2 // 5, 56))
+
+
+def default_jobs():
+    """How many books to split at once, derived the same way the C# programs derive
+    their -j default: half the cores, capped by what free memory allows."""
+    cores = max(1, (os.cpu_count() or 2) // 2)
+    try:
+        with open('/proc/meminfo') as meminfo:
+            for line in meminfo:
+                if line.startswith('MemAvailable:'):
+                    megabytes = int(line.split()[1]) // 1024
+                    return max(1, min(cores, megabytes // 512))
+    except (OSError, ValueError, IndexError):
+        pass
+    return cores
+
+
+def stamp_parts(source, output_folder_name):
+    """Copy the source's mtime onto each part, one millisecond apart."""
+    try:
+        # Integer nanoseconds, not float seconds: adding 0.001 to a 1.5e9-second
+        # float lands on 0.000999927, which is still strictly ordered but needlessly
+        # imprecise. os.utime's ns form is exact.
+        source_ns = os.stat(source).st_mtime_ns
+    except OSError:
+        return
+
+    parts = sorted(
+        os.path.join(output_folder_name, name)
+        for name in os.listdir(output_folder_name)
+    )
+
+    for index, part in enumerate(parts):
+        try:
+            stamp_ns = source_ns + index * 1_000_000  # one millisecond apart
+            os.utime(part, ns=(stamp_ns, stamp_ns))
+        except OSError:
+            pass
+
+
+MEDIA_FILTERS = [eb.ITEM_IMAGE, eb.ITEM_AUDIO, eb.ITEM_VIDEO]
+
+
+def split_one(file, chunk_size, per_book, width):
+    """Split a single epub. Runs on a worker thread, touching only its own book and
+    its own output folder, so nothing here is shared with the other workers."""
+    output_folder_name, _ = get_filename_extension(file)
+    os.makedirs(output_folder_name, exist_ok=True)
+
+    book = epub.read_epub(file)
+    chapters = list(book.get_items_of_type(eb.ITEM_DOCUMENT))
+
+    # rich's Progress guards its own state with a lock, so adding a task and
+    # advancing it from a worker thread is safe.
+    task = per_book.add_task(
+        f"[bold cyan]{fit(os.path.basename(file) + ':', width)}[/bold cyan]",
+        total=max(len(chapters), 1),
+    )
+
+    i = 0
+    for chapter in chapters:
+        chapter_content = chapter.content
+        chapter_title = chapter.get_name()
+
+        # Pull the title + stylesheet/script links out of the original
+        # chapter's <head>. ebooklib will reconstruct the new <head> from
+        # these -- if we don't re-inject them, every chunk loses its CSS
+        # and reverts to the reader's default styling.
+        head_title, head_links = extract_head_metadata(chapter_content)
+
+        chunks = split_html_by_size(chapter_content, chunk_size)
+
+        for chunk in chunks:
+            new_book = epub.EpubBook()
+            new_chapter = epub.EpubHtml(
+                title=head_title or chapter_title.split(".")[0],
+                file_name=chapter_title,
+                content=chunk,
+            )
+            for link in head_links:
+                new_chapter.add_link(**link)
+
+            chunk_refs = referenced_resources(chunk)
+
+            # Copy non-HTML manifest items. Stylesheets / fonts / scripts /
+            # nav / etc. are copied unconditionally so every chunk renders
+            # with the same styling as the source. Media items are copied
+            # only when this chunk actually references them.
+            for item in book.get_items():
+                if is_epub_html(item):
+                    continue
+                if item.get_type() in MEDIA_FILTERS:
+                    name = item.get_name()
+                    if name in chunk_refs or os.path.basename(name) in chunk_refs:
+                        new_book.add_item(item)
+                else:
+                    new_book.add_item(item)
+
+            new_book.add_item(new_chapter)
+            new_book.toc = [new_chapter]
+            new_book.spine = [new_chapter]
+
+            output_file = os.path.join(
+                output_folder_name,
+                f"{output_folder_name}-{str(i+1).zfill(3)}.epub",
+            )
+            i += 1
+            epub.write_epub(output_file, new_book)
+
+        per_book.advance(task)
+
+    # Give every part the book's own date, offset a millisecond each.
+    #
+    # Two reasons. The parts are written now, so without this they cluster at
+    # "now" instead of sitting where the book did in a date-sorted listing. And
+    # several are written inside the same millisecond, so they end up with
+    # byte-identical timestamps — nothing for a sort to order them by, and a
+    # file manager's tie-break can then show part 003 before part 001.
+    stamp_parts(file, output_folder_name)
+
+    # Handed back so a tagging failure counts as a failure for this book rather than
+    # passing silently, which is how the glob bug above stayed hidden.
+    return run_percentage_tag(output_folder_name)
 
 
 def process_files(args):
-    files = args.files
-    chunk_size = args.sizekb
-    media_filters = [eb.ITEM_IMAGE, eb.ITEM_AUDIO, eb.ITEM_VIDEO]
+    width = description_width()
 
-    for file in track(files, description="[bold cyan]Split : [/bold cyan]"):
-        mimestart = get_mime(file, part=1)
-        if mimestart is None or mimestart not in ['epub', 'epub+zip']:
-            continue
+    columns = (
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(elapsed_when_finished=True),
+    )
 
-        output_folder_name, _ = get_filename_extension(file)
-        mkdir -p @(output_folder_name)
+    # Two Progress objects rather than one. A Group renders its members in order, so
+    # this puts the per-book bars on top and the overall bar underneath, and keeps it
+    # there as books come and go. When a run has more books than the terminal has
+    # rows, rich crops the top of the group, so the overall bar stays on screen where
+    # it can still be read.
+    per_book = Progress(*columns)
+    overall = Progress(*columns)
 
-        book = epub.read_epub(file)
-        chapters = book.get_items_of_type(eb.ITEM_DOCUMENT)
+    # get_mime calls mimetypes.init(), which rebuilds a module-global map. Filter
+    # here, on the main thread, rather than inside the workers.
+    epubs = [f for f in args.files
+             if get_mime(f, part=1) in ('epub', 'epub+zip')]
 
-        i = 0
-        for chapter in chapters:
-            chapter_content = chapter.content
-            chapter_title = chapter.get_name()
+    for skipped in [f for f in args.files if f not in epubs]:
+        print(f"[yellow]Skipping {skipped}[/yellow]")
 
-            # Pull the title + stylesheet/script links out of the original
-            # chapter's <head>. ebooklib will reconstruct the new <head> from
-            # these -- if we don't re-inject them, every chunk loses its CSS
-            # and reverts to the reader's default styling.
-            head_title, head_links = extract_head_metadata(chapter_content)
+    if not epubs:
+        return 0
 
-            chunks = split_html_by_size(chapter_content, chunk_size)
+    total = overall.add_task(
+        f"[bold cyan]{fit(f'Split {len(epubs)} epub(s):', width)}[/bold cyan]",
+        total=len(epubs),
+    )
 
-            for chunk in chunks:
-                new_book = epub.EpubBook()
-                new_chapter = epub.EpubHtml(
-                    title=head_title or chapter_title.split(".")[0],
-                    file_name=chapter_title,
-                    content=chunk,
-                )
-                for link in head_links:
-                    new_chapter.add_link(**link)
+    failures = 0
 
-                chunk_refs = referenced_resources(chunk)
+    with Live(Group(per_book, overall), refresh_per_second=12):
+        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+            futures = {pool.submit(split_one, f, args.sizekb, per_book, width): f
+                       for f in epubs}
 
-                # Copy non-HTML manifest items. Stylesheets / fonts / scripts /
-                # nav / etc. are copied unconditionally so every chunk renders
-                # with the same styling as the source. Media items are copied
-                # only when this chunk actually references them.
-                for item in book.get_items():
-                    if is_epub_html(item):
-                        continue
-                    if item.get_type() in media_filters:
-                        name = item.get_name()
-                        if name in chunk_refs or os.path.basename(name) in chunk_refs:
-                            new_book.add_item(item)
-                    else:
-                        new_book.add_item(item)
+            # as_completed, not pool.map: map yields in submission order, which would
+            # hold the overall bar back behind whichever book happens to be slowest.
+            for future in as_completed(futures):
+                try:
+                    if future.result():
+                        failures += 1
+                except Exception as err:
+                    print(f"[bold red]Could not split {futures[future]}: {err}[/bold red]")
+                    failures += 1
+                overall.advance(total)
 
-                new_book.add_item(new_chapter)
-                new_book.toc = [new_chapter]
-                new_book.spine = [new_chapter]
-
-                output_file = os.path.join(
-                    output_folder_name,
-                    f"{output_folder_name}-{str(i+1).zfill(3)}.epub",
-                )
-                i += 1
-                epub.write_epub(output_file, new_book)
-
-        run_percentage_tag(output_folder_name)
+    return failures
 
 
 def main():
     parser = argparse.ArgumentParser(description="Split an EPUB file into smaller parts.")
     parser.add_argument('-s', '--sizekb', type=float, default=10.0, required=False, help="Split size in KB")
+    parser.add_argument('-j', '--jobs', type=int, default=default_jobs(), required=False,
+                        help="Books to split at once, 1 for one at a time "
+                             f"(default: {default_jobs()})")
     parser.add_argument('files', nargs='+', help="Epubs to split")
 
     # argparse prints usage and exits via SystemExit on bad args; intercept
@@ -262,13 +464,15 @@ def main():
         args = parser.parse_args()
     except SystemExit as err:
         if err.code not in (None, 0):
-            audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+            pass  # the caller reports failure; see the note at the top
         raise
 
-    process_files(args)
+    failures = process_files(args)
 
-    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
     console.rule(style="cyan")
+
+    if failures:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

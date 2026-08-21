@@ -1,57 +1,68 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
-from rich import print
+// Turn PDFs into audiobooks, by chaining two other programs in this suite:
+//
+//     pdf-convert-text  ->  text-to-speech
+//
+// The PDF's modification time is carried onto the audio, so a date-sorted
+// library keeps its order.
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("pdf-convert-audio", "Convert PDFs to audio by chaining text extraction and TTS")
+    .Rest("files", min: 1, help: "PDF files to convert")
+    .Parse(args);
 
-from utilities import get_mime, get_filename_extension
+var allFiles = Fs.SortedFiles(a.Rest);
 
-console = Console()
+Ui.Begin("Convert pdf to audio...");
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+int converted = 0;
 
-if len(sys.argv) > 1: # arguments passed
-	selection = True
+foreach (var file in allFiles)
+{
+    if (!Fs.IsPdf(file))
+    {
+        Ui.Warn($"Skipping {file}");
+        continue;
+    }
 
-if selection:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+    var (filename, _) = Fs.SplitExt(file);
+    var textFilename = filename + ".txt";
+    var outputAudioFilename = filename + ".mkv";
 
-	console.rule(f"[bold cyan]Convert pdf to audio...", style="cyan")
+    Ui.Info($"Extracting text from {file}...");
+    if (Proc.Call("pdf-convert-text", file) != 0 || !File.Exists(textFilename))
+    {
+        Ui.Err($"Could not extract text from {file}");
+        Snd.Error();
+        continue;
+    }
 
-	for file in allFiles:
-		mimestart = get_mime(file, part=1)
-		if mimestart != None:
-			if mimestart in ['pdf']:
-				filename, _ = get_filename_extension(file)
-				text_filename = filename + '.txt'
-				audio_filename = filename + '.opus'
-				output_audio_filename = filename + '.mkv'
+    Ui.Info($"Synthesising speech for {textFilename}...");
+    if (Proc.Call("text-to-speech", textFilename) != 0 || !File.Exists(outputAudioFilename))
+    {
+        Ui.Err($"Could not convert {textFilename} to speech");
+        Snd.Error();
+        continue;
+    }
 
-				# convert pdf to text
-				pdf-convert-text @(file)
-				modification_datetime=$(stat -c %y @(file))
-				# convert text to audio
-				text-to-speech @(text_filename)
-				# delete the text file
-				trash-put @(text_filename)
-				# rename the file
-				# mv @(audio_filename) @(output_audio_filename)
-				touch -d @(modification_datetime) @(output_audio_filename)
-				
-				# if !(ebook-convert @(file) @(output_filename) --pretty-print):
-				# 	print(f"[green]Converted {file}")
-				# else:
-				# 	print(f"[bold red]Could not convert {file}")
-	
-	# audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print("No files selected!", style="bold red")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+    // The extracted text was only an intermediate step.
+    Fs.Trash(textFilename);
 
-console.rule(style="cyan")
+    Fs.CopyTimestamp(file, outputAudioFilename);
+
+    Ui.Ok($"Converted {file} to {outputAudioFilename}");
+    converted++;
+}
+
+if (converted == 0)
+{
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
+
+return Ui.Done();

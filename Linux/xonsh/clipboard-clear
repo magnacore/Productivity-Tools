@@ -1,7 +1,30 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-clear
-greenclip clear
-rm /home/manuj/.cache/greenclip.history
+// Wipe the clipboard and everything remembering it: the terminal scrollback, the
+// greenclip manager's live history, and its on-disk cache. Run after handling
+// anything sensitive.
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+var a = new Args("clipboard-clear", "Clear the clipboard, terminal and greenclip history")
+    .Parse(args);
+
+// Scrollback first, since the rest prints nothing worth keeping.
+Proc.Run("clear");
+
+Clip.Clear();
+
+if (Proc.Exists("greenclip")) Proc.Run("greenclip", "clear");
+
+// greenclip keeps a history file that survives `greenclip clear`.
+var history = Path.Combine(Paths.Home, ".cache", "greenclip.history");
+if (File.Exists(history))
+{
+    try { File.Delete(history); }
+    catch (Exception ex) { Ui.Warn($"Could not remove {history}: {ex.Message}"); }
+}
+
+Snd.Success();
+return 0;

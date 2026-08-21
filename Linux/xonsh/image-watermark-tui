@@ -1,55 +1,88 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
 
-from rich.progress import track
-from rich.console import Console
-from prompt_toolkit.shortcuts import input_dialog
+// Ask for watermark text once, then apply it across a whole selection of images
+// by calling image-watermark for each.
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = Jobs.Add(new Args("image-watermark-tui", "Watermark many images with text entered in a dialog")
+    .Opt("-t", "--text", help: "Watermark text, skipping the dialog")
+    .Rest("files", min: 1, help: "Images to watermark"))
+    .Parse(args);
 
-from utilities import (
-	get_mime,
-	get_filename_extension,
-	set_valid_file_names, 
-	handle_original_file, 
-	get_user_selection,
-	monokai_dialog_style
-	)
+var allFiles = Fs.SortedFiles(a.Rest);
 
-console = Console()
+Ui.Begin("Watermarking images....");
 
-if len(sys.argv) >= 2:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+// Slugify first so the generated _watermark.png names are predictable.
+var cleanFileNames = Fs.RenameToValid(allFiles);
 
-	console.rule("[bold cyan]Watermarking images....", style="cyan")
+// A Terminal.Gui dialog, not a Spectre confirm: a Spectre prompt immediately
+// before the Dlg.Input below is the mixed-mode case this file warns about further
+// down, and it left the two owning the terminal in turn.
+var deleteChoice = Dlg.DeleteOriginals("Images");
+if (deleteChoice is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    Ui.End();
+    return 0;
+}
+bool deleteOriginals = deleteChoice.Value;
 
-	clean_file_names = set_valid_file_names(allFiles)
+var watermarkText = a.StrOrNull("text")
+    ?? Dlg.Input("Enter watermark text", "Please type the watermark text:");
 
-	delete_choice = get_user_selection(["No", "Yes"], "Delete original images after watermarking?")
+if (watermarkText is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    Ui.End();
+    return 0;
+}
 
-	watermark_text = input_dialog(
-    title='Enter watermark text',
-    text='Please type the watermark text:',
-	style=monokai_dialog_style).run()
+if (watermarkText.Length == 0)
+{
+    Ui.Err("No watermark text given.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-	for image in track(clean_file_names, description="[bold cyan]Converting : [/bold cyan]"):
-		mimestart = get_mime(image)
+int failures = 0;
 
-		if mimestart != None:
-			if mimestart in ['image']:
-				file_name, _ = get_filename_extension(image)
-				new_filename = f"{file_name}_watermark.png"
+// Every image costs two process launches — this program spawns image-watermark,
+// which in turn runs magick — and none of them touch each other's files, so run
+// several at once. The dialog above is deliberately outside the loop: it owns the
+// terminal while it is up and cannot overlap the progress bar.
+Ui.Track2(cleanFileNames,
+          $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Watermarking {cleanFileNames.Count}:"))}[/]",
+          (image, addBar) =>
+{
+    if (!Fs.IsImage(image)) return;
 
-				image-watermark @(image) @(new_filename) @(watermark_text) 72 50 150
-				handle_original_file(image, delete_choice, "Images")
+    // No progress to read out of this tool, so the bar is one step: the spinner
+    // shows the file is in flight, and a failure leaves the bar visibly unfilled.
+    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{image}:"))}[/]", 1);
 
+    var newFilename = $"{Fs.SplitExt(image).Name}_watermark.png";
 
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print("No files selected!", style="bold red")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+    // Font size 72, spacing 50, opacity 150 out of 255 — legible over the image
+    // without hiding it.
+    if (Proc.Call("image-watermark",
+                  [image, newFilename, watermarkText, "72", "50", "150"], quiet: true) == 0)
+    {
+        advance(1);
+        Ui.Line($"[green]{Ui.Esc(image)} -> {Ui.Esc(newFilename)}[/]");
+        Fs.HandleOriginal(image, deleteOriginals, "Images");
+    }
+    else
+    {
+        Ui.Line($"[bold red]Unable to watermark {Ui.Esc(image)}[/]");
+        Interlocked.Increment(ref failures);
+    }
+}, Jobs.From(a));
 
-console.rule(style="cyan")
+return Ui.Done(failures);

@@ -1,45 +1,61 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import pyperclip as pc
+// ROT13 the clipboard in place, rotating digits by 5 so the transform is its own
+// inverse — running it twice gives back the original.
+//
+// This is casual obfuscation for shoulder-surfing, not encryption.
 
-from rich.console import Console
-console = Console()
+var a = new Args("clipboard-rot13-rotate", "ROT13/5 the clipboard in place")
+    .Parse(args);
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+Ui.Begin("Encrypting clipboard using Rot13/5 Cipher...");
 
-from utilities import rot13, rot13_5
+var clipboardContent = Clip.Paste();
 
-console.rule(f"[bold cyan]Encrypting clipboard using Rot13/5 Cipher...", style="cyan")
+if (clipboardContent.Length == 0)
+{
+    Ui.Err("Clipboard is empty.");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-# Use raw strings
-# Python cannot handle \ as the last character in a raw string. It can be at the start or middle.
-# What happens if \ is the last character in the encrypted string? Will python not able to decrypt it?
-clipboard_content = pc.paste()
+var cipherText = Crypto.Rot13And5(clipboardContent);
+Clip.Copy(cipherText);
 
-cipher_text = rot13_5(clipboard_content)
+// Read the clipboard back and undo the rotation: this proves the text really
+// made it onto the clipboard intact, not just that the maths was right.
+var plainText = Crypto.Rot13And5(Clip.Paste());
 
-pc.copy(cipher_text)
+if (plainText != clipboardContent)
+{
+    Ui.Err("ERROR!");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-## Check
-clipboard_content_check = pc.paste()
-plain_text = rot13_5(clipboard_content_check)
+Ui.Line($"Copied: Rot13 encryption of [bold cyan]{Ui.Esc(clipboardContent)}[/] " +
+        $"is [bold green]{Ui.Esc(cipherText)}[/]");
 
-if plain_text == clipboard_content:
-	console.print(f"Copied: Rot13 encryption of [bold cyan]{clipboard_content}[/bold cyan] is [bold green]{cipher_text}[/bold green]")
+WarnAboutEdgeSpaces(cipherText);
 
-	warning_cipher_text = cipher_text.replace(" ", "<SPACE>")
+return Ui.Done();
 
-	if cipher_text[0] == " ":
-		console.print(f"[bold red]Warning: Ciphertext contains a leading space! {warning_cipher_text}")
-	elif cipher_text[-1] == " ":
-		console.print(f"[bold red]Warning: Ciphertext contains a trailing space! {warning_cipher_text}")
+/// A leading or trailing space is invisible when pasted and silently breaks the
+/// round trip, so make it visible.
+static void WarnAboutEdgeSpaces(string cipherText)
+{
+    if (cipherText.Length == 0) return;
 
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print('ERROR!')
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+    var visible = cipherText.Replace(" ", "<SPACE>");
 
-console.rule(style="cyan")
+    if (cipherText[0] == ' ')
+        Ui.Err($"Warning: Ciphertext contains a leading space! {visible}");
+    else if (cipherText[^1] == ' ')
+        Ui.Err($"Warning: Ciphertext contains a trailing space! {visible}");
+}

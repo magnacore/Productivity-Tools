@@ -1,27 +1,38 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+// Change the extension of the selected files — for the common case where a file
+// is already in the right container but carries the wrong suffix.
 
-from utilities import get_filename_extension, get_user_selection
+var a = new Args("file-rename-extension", "Change the extension of the selected files")
+    .Opt("-e", "--extension", required: true,
+         help: "New extension, without the dot (e.g. mkv, opus, mka, txt, md)")
+    .Rest("files", min: 1, help: "Files to rename")
+    .Parse(args);
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+var files = Fs.SortedFiles(a.Rest);
 
-if len(sys.argv) > 1:
-	selection = True
+// Accept "mkv" and ".mkv" alike; the dot is added when the name is rebuilt.
+var extensionChoice = a.Str("extension").TrimStart('.');
 
-if selection:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+if (extensionChoice.Length == 0)
+{
+    Ui.Err("--extension cannot be empty.");
+    return 2;
+}
 
-	extension_choice = get_user_selection(["mkv", "opus", "mka", "txt", "md"], "Choose new file extension:")
+foreach (var file in files)
+{
+    var (name, ext) = Fs.SplitExt(file);
 
-	for file in allFiles:
-		file_name, extension = get_filename_extension(file)
+    // An empty extension means a directory, which has nothing to rename.
+    if (ext.Length == 0) continue;
 
-		if extension: #Do not add extension to directories
-			new_file_name = f"{file_name}.{extension_choice}"
-			os.rename(file, new_file_name)
+    try { Fs.Move(file, $"{name}.{extensionChoice}"); }
+    catch (Exception ex) { Ui.Err($"Could not rename {file}: {ex.Message}"); }
+}
+
+return 0;

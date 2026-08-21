@@ -1,0 +1,41 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for media-split-equal.
+//
+// The durations come from the caller (the ranger bindings pass their own), so the
+// only thing asked here is what should happen to the originals.
+
+var a = new Args("media-split-equal-tui", "Ask about the originals, then run media-split-equal")
+    .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
+    .Opt("-t", "--threshold_seconds", required: true,
+         help: "Threshold in seconds beyond which the media should be split")
+    .Flag("-e", "--equal", help: "Create approximately equal parts")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Files to process")
+    .Parse(args);
+
+var deleteChoice = Dlg.DeleteOriginals("Media");
+if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+var callArgs = new List<string>
+{
+    "-s", a.Str("split_duration"),
+    "-t", a.Str("threshold_seconds"),
+};
+if (a.Flag("equal")) callArgs.Add("-e");
+if (deleteChoice.Value) callArgs.Add("-d");
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]media-split-equal {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("media-split-equal", callArgs);

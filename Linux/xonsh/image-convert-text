@@ -1,44 +1,47 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.progress import track
-from rich.console import Console
-from rich import print
+// Read the text out of images with tesseract. For handwriting, layout-heavy
+// scans or anything tesseract struggles with, use ocr-genai instead.
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = Jobs.Add(new Args("image-convert-text", "OCR images into .txt files")
+    .Rest("files", min: 1, help: "Images to read"))
+    .Parse(args);
 
-from utilities import get_mime, get_filename_extension
+var allFiles = Fs.SortedFiles(a.Rest);
 
-console = Console()
+Ui.Begin("Optical Character Recognition...");
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+int failures = 0;
 
-if len(sys.argv) > 1: # Arguments passed
-	selection = True
+Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"OCR {allFiles.Count}:"))}[/]",
+          (file, addBar) =>
+{
+    if (!Fs.IsImage(file)) return;
 
-if selection:
-	allFiles = sys.argv[1:]
-	allFiles.sort()
+    // No progress to read out of this tool, so the bar is one step: the spinner
+    // shows the file is in flight, and a failure leaves the bar visibly unfilled.
+    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 1);
 
-	console.rule(f"[bold cyan]Optical Character Recognition...", style="cyan")
+    // tesseract appends ".txt" to the output name itself.
+    var outputFilename = Fs.SplitExt(file).Name;
 
-	for file in track(allFiles, description="[bold cyan]OCR : [/bold cyan]"):
-		mimestart = get_mime(file)
+    if (Proc.Ok("tesseract", file, outputFilename))
+    {
+        // These run concurrently, so give the text the image's date and keep a
+        // modified-time sort in the same order as the images.
+        advance(1);
+        Fs.CopyTimestamp(file, outputFilename + ".txt");
+        Ui.Line($"[green]Converted {Ui.Esc(file)}[/]");
+    }
+    else
+    {
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(file)}[/]");
+        Interlocked.Increment(ref failures);
+    }
+}, Jobs.From(a));
 
-		if mimestart != None:
-			if mimestart in ['image']:
-				output_filename, _ = get_filename_extension(file)
-				if !(tesseract @(file) @(output_filename)):
-					print(f"[green]Converted {file}")
-				else:
-					print(f"[bold red]Could not convert {file}")
-	
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print("No files selected!", style="bold red")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-console.rule(style="cyan")
+return Ui.Done(failures);

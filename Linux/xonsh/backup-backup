@@ -1,25 +1,29 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Mirror the primary backup drive onto the secondary, keeping one generation of
+// history on the far side. Snapshot first, then sync — so if the sync goes wrong
+// (a source drive half-mounted, say), @previous still holds a good copy.
 
-console = Console()
+var a = Sys.WithDryRun(new Args("backup-backup", "Mirror BACKUP_01_A onto BACKUP_01_B")).Parse(args);
+Sys.Apply(a);
 
-console.rule("[bold cyan]Backing up backup drive....", style="cyan")
+Ui.Begin("Backing up backup drive....");
 
-console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /media/$USER/BACKUP_01_B/BACKUP/@previous
+var backupRoot = Path.Combine(Paths.Media, "BACKUP_01_B", "BACKUP");
+var current = Path.Combine(backupRoot, "@current");
+var previous = Path.Combine(backupRoot, "@previous");
+var source = Path.Combine(Paths.Media, "BACKUP_01_A");
 
-console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /media/$USER/BACKUP_01_B/BACKUP/@current/ /media/$USER/BACKUP_01_B/BACKUP/@previous
+Sys.RotatePreviousSnapshot(current + "/", previous);
 
-console.print(f"[bold cyan]Synchronizing...")
-rsync -vahiP --delete /media/$USER/BACKUP_01_A/ /media/$USER/BACKUP_01_B/BACKUP/@current/
+Ui.Info("Synchronizing...");
+Sys.Rsync("-vahiP", "--delete", source + "/", current + "/");
 
-date > ~/.local/state/shortcut/backup-backup.txt
-date > /media/$USER/BACKUP_01_B/BACKUP/@current/backup_date.txt
+Sys.Stamp("backup-backup");
+Sys.StampFile(Path.Combine(current, "backup_date.txt"));
 
-# sudo btrfs filesystem show
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

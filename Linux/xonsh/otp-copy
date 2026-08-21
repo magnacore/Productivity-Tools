@@ -1,41 +1,47 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import sys
-import os
-from rich.console import Console
+// Pick a TOTP entry from the password store, copy the current code, and print it
+// large enough to read off the screen while typing it somewhere else.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("otp-copy", "Copy a TOTP code from the password store")
+    .Pos("entry", "Name of the otp store entry (see otp-copy-tui to pick from a list)")
+    .Parse(args);
 
-console = Console()
+var entries = PassStore.Entries("otp");
 
-from utilities import get_user_selection
+if (entries.Count == 0)
+{
+    Ui.Err($"No OTP entries found in {PassStore.Root}/otp");
+    Snd.Error();
+    return 1;
+}
 
-import pyperclip as pc
+var selection = a.Str("entry");
 
-root_dir = p"~/.password-store/otp/"
+if (!entries.Contains(selection, StringComparer.Ordinal))
+{
+    Ui.Err($"No entry named '{selection}' under {PassStore.Root}/otp");
+    Snd.Error();
+    return 1;
+}
 
-search_result = []
+var totp = Proc.Capture("pass", "otp", $"otp/{selection}");
 
-for root, dirs, files in os.walk(root_dir):
-    for name in files:    
-        abs_path = os.path.abspath(os.path.join(root, name))
+if (string.IsNullOrWhiteSpace(totp))
+{
+    Ui.Err($"Could not read a code for {selection}");
+    Snd.Error();
+    return 1;
+}
 
-        abs_path = abs_path.replace(f"{myhome}/.password-store/otp/", "")
-        abs_path = abs_path.replace(".gpg", "")
+Clip.Copy(totp);
 
-        search_result.append(abs_path)
+// Split into two groups, which is how these codes are read aloud and typed.
+var grouped = totp.Length > 3 ? $"{totp[..3]} {totp[3..]}" : totp;
+Proc.Run("figlet", "-c", "-f", "big", grouped);
 
-search_result.sort()
-
-selection = get_user_selection(search_result, "Which TOTP to copy?")
-
-topt = $(pass otp @(f"otp/{selection}"))
-
-pc.copy(topt)
-
-figlet -c -f big @(f"{topt[:3]} {topt[3:]}")
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

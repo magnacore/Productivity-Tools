@@ -73,9 +73,9 @@ keys = [
     Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open'"), desc="Launch Ranger"),
     Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     #Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
-    Key([mod], "d", lazy.spawn(f"/opt/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-convert-text"), desc="Save clipboard to text"),
-    Key([mod], "y", lazy.spawn(f"/opt/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
-    Key([mod], "v", lazy.spawn(f"/opt/anaconda3/envs/util/bin/python {myhome}/.local/bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
+    Key([mod], "d", lazy.spawn(f"/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet {myhome}/.local/bin/clipboard-convert-text"), desc="Save clipboard to text"),
+    Key([mod], "y", lazy.spawn(f"/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet {myhome}/.local/bin/clipboard-insert-link"), desc="Insert URLs in a text file"),
+    Key([mod], "v", lazy.spawn(f"/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet {myhome}/.local/bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
     # Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
 

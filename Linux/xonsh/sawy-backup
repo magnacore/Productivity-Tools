@@ -1,21 +1,24 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
-console = Console()
+// Mirror the Sawy drive onto its backup partner, keeping one generation.
 
-console.rule(f"[bold cyan]Backup Sawy Drive...")
+var a = Sys.WithDryRun(new Args("sawy-backup", "Mirror SAWY_01_A onto SAWY_01_B")).Parse(args);
+Sys.Apply(a);
 
-console.print(f"[bold cyan]Deleting previous snapshot...")
-sudo btrfs subvolume delete /media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
+Ui.Begin("Backup Sawy Drive...");
 
-console.print(f"[bold cyan]Creating a new read only snapshot...")
-sudo btrfs subvolume snapshot -r /media/$USER/SAWY_01_B/SAWY_BACKUP/@current/ /media/$USER/SAWY_01_B/SAWY_BACKUP/@previous
+var backupRoot = Path.Combine(Paths.Media, "SAWY_01_B", "SAWY_BACKUP");
+var current = Path.Combine(backupRoot, "@current");
 
-console.print(f"[bold cyan]Synchronizing...")
-rsync -vahiP --delete /media/$USER/SAWY_01_A/SAWY/ /media/$USER/SAWY_01_B/SAWY_BACKUP/@current/
+Sys.RotatePreviousSnapshot(current + "/", Path.Combine(backupRoot, "@previous"));
 
-date > ~/.local/state/shortcut/sawy-backup.txt
+Ui.Info("Synchronizing...");
+Sys.Rsync("-vahiP", "--delete", Path.Combine(Paths.Media, "SAWY_01_A", "SAWY") + "/", current + "/");
 
-console.rule(style="cyan")
+Sys.Stamp("sawy-backup");
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

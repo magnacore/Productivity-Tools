@@ -1,20 +1,26 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-#import datetime
+// Run the maintenance pass, then power the machine off — for starting at the end
+// of the day and walking away.
 
-#video-process
-shortcut-update
+var a = Sys.WithDryRun(new Args("update-shutdown", "Run shortcut-update, then shut down")).Parse(args);
+Sys.Apply(a);
 
-# Get today's date
-# today = datetime.datetime.now()
+int code = Proc.Call("shortcut-update", Sys.DryRun ? ["--dry-run"] : []);
 
-# Get the day of the month
-# day = today.day
+if (code != 0)
+{
+    // A failed update is worth waking up to, so do not hide it behind a shutdown.
+    Ui.Err($"shortcut-update exited with {code}; not shutting down.");
+    Snd.Error();
+    return code;
+}
 
-# # Check if it's divisible by 7
-# if day % 7 == 0:
-#     audiobook-progress
+Ui.Info("Shutting down...");
+Sys.Sudo("shutdown", "-h", "now");
 
-#systemctl --user stop ollama.service
-
-sudo shutdown -h now
+return 0;

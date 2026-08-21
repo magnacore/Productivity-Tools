@@ -1,20 +1,31 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Mirror $HOME into a mounted VeraCrypt volume.
+//
+// This one has no snapshot rotation: the encrypted container is the protection,
+// and it is unlocked only while the backup runs.
 
-console = Console()
+var a = Sys.WithDryRun(new Args("laptop-backup-a", "Mirror $HOME into the VeraCrypt system backup")).Parse(args);
+Sys.Apply(a);
 
-console.rule(f"[bold cyan]Laptop Backup A...", style="cyan")
+Ui.Begin("Laptop Backup A...");
 
-# Remove the old log file so we start fresh
-rm -f $HOME/.local/state/shortcut/copy_log.txt
+var destination = "/media/veracrypt1/SYSTEM_BACKUP";
 
-#rsync -vahiP --delete --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
-sudo rsync -vahi --partial --info=progress2 --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt --exclude-from=$HOME/Backups/RSYNC_EXCLUDE/rsync-homedir-local.txt $HOME/ /media/veracrypt1/SYSTEM_BACKUP/
+// Start the log fresh so it describes this run and no other.
+Sys.Remove(Sys.CopyLog);
 
-date > ~/.local/state/shortcut/laptop-backup-a.txt
-date > /media/veracrypt1/SYSTEM_BACKUP/backup_date.txt
+Ui.Info("Synchronizing...");
+Sys.SudoRsync("-vahi", "--partial", "--info=progress2", "--delete",
+              $"--log-file={Sys.CopyLog}",
+              $"--exclude-from={Sys.HomeExcludes}",
+              Paths.Home + "/", destination + "/");
 
-console.rule(style="cyan")
+Sys.Stamp("laptop-backup-a");
+Sys.StampFile(Path.Combine(destination, "backup_date.txt"));
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

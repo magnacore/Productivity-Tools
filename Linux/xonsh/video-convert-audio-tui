@@ -1,0 +1,32 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for video-convert-audio.
+//
+// Only one question to ask: what should happen to the source videos once their
+// audio has been pulled out. The extraction lives in video-convert-audio.
+
+var a = new Args("video-convert-audio-tui", "Ask about the originals, then run video-convert-audio")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Files to process")
+    .Parse(args);
+
+var deleteChoice = Dlg.DeleteOriginals("Video");
+if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+var callArgs = new List<string>();
+if (deleteChoice.Value) callArgs.Add("-d");
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]video-convert-audio {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("video-convert-audio", callArgs);

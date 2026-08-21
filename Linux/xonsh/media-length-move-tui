@@ -1,60 +1,63 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
 
-import sys
-import os
-from rich.console import Console
-from rich import print
-from prompt_toolkit.shortcuts import radiolist_dialog, yes_no_dialog
+// Dialog front end for media-length-move.
+//
+// You choose how many hours you want to listen for; this converts that into the
+// media duration that fills it, and hands the number to media-length-move. All
+// the actual work lives there.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("media-length-move-tui", "Choose a media bundle size in a dialog, then run media-length-move")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Parse(args);
 
-# Assuming monokai_dialog_style is defined in your utilities as in the previous script
-from utilities import monokai_dialog_style
+// (listening hours, label)
+(int Minutes, string Label)[] durations =
+[
+    (60,  "1 hour"),
+    (120, "2 hours"),
+    (180, "3 hours"),
+    (240, "4 hours"),
+];
 
-console = Console()
+var chosen = Dlg.Choose(
+    "Media Length Move",
+    "Select the target duration for the media bundle @1.5x:",
+    [.. durations.Select(d => d.Label)]);
 
-def main():
-    # 1. Dialog for duration selection
-    duration_result = radiolist_dialog(
-        title="Media Length Move",
-        text="Select the target duration for the media bundle @1.5x:",
-        values=[
-            (60,  "1 hour"),
-            (120, "2 hours"),
-            (240, "4 hours")
-        ],
-        style=monokai_dialog_style,
-    ).run()
+if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
 
-    # Exit if the user presses Cancel
-    if duration_result is None:
-        print("[bold yellow]Operation cancelled by user.[/bold yellow]")
-        sys.exit(0)
+var sortByTime = Dlg.YesNo(
+    "Sorting Preference",
+    "Sort files by modified time?\n(Selecting 'No' will sort alphabetically by name)");
 
-    # 2. Dialog for sorting preference (Boolean)
-    sort_result = yes_no_dialog(
-        title="Sorting Preference",
-        text="Sort files by modified time?\n(Selecting 'No' will sort alphabetically by name)",
-        style=monokai_dialog_style,
-    ).run()
+if (sortByTime is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
 
-    # Exit if the user presses Cancel
-    if sort_result is None:
-        print("[bold yellow]Operation cancelled by user.[/bold yellow]")
-        sys.exit(0)
+// The choice is how long you want to listen; at 1.5x that consumes 1.5x as much
+// media, so the bundle has to be that much longer.
+int durationMinutes = (int)(durations[chosen.Value].Minutes * 1.5);
+var sortArg = sortByTime.Value ? "true" : "false";
 
-    # Convert the boolean result to the string required by our -s/--sort flag
-    sort_arg = "true" if sort_result else "false"
+Ui.Info($"\nRunning media-length-move (Duration: {durationMinutes}m, " +
+        $"Sort by modified time: {sortByTime.Value})...\n");
 
-    # 3. Execute the media-length-move script
-    # Speed multipler
-    duration_result = int(duration_result*1.5)
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]media-length-move -d {durationMinutes} -s {sortArg}[/]");
+    return 0;
+}
 
-    print(f"\n[bold cyan]Running media-length-move (Duration: {duration_result}m, Sort by modified time: {sort_result})...[/bold cyan]\n")
-    
-    # In Xonsh, you can call CLI tools directly and pass Python variables using @()
-    media-length-move -d @(duration_result) -s @(sort_arg)
-
-if __name__ == "__main__":
-    main()
+return Proc.Call("media-length-move", "-d", durationMinutes.ToString(), "-s", sortArg);

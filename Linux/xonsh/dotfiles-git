@@ -1,67 +1,57 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Copy the live dotfiles and configs into the Productivity-Tools repository, so
+// they can be committed from there.
+//
+// Despite the name this runs no git commands — it only stages the files. Commit
+// and push yourself, after reading the diff.
 
-console = Console()
+var a = Sys.WithDryRun(new Args("dotfiles-git", "Copy live dotfiles and configs into the tools repository")).Parse(args);
+Sys.Apply(a);
 
-console.rule(f"[bold cyan]Synchronizing dot files...", style="cyan")
+Ui.Begin("Copying dotfiles...");
 
-dotfiles_path = p"~/Projects/Productivity-Tools/Linux/dotFiles/"
-config_path = p"~/Projects/Productivity-Tools/Linux/config/"
+var repo = Path.Combine(Paths.Home, "Projects", "Productivity-Tools", "Linux");
+var dotfilesPath = Path.Combine(repo, "dotFiles") + "/";
+var configPath = Path.Combine(repo, "config") + "/";
 
-console.print(f"[bold cyan]Syncing .bashrc...[/bold cyan]")
-rsync --delete --progress -vahi ~/.bashrc @(dotfiles_path)
+// Single files, copied to whichever of the two collection directories they belong in.
+(string Source, string Destination)[] files =
+[
+    (".bashrc",                      dotfilesPath),
+    (".bash_aliases",                dotfilesPath),
+    (".xonshrc",                     dotfilesPath),
+    (".alacritty.yml",               dotfilesPath),
+    (".config/nvim/init.lua",        dotfilesPath),
+    (".Xresources",                  dotfilesPath),
+    (".config/picom/picom.conf",     dotfilesPath),
+    (".config/mpv/mpv.conf",         configPath),
+    (".config/zathura/zathurarc",    configPath),
+    (".config/greenclip.toml",       configPath),
+    (".var/app/net.christianbeier.Gromit-MPX/config/gromit-mpx.cfg", configPath),
+    (".config/sxiv/exec/image-info", configPath),
+    (".config/cmus/autosave",        configPath),
+];
 
-console.print(f"[bold cyan]Syncing .bashrc_aliases...[/bold cyan]")
-rsync --delete --progress -vahi ~/.bash_aliases @(dotfiles_path)
+foreach (var (source, destination) in files)
+    Sys.Rsync("--delete", "--progress", "-vahi", Path.Combine(Paths.Home, source), destination);
 
-console.print(f"[bold cyan]Syncing .xonshrc...[/bold cyan]")
-rsync --delete --progress -vahi ~/.xonshrc @(dotfiles_path)
+// Whole directories. The trailing slashes matter to rsync: they mean "the
+// contents of", so the tree is mirrored rather than nested one level deeper.
+(string Source, string Destination)[] directories =
+[
+    (".local/bin",     Path.Combine(repo, "xonsh")),
+    (".config/ranger", Path.Combine(repo, "config", "ranger")),
+    (".config/rofi",   Path.Combine(repo, "config", "rofi")),
+    (".config/qtile",  Path.Combine(repo, "config", "qtile")),
+];
 
-console.print(f"[bold cyan]Syncing .alacritty.yml...[/bold cyan]")
-rsync --delete --progress -vahi ~/.alacritty.yml @(dotfiles_path)
+foreach (var (source, destination) in directories)
+    Sys.Rsync("--delete", "--progress", "-vahi",
+              Path.Combine(Paths.Home, source) + "/", destination + "/");
 
-console.print(f"[bold cyan]Syncing init.lua...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/nvim/init.lua @(dotfiles_path)
-
-console.print(f"[bold cyan]Syncing mpv.conf...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/mpv/mpv.conf @(config_path)
-
-console.print(f"[bold cyan]Syncing .Xresources...[/bold cyan]")
-rsync --delete --progress -vahi ~/.Xresources @(dotfiles_path)
-
-console.print(f"[bold cyan]Syncing picom.conf...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/picom/picom.conf @(dotfiles_path)
-
-console.print(f"[bold cyan]Syncing zathurarc...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/zathura/zathurarc @(config_path)
-
-console.print(f"[bold cyan]Syncing Greenclip Config...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/greenclip.toml @(config_path)
-
-console.print(f"[bold cyan]Syncing Gromit-mpx.cfg...[/bold cyan]")
-rsync --delete --progress -vahi ~/.var/app/net.christianbeier.Gromit-MPX/config/gromit-mpx.cfg @(config_path)
-
-console.print(f"[bold cyan]Syncing Sxiv Config...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/sxiv/exec/image-info @(config_path)
-
-console.print(f"[bold cyan]Syncing Cmus Config...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/cmus/autosave @(config_path)
-
-console.print(f"[bold cyan]Syncing Xonsh scripts...[/bold cyan]")
-rsync --delete --progress -vahi ~/.local/bin/ ~/Projects/Productivity-Tools/Linux/xonsh/
-
-console.print(f"[bold cyan]Syncing Ranger scripts...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/ranger/ ~/Projects/Productivity-Tools/Linux/config/ranger/
-
-console.print(f"[bold cyan]Syncing Rofi...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/rofi/ ~/Projects/Productivity-Tools/Linux/config/rofi/
-
-console.print(f"[bold cyan]Syncing Qtile scripts...[/bold cyan]")
-rsync --delete --progress -vahi ~/.config/qtile/ ~/Projects/Productivity-Tools/Linux/config/qtile/
-
-console.print(f"[bold cyan]Done.[/bold cyan]")
-
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

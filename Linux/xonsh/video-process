@@ -1,29 +1,66 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import glob
+// Tidy up freshly downloaded videos and file them in the capture inbox.
+//
+// yt-dlp writes uploader-less videos into a "NA" folder and prefixes each name
+// with "NA - "; both are noise, so the prefix goes and the files move on.
 
-import os
-myhome = os.path.expanduser('~')
+var a = new Args("video-process", "Rename downloaded videos and move them to the capture inbox")
+    .Flag("-n", "--dry-run", help: "Show what would be renamed and moved, without doing it")
+    .Parse(args);
 
-from rich.console import Console
-from rich.progress import track
+bool dryRun = a.Flag("dry-run");
 
-console = Console()
+Ui.Begin("Moving videos...");
 
-console.rule(f"[bold cyan]Moving videos...", style="cyan")
+var moveFromPath = Path.Combine(Paths.Downloads, "NA");
 
-move_from_path = f"{myhome}/Downloads/NA"
+if (!Directory.Exists(moveFromPath))
+{
+    Ui.Warn($"Nothing to do: {moveFromPath} does not exist.");
+    Ui.End();
+    return 0;
+}
 
-allFiles = glob.glob(f"{move_from_path}/*")
+var allFiles = Directory.GetFiles(moveFromPath).OrderBy(f => f, StringComparer.Ordinal).ToList();
 
-console.print(f"[bold cyan]Renaming Files...")
-for file in track(allFiles, description="[bold cyan]Renaming : [/bold cyan]"):
-	new_filename = file.replace("NA - ", "")
-	os.rename(file,new_filename)
+if (allFiles.Count == 0)
+{
+    Ui.Warn("Nothing to do: no files waiting.");
+    Ui.End();
+    return 0;
+}
 
-console.print(f"[bold cyan]Moving Files...")
-/opt/anaconda3/envs/util/bin/pymv -gip @(move_from_path)/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+Ui.Info("Renaming Files...");
+Ui.Track(allFiles, "[bold cyan]Renaming : [/]", file =>
+{
+    var newFilename = file.Replace("NA - ", string.Empty);
+    if (newFilename == file) return;
 
-console.rule(style="cyan")
+    if (dryRun) { Ui.Line($"[dim]{Ui.Esc(file)} -> {Ui.Esc(newFilename)}[/]"); return; }
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+    try { Fs.Move(file, newFilename); }
+    catch (Exception ex) { Ui.Line($"[bold red]Could not rename {Ui.Esc(file)}: {ex.Message}[/]"); }
+});
+
+Ui.Info("Moving Files...");
+
+if (dryRun)
+{
+    Ui.Line($"[dim]would move {moveFromPath}/* -> {Paths.TaskCaptureBin}/[/]");
+    Ui.End();
+    return 0;
+}
+
+// pymv shows a progress bar and prompts before overwriting.
+var pymvArgs = new List<string> { "/opt/anaconda3/envs/util/bin/pymv", "-gip" };
+pymvArgs.AddRange(Directory.GetFiles(moveFromPath));
+pymvArgs.Add(Paths.TaskCaptureBin + "/");
+
+if (pymvArgs.Count > 3) Proc.Run("/opt/anaconda3/envs/util/bin/python", pymvArgs);
+
+return Ui.Done();

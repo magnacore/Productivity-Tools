@@ -1,39 +1,62 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-cyan		= '\x1b[1;36m'
-red			= '\033[0;31m'
-no_color	= '\x1b[0m'
+// Prepare a folder of single-page PDFs for manual duplex printing: deal the pages
+// alternately into odd and even piles, then bind each pile into one file.
+// Print Odd.pdf, flip the stack, print Even.pdf.
 
-import os
-import glob
-from tqdm import tqdm
+var a = new Args("pdf-seperate", "Split PDFs into odd/even sets for duplex printing")
+    .Flag("-n", "--dry-run", help: "Show the split without moving anything")
+    .Parse(args);
 
-print(f"{cyan}Seperating even and odd PDF files for duplex printing...{no_color}")
+Ui.Begin("Seperating even and odd PDF files for duplex printing...");
 
-pdf_files = glob.glob('*.pdf')
+// Operates on the current directory: the input is "the stack of pages here".
+var pdfFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.pdf")
+    .Select(Path.GetFileName)
+    .Where(f => f is not null)
+    .Select(f => f!)
+    .OrderBy(f => f, StringComparer.Ordinal)
+    .ToList();
 
-if len(pdf_files) > 0:	
-	pdf_files.sort()
+if (pdfFiles.Count == 0)
+{
+    Ui.Err("No PDFs found...");
+    Snd.Error();
+    Ui.End();
+    return 1;
+}
 
-	mkdir even odd
+if (a.Flag("dry-run"))
+{
+    for (int i = 0; i < pdfFiles.Count; i++)
+        Ui.Line($"[dim]{(i % 2 == 0 ? "odd " : "even")} <- {Ui.Esc(pdfFiles[i])}[/]");
+    Ui.End();
+    return 0;
+}
 
-	i = 1
+Directory.CreateDirectory("even");
+Directory.CreateDirectory("odd");
 
-	for pdf in tqdm(pdf_files):
-		if i%2 != 0:
-			mv @(pdf) odd
-		else:
-			mv @(pdf) even
-		i+=1
+// The first page is page 1, which is odd.
+for (int i = 0; i < pdfFiles.Count; i++)
+{
+    var destination = i % 2 == 0 ? "odd" : "even";
+    try { Fs.Move(pdfFiles[i], Path.Combine(destination, pdfFiles[i])); }
+    catch (Exception ex) { Ui.Err($"Could not move {pdfFiles[i]}: {ex.Message}"); }
+}
 
-	print(f"{cyan}Combining even PDFs...{no_color}")
-	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Even.pdf even/*.pdf
-	print(f"{cyan}Combining odd PDFs...{no_color}")
-	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None -sOutputFile=Odd.pdf odd/*.pdf
+// Ghostscript concatenates; -dAutoRotatePages=/None stops it from "helpfully"
+// turning pages, which would break the duplex alignment.
+foreach (var (pile, output) in new[] { ("even", "Even.pdf"), ("odd", "Odd.pdf") })
+{
+    Ui.Info($"Combining {pile} PDFs...");
+    // A glob is the point here, so this genuinely needs a shell.
+    Proc.Shell($"gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None " +
+               $"-sOutputFile={output} {pile}/*.pdf");
+}
 
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	print(f"{red}No PDFs found...{no_color}")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
-
-print(u'\u2500' * os.get_terminal_size().columns)
+return Ui.Done();

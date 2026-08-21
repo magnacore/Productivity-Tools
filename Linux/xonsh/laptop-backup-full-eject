@@ -1,42 +1,57 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import time
+// Shut the encrypted backup disk down safely and power it off.
+//
+// The order matters and each step needs the previous one to have settled, which
+// is what the pauses are for: flush writes, unmount, deactivate the LVM group,
+// close the LUKS container, then cut power. Skipping ahead risks the disk being
+// pulled with writes still in flight.
 
-from rich.console import Console
+var a = Sys.WithDryRun(new Args("laptop-backup-full-eject", "Safely unmount and power off the full-backup disk")).Parse(args);
+Sys.Apply(a);
 
-console = Console()
+Ui.Begin("Eject Laptop Backup Full...");
 
-console.rule(f"[bold cyan]Eject Laptop Backup Full...", style="cyan")
+var mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
 
-console.print(f"[bold cyan]Syncing...")
-sync
-time.sleep(3)
+Ui.Info("Syncing...");
+Sys.Run("sync");
+Settle();
 
-console.print(f"[bold cyan]Unmounting...")
-sudo umount /media/$USER/laptop_backup_full
-time.sleep(3)
+Ui.Info("Unmounting...");
+Sys.Sudo("umount", mountPoint);
+Settle();
 
-console.print(f"[bold cyan]Deleting Mountpoint...")
-sudo rm -r /media/$USER/laptop_backup_full
-time.sleep(3)
+Ui.Info("Deleting Mountpoint...");
+Sys.Sudo("rm", "-r", mountPoint);
+Settle();
 
-console.print(f"[bold cyan]Unmounting logical volumes...")
-sudo lvchange -an vg-laptop-backup-full
-time.sleep(3)
+Ui.Info("Unmounting logical volumes...");
+Sys.Sudo("lvchange", "-an", "vg-laptop-backup-full");
+Settle();
 
-console.print(f"[bold cyan]Closing encrypted LUKS container...")
-sudo cryptsetup luksClose luks-laptop-backup-full
+Ui.Info("Closing encrypted LUKS container...");
+Sys.Sudo("cryptsetup", "luksClose", "luks-laptop-backup-full");
 
-console.print(f"[bold cyan]Waiting for 3 seconds before turning off...")
-time.sleep(3)
-console.print(f"[bold cyan]Powering off...")
-udisksctl power-off -b /dev/sda
+Ui.Info("Waiting for 3 seconds before turning off...");
+Settle();
 
-lsblk
+Ui.Info("Powering off...");
+Sys.Run("udisksctl", "power-off", "-b", "/dev/sda");
 
-console.print(f"[bold cyan]Empty trash...")
-trash-empty -f
+Sys.Run("lsblk");
 
-console.rule(style="cyan")
+Ui.Info("Empty trash...");
+Sys.Run("trash-empty", "-f");
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();
+
+/// Let the kernel finish the previous step before starting the next.
+static void Settle()
+{
+    if (!Sys.DryRun) Thread.Sleep(3000);
+}

@@ -1,108 +1,170 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import datetime
-from rich.console import Console
+// The periodic maintenance routine: sweep the inbox, update the system, and — on
+// a fortnightly schedule — do the deep clean.
+//
+// The cleanup only runs on Saturdays in even months. It is slow and aggressive
+// (it deletes caches, logs and container images system-wide), so it is kept off
+// the daily path and lands roughly once a fortnight, on a day when a long run
+// does not get in the way.
 
-console = Console()
+var a = Sys.WithDryRun(new Args("shortcut-update", "Periodic system maintenance"))
+    .Flag("-c", "--clean", help: "Force the deep clean, whatever day it is")
+    .Flag("-s", "--skip-clean", help: "Skip the deep clean, whatever day it is")
+    .Parse(args);
+Sys.Apply(a);
 
-console.rule(f"[bold cyan]Updating [Shortcut]...", style="cyan")
+Ui.Begin("Updating [Shortcut]...");
 
-console.print(f"[bold cyan]Delete old files in trash...[/bold cyan]")
-trash-empty -f 3
+Ui.Info("Delete old files in trash...");
+Sys.Run("trash-empty", "-f", "3");
 
-console.print(f"[bold cyan]Moving Files...[/bold cyan]")
-mv --backup=numbered @(p"~/Productivity_System/02 POOL/01 CREATION ACTIVE/02 RELAX ACTIVE MATERIAL/ANDROID CAMERA/Camera")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
-mv --backup=numbered @(p"~/Pictures")/*.png @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
-mv --backup=numbered @(p"~/Productivity_System/04 BIN/04 RA RP SP/TRAVEL/DUMP")/* @(p"~/Productivity_System/01 TASK CAPTURE BIN/00 COPY TO HDD/")
+// --- Sweep everything that accumulates into the capture inbox ---------------
+Ui.Info("Moving Files...");
 
-console.print(f"[bold cyan]Update locate database...[/bold cyan]")
-# sudo updatedb --add-single-prunepath '~/Productivity_System/04 BIN/02 PRACTICE'
-sudo updatedb
+var inbox = Paths.TaskCaptureBin;
 
-console.print(f"[bold cyan]Update repositories...[/bold cyan]")
-sudo apt update -y
+MoveWithBackup(Path.Combine(Paths.ProductivitySystem,
+    "02 POOL", "01 CREATION ACTIVE", "02 RELAX ACTIVE MATERIAL", "ANDROID CAMERA", "Camera"), "*");
+MoveWithBackup(Path.Combine(Paths.Home, "Pictures"), "*.png");
+MoveWithBackup(Path.Combine(Paths.ProductivitySystem, "04 BIN", "04 RA RP SP", "TRAVEL", "DUMP"), "*");
 
-console.print(f"[bold cyan]Upgrade software...[/bold cyan]")
-sudo apt upgrade -y
-flatpak update -y
+// --- Routine updates --------------------------------------------------------
+Ui.Info("Update locate database...");
+Sys.Sudo("updatedb");
 
-# console.print(f"[bold cyan]Update Virus Definitions...[/bold cyan]")
-# sudo freshclam
+Ui.Info("Update repositories...");
+Sys.Sudo("apt", "update", "-y");
 
-# Monday is 0, Saturday is 5
-day_of_week = datetime.datetime.today().weekday()
-this_month = datetime.datetime.today().month
+Ui.Info("Upgrade software...");
+Sys.Sudo("apt", "upgrade", "-y");
+Sys.Run("flatpak", "update", "-y");
 
-if(day_of_week == 5 and (this_month % 2 == 0)):
-    console.print(f"[bold cyan]Clean software cache...[/bold cyan]")
-    sudo apt autoremove -y
-    sudo apt clean -y
+// --- Deep clean, on a fortnightly rhythm ------------------------------------
+// Saturday, in an even month.
+var today = DateTime.Today;
+bool scheduled = today.DayOfWeek == DayOfWeek.Saturday && today.Month % 2 == 0;
+bool deepClean = a.Flag("clean") || (scheduled && !a.Flag("skip-clean"));
 
-    console.print(f"[bold cyan]Clean flatpaks...[/bold cyan]")
-    flatpak update --appstream
-    flatpak uninstall --unused -y
+if (!deepClean)
+{
+    Ui.Good("Skipping cleanup.");
+}
+else
+{
+    Ui.Info("Clean software cache...");
+    Sys.Sudo("apt", "autoremove", "-y");
+    Sys.Sudo("apt", "clean", "-y");
 
-    console.print(f"[bold cyan]Update prompts...[/bold cyan]")
-    fabric -U
+    Ui.Info("Clean flatpaks...");
+    Sys.Run("flatpak", "update", "--appstream");
+    Sys.Run("flatpak", "uninstall", "--unused", "-y");
 
-    console.print(f"[bold cyan]Deleting unsued conda packages...[/bold cyan]")
-    conda clean --all -y
+    Ui.Info("Update prompts...");
+    Sys.Run("fabric", "-U");
 
-    console.print(f"[bold cyan]Deleting journalctl history...[/bold cyan]")
-    sudo journalctl --vacuum-time=4weeks
+    Ui.Info("Deleting unused conda packages...");
+    Sys.Run("conda", "clean", "--all", "-y");
 
-    console.print(f"[bold cyan]Clean cache...[/bold cyan]")
-    rm -rf @(p"~/.cache")/*
-    rm -rf @(p"~/.var/app/net.sourceforge.liferea/cache")/*
-    rm -rf @(p"~/.local/share/dotnet/runfile")/*
+    Ui.Info("Deleting journalctl history...");
+    Sys.Sudo("journalctl", "--vacuum-time=4weeks");
 
-    console.print(f"[bold cyan]Clean Xonsh history...[/bold cyan]")
-    rm -rf @(p"~/.local/share/xonsh")/*
+    Ui.Info("Clean cache...");
+    EmptyDirectory(Path.Combine(Paths.Home, ".cache"));
+    EmptyDirectory(Path.Combine(Paths.Home, ".var", "app", "net.sourceforge.liferea", "cache"));
 
-    console.print(f"[bold cyan]Deleting logs from home folder...[/bold cyan]")
-    # rm -rf @(p"~/.var/app/fr.handbrake.ghb/config/ghb/EncodeLogs")/*
-    # find the size of all the log files
-    # find $HOME/ -type f -iname "*.log" -exec du -k '{}' + | awk '{ total += $1 } END { print "Total size: " total/1024 "MB" }'
-    sudo find $HOME/ -type f -iname "*.log" -delete
-    rm -rf @(p"~/.var/app/com.obsproject.Studio/config/obs-studio/logs")/*
+    // The C# suite's compiled output lives in ~/.local/share/dotnet/runfile.
+    // The xonsh original wiped it outright, which would now force every script
+    // in this collection to rebuild from scratch — roughly 45 minutes of
+    // recompiling, every other Saturday. Prune only what has gone stale.
+    Ui.Info("Prune old .NET file-based app build artifacts...");
+    Sys.Run("/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet",
+            "clean", "file-based-app-artifacts", "--days", "30");
 
-    console.print(f"[bold cyan]Deleting .DS_Store files...[/bold cyan]")
-    sudo find $HOME/ -type f -iname ".DS_Store" -delete
+    Ui.Info("Clean Xonsh history...");
+    EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "xonsh"));
 
-    console.print(f"[bold cyan]Deleting .bak files...[/bold cyan]")
-    sudo find $HOME/ -type f -iname "*.bak" -delete
-    sudo find $HOME/ -type f -iname "*.bkp" -delete
+    Ui.Info("Deleting logs from home folder...");
+    Sys.Sudo("find", Paths.Home + "/", "-type", "f", "-iname", "*.log", "-delete");
+    EmptyDirectory(Path.Combine(Paths.Home, ".var", "app", "com.obsproject.Studio", "config", "obs-studio", "logs"));
 
-    console.print(f"[bold cyan]Deleting desktop.ini files...[/bold cyan]")
-    sudo find $HOME/ -type f -iname "desktop.ini" -delete
+    Ui.Info("Deleting .DS_Store files...");
+    DeleteFilesNamed(".DS_Store");
 
-    console.print(f"[bold cyan]Deleting .ipynb_checkpoints directories...[/bold cyan]")
-    sudo find $HOME/ -type d -iname ".ipynb_checkpoints" -prune -exec rm -rf '{}' ';'
+    Ui.Info("Deleting .bak files...");
+    DeleteFilesNamed("*.bak");
+    DeleteFilesNamed("*.bkp");
 
-    console.print(f"[bold cyan]Deleting __pycache__ directories...[/bold cyan]")
-    sudo find /opt/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
-    sudo find $HOME/ -type d -iname "__pycache__" -prune -exec rm -rf '{}' ';'
+    Ui.Info("Deleting desktop.ini files...");
+    DeleteFilesNamed("desktop.ini");
 
-    console.print(f"[bold cyan]Deleting __MACOSX directories...[/bold cyan]")
-    sudo find $HOME/ -type d -iname "__MACOSX" -prune -exec rm -rf '{}' ';'
+    Ui.Info("Deleting .ipynb_checkpoints directories...");
+    DeleteDirectoriesNamed(Paths.Home, ".ipynb_checkpoints");
 
-    console.print(f"[bold cyan]Deleting .thumbnails directories...[/bold cyan]")
-    sudo find $HOME/ -type d -iname ".thumbnails" -prune -exec rm -rf '{}' ';'
+    Ui.Info("Deleting __pycache__ directories...");
+    DeleteDirectoriesNamed("/opt", "__pycache__");
+    DeleteDirectoriesNamed(Paths.Home, "__pycache__");
 
-    console.print(f"[bold cyan]Deleting snapper snapshots...[/bold cyan]")
-    snapper-rollback-snapshot-delete
+    Ui.Info("Deleting __MACOSX directories...");
+    DeleteDirectoriesNamed(Paths.Home, "__MACOSX");
 
-    console.print(f"[bold cyan]Free container space...[/bold cyan]")
-    podman system prune
-    podman system reset
+    Ui.Info("Deleting .thumbnails directories...");
+    DeleteDirectoriesNamed(Paths.Home, ".thumbnails");
 
-    #audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-Sys-Trash-Emptied.ogg &
+    Ui.Info("Deleting snapper snapshots...");
+    Proc.Call("snapper-rollback-snapshot-delete", Sys.DryRun ? ["--dry-run"] : []);
 
-else:
-    console.print(f"[bold green]Skipping cleanup.[/bold green]")
+    Ui.Info("Free container space...");
+    Sys.Run("podman", "system", "prune");
+    Sys.Run("podman", "system", "reset");
+}
 
-hdd-size
+Proc.Call("hdd-size");
 
-date > ~/.local/state/shortcut/system-update.txt
+Sys.Stamp("system-update");
 
-#audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+Ui.End();
+return 0;
+
+/// Move matching entries into the capture inbox, numbering rather than
+/// overwriting anything already there with the same name.
+static void MoveWithBackup(string sourceDir, string pattern)
+{
+    if (!Directory.Exists(sourceDir))
+    {
+        Ui.Warn($"Skipping {sourceDir} (not present)");
+        return;
+    }
+
+    var entries = pattern == "*"
+        ? Directory.GetFileSystemEntries(sourceDir)
+        : Directory.GetFiles(sourceDir, pattern);
+
+    if (entries.Length == 0) return;
+
+    var mvArgs = new List<string> { "--backup=numbered" };
+    mvArgs.AddRange(entries.OrderBy(e => e, StringComparer.Ordinal));
+    mvArgs.Add(Paths.TaskCaptureBin + "/");
+
+    Sys.Run("mv", [.. mvArgs]);
+}
+
+/// Empty a directory without removing the directory itself.
+static void EmptyDirectory(string directory)
+{
+    if (!Directory.Exists(directory)) return;
+
+    // A shell glob, because `rm -rf dir/*` is exactly the semantics wanted:
+    // clear the contents, leave the directory in place.
+    Sys.Run("/bin/sh", "-c", $"rm -rf -- '{directory.Replace("'", @"'\''")}'/*");
+}
+
+static void DeleteFilesNamed(string pattern)
+    => Sys.Sudo("find", Paths.Home + "/", "-type", "f", "-iname", pattern, "-delete");
+
+static void DeleteDirectoriesNamed(string root, string name)
+    => Sys.Sudo("find", root + "/", "-type", "d", "-iname", name, "-prune", "-exec", "rm", "-rf", "{}", ";");

@@ -1,37 +1,42 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Mirror $HOME onto LAPTOP_BACKUP_C, keeping three generations on a rotating
+// set of slots: @s_0 is live, @s_minus_1 and @s_minus_2 are older states.
+//
+// Unlike backups A, B and D this one applies no exclude list — it is the
+// full-fidelity copy, taken deliberately without filtering.
 
-console = Console()
+var a = Sys.WithDryRun(new Args("laptop-backup-c", "Mirror $HOME onto LAPTOP_BACKUP_C with 3-deep history")).Parse(args);
+Sys.Apply(a);
 
-console.rule(f"[bold cyan]Laptop Backup C...", style="cyan")
+Ui.Begin("Laptop Backup C...");
 
-# Remove the old log file so we start fresh
-rm -f $HOME/.local/state/shortcut/copy_log.txt
+var root = Path.Combine(Paths.Media, "LAPTOP_BACKUP_C");
+var s0 = Path.Combine(root, "@s_0");
+var s1 = Path.Combine(root, "@s_minus_1");
+var s2 = Path.Combine(root, "@s_minus_2");
 
-# --- SNAPSHOT ROTATION LOGIC ---
+Sys.Remove(Sys.CopyLog);
 
-# Step 1: Delete the oldest snapshot (@s_minus_2)
-console.print(f"[bold cyan]Deleting @s_minus_2 snapshot...")
-sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_C/@s_minus_2
+// Rotate oldest-first, so no slot is ever overwritten while still needed.
+Ui.Info("Deleting @s_minus_2 snapshot...");
+Sys.DeleteSubvolume(s2);
 
-# Step 2: Promote the middle snapshot (@s_minus_1) to the oldest slot (@s_minus_2)
-console.print(f"[bold cyan]Promoting @s_minus_1 to @s_minus_2...")
-sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_C/@s_minus_1 /media/$USER/LAPTOP_BACKUP_C/@s_minus_2
-sudo btrfs subvolume delete /media/$USER/LAPTOP_BACKUP_C/@s_minus_1
+Ui.Info("Promoting @s_minus_1 to @s_minus_2...");
+Sys.Snapshot(s1, s2);
+Sys.DeleteSubvolume(s1);
 
-# Step 3: Snapshot the current working subvolume (@s_0) into the middle slot (@s_minus_1)
-console.print(f"[bold cyan]Promoting @s_0 to @s_minus_1...")
-sudo btrfs subvolume snapshot -r /media/$USER/LAPTOP_BACKUP_C/@s_0 /media/$USER/LAPTOP_BACKUP_C/@s_minus_1
+Ui.Info("Promoting @s_0 to @s_minus_1...");
+Sys.Snapshot(s0, s1);
 
-# Step 4: Synchronize the live filesystem directly into the active working subvolume (@s_0)
-console.print(f"[bold cyan]Synchronizing to @s_0...")
-sudo rsync -vahiP --delete --log-file=$HOME/.local/state/shortcut/copy_log.txt $HOME/ /media/$USER/LAPTOP_BACKUP_C/@s_0/
+Ui.Info("Synchronizing to @s_0...");
+Sys.SudoRsync("-vahiP", "--delete", "--exclude=.gvfs",$"--log-file={Sys.CopyLog}", Paths.Home + "/", s0 + "/");
 
-# Update backup timestamps
-date > ~/.local/state/shortcut/laptop-backup-c.txt
-date > /media/$USER/LAPTOP_BACKUP_C/@s_0/backup_date.txt
+Sys.Stamp("laptop-backup-c");
+Sys.StampFile(Path.Combine(s0, "backup_date.txt"));
 
-console.rule(style="cyan")
-
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+return Ui.Done();

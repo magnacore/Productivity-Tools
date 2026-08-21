@@ -1,14 +1,29 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Pick a process with fzf and stop it.
+//
+// Sends SIGTERM by default, which lets a program shut down properly. Use -9 when
+// something is genuinely wedged and will not respond.
 
-console = Console()
+var a = new Args("process-kill", "Pick a process with fzf and signal it")
+    .Flag("-9", "--force", help: "Send SIGKILL instead of SIGTERM")
+    .Parse(args);
 
-console.rule(f"[bold cyan]Kill Process...", style="cyan")
+Ui.Begin("Kill Process...");
 
-# use -9 to hard kill
-ps aux | fzf | awk '{print $2}' | xargs kill -15
+var signal = a.Flag("force") ? "9" : "15";
 
-console.rule(style="cyan")
+// fzf needs the real terminal, and this is a pipeline end to end, so it runs in
+// a shell rather than through ArgumentList.
+int code = Proc.Shell($"ps aux | fzf | awk '{{print $2}}' | xargs --no-run-if-empty kill -{signal}");
 
-audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
+Ui.End();
+
+if (code != 0) return code;
+
+Snd.Success();
+return 0;

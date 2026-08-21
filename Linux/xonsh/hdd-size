@@ -1,34 +1,46 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.console import Console
+// Report disk, RAM and trash usage. Run on its own, and by shortcut-update at
+// the end of every maintenance pass.
 
-console = Console()
+Ui.Begin("Space used: ");
 
-console.rule(f"[bold cyan]Space used: ", style="cyan")
+// `df -h /home | grep /dev` — a pipe is the point here, so use a real shell.
+var dfLine = Proc.ShellCapture("df -h /home | grep /dev").Trim();
+var fields = dfLine.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
-console.print(f"[bold cyan]Used Disk Space: [/bold cyan]")
-subprocess_output = $(df -h /home | grep /dev)
+if (fields.Length >= 5)
+{
+    var total = fields[1];
+    var used = fields[2];
+    var free = fields[3];
 
-total_space = subprocess_output.split()[1]
+    // The capacity column looks like "83%"; drop the sign to do arithmetic on it.
+    int.TryParse(fields[4].TrimEnd('%'), out var usedPercentage);
 
-used_space = subprocess_output.split()[2]
-used_percentage = int(subprocess_output.split()[4][:-1])
-console.print(f"{used_space} of {total_space} or {used_percentage}% of disk is used.\n")
+    Ui.Info("Used Disk Space: ");
+    Ui.Line($"{Ui.Esc(used)} of {Ui.Esc(total)} or {usedPercentage}% of disk is used.\n");
 
-console.print(f"[bold cyan]Free Disk Space: [/bold cyan]")
-free_space = subprocess_output.split()[3]
-console.print(f"{free_space} of {total_space} or {100-used_percentage}% of disk is free.\n")
+    Ui.Info("Free Disk Space: ");
+    Ui.Line($"{Ui.Esc(free)} of {Ui.Esc(total)} or {100 - usedPercentage}% of disk is free.\n");
+}
+else
+{
+    Ui.Warn("Could not read disk usage for /home.");
+}
 
-df -h
-console.print("\n")
+Proc.Run("df", "-h");
+Console.WriteLine();
 
-console.print(f"[bold cyan]Used RAM Space: [/bold cyan]")
-free -h
+Ui.Info("Used RAM Space: ");
+Proc.Run("free", "-h");
 
-# console.print(f"\n[bold cyan]Used ZRAM Space: [/bold cyan]")
-# zramctl
+Ui.Info("\nUsed Trash Space: ");
+Proc.Run("du", "-hs", Path.Combine(Paths.Home, ".local", "share", "Trash"));
 
-console.print(f"\n[bold cyan]Used Trash Space: [/bold cyan]")
-du -hs ~/.local/share/Trash
-
-console.rule(style="cyan")
+Ui.End();
+return 0;

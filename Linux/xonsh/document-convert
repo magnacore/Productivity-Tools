@@ -1,43 +1,181 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-from rich.progress import track
-from rich.console import Console
-from rich import print
+// Convert documents between any of pandoc's formats.
+//
+//     document-convert pdf notes.md report.docx
+//
+// PDF output goes through LaTeX, which is where this gets interesting: LaTeX
+// treats \ ^ # _ $ & % ~ as commands, so ordinary prose containing a shell
+// snippet or a URL will fail to typeset. Three things keep that in check —
+// see PandocArgs below.
 
-import sys
-import os
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = Jobs.Add(new Args("document-convert", "Convert documents to another format with pandoc")
+    .Opt("-p", "--pdf-engine", @default: "xelatex",
+         help: "LaTeX engine for PDF output")
+    .Flag("-r", "--raw",
+          help: "Do not sanitise input for LaTeX; pass it to pandoc untouched")
+    .Pos("extension", "Target format extension, e.g. pdf, docx, epub")
+    .Rest("files", min: 1, help: "Files to convert"))
+    .Parse(args);
 
-from utilities import get_filename_extension
+var extension = a.Str("extension").TrimStart('.');
+var allFiles = Fs.SortedFiles(a.Rest);
+bool toPdf = extension.Equals("pdf", StringComparison.OrdinalIgnoreCase);
+bool sanitise = !a.Flag("raw") && toPdf;
 
-console = Console()
+// xelatex understands Unicode; pdflatex does not, and dies on the first emoji.
+// It is also the engine that honours mainfont/monofont below — under pdflatex
+// those were silently ignored, so the chosen fonts never actually applied.
+var pdfEngine = a.Str("pdf-engine");
+if (toPdf && !Proc.Exists(pdfEngine))
+{
+    Ui.Warn($"{pdfEngine} is not installed; letting pandoc choose the PDF engine.");
+    pdfEngine = string.Empty;
+}
 
-# sys.argv[0] is the name of the script which will always be there
-selection = False
+Ui.Begin($"Converting document to .{extension}...");
 
-if len(sys.argv) > 2:
-	selection = True
+int failures = 0;
 
-if selection:
-	allFiles = sys.argv[2:]
-	extension = sys.argv[1]
-	allFiles.sort()
+// Each file is a separate pandoc run, and a LaTeX engine is single-threaded, so
+// several at once is close to a linear speedup. -j 1 for a spinning disk.
+Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {allFiles.Count}:"))}[/]",
+          (file, addBar) =>
+{
+    // No progress to read out of this tool, so the bar is one step: the spinner
+    // shows the file is in flight, and a failure leaves the bar visibly unfilled.
+    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 1);
 
-	console.rule(f"[bold cyan]Converting document to .{extension}...", style="cyan")
+    var (fileName, _) = Fs.SplitExt(file);
+    var output = $"{fileName}.{extension}";
 
-	for file in track(allFiles, description="[bold cyan]Converting : [/bold cyan]"):
+    // Plain text has no markup to honour, so any special character in it is just a
+    // character. Escaping them says so without changing how the text is set.
+    string source = file;
+    string? scratch = null;
 
-		file_name, _ = get_filename_extension(file)
+    if (sanitise && IsPlainText(file))
+    {
+        scratch = WriteEscapedCopy(file);
+        if (scratch is null)
+        {
+            Ui.Line($"[bold red]Could not read {Ui.Esc(file)}[/]");
+            Interlocked.Increment(ref failures);
+            return;
+        }
+        source = scratch;
+    }
 
-		if !(pandoc -s -V geometry:margin=2cm -V geometry:landscape -V papersize:a4 -V monofont:'Latin Modern Mono' -V mainfont:'Vollkorn' -o @(file_name).@(extension) @(file)):
-			print(f"[green]Converted {file} to {extension}")
-		else:
-			print(f"[bold red]Could not convert {file} to {extension}")
+    try
+    {
+        var (ok, error) = Proc.TryRun("pandoc", PandocArgs(source, output));
 
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-else:
-	console.print(f"[bold red]No file selected![/bold red]")
-	audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Error.ogg &
+        if (ok)
+        {
+            advance(1);
+            Fs.CopyTimestamp(file, output);
+            Ui.Line($"[green]Converted {Ui.Esc(file)} to {Ui.Esc(extension)}[/]");
+        }
+        else
+        {
+            // Say why. A bare "could not convert" sends you hunting for a cause
+            // pandoc already explained.
+            Ui.Line($"[bold red]Could not convert {Ui.Esc(file)} to {Ui.Esc(extension)}[/]");
+            foreach (var line in FirstLines(error, 4))
+                Ui.Line($"[dim]    {Ui.Esc(line)}[/]");
+            Interlocked.Increment(ref failures);
+        }
+    }
+    finally
+    {
+        if (scratch is not null)
+        {
+            try { File.Delete(scratch); } catch (IOException) { /* a stray temp file is harmless */ }
+        }
+    }
+}, Jobs.From(a));
 
-console.rule(style="cyan")
+return Ui.Done(failures);
+
+/// The pandoc command line for one file.
+List<string> PandocArgs(string source, string output)
+{
+    var pandocArgs = new List<string> { "-s" };
+
+    // Landscape A4 with generous margins, and typefaces chosen for long reading.
+    pandocArgs.AddRange([
+        "-V", "geometry:margin=2cm",
+        "-V", "geometry:landscape",
+        "-V", "papersize:a4",
+        "-V", "monofont:Latin Modern Mono",
+        "-V", "mainfont:Vollkorn",
+    ]);
+
+    if (toPdf && pdfEngine.Length > 0) pandocArgs.Add($"--pdf-engine={pdfEngine}");
+
+    // Markdown headed for LaTeX, with two extensions turned off:
+    //   raw_tex          - otherwise "echo -e \n" in prose is passed through as a
+    //                      LaTeX command, and \n is not one.
+    //   tex_math_dollars - otherwise a lone $ opens math mode, and everything
+    //                      after it, URLs and all, is parsed as an equation.
+    if (sanitise && IsMarkdown(source))
+        pandocArgs.AddRange(["-f", "markdown-raw_tex-tex_math_dollars"]);
+
+    pandocArgs.AddRange(["-o", output, source]);
+    return pandocArgs;
+}
+
+/// A copy of the file with every character that markdown or LaTeX would treat as
+/// syntax escaped, so pandoc sets the text as ordinary prose containing those
+/// characters rather than acting on them.
+///
+/// Not a fenced code block, which was the first attempt: that is also literal,
+/// but a code block is typeset in the monospace font, so an entire book came out
+/// looking like a terminal. Escaping leaves it as prose in the body font.
+///
+/// NUL bytes are dropped as well: no LaTeX engine accepts them, and they only
+/// ever arrive by accident.
+static string? WriteEscapedCopy(string file)
+{
+    try
+    {
+        var text = File.ReadAllText(file).Replace("\0", string.Empty);
+
+        var scratch = Path.Combine(Path.GetTempPath(), $"document-convert-{Fs.Uuid()}.md");
+        File.WriteAllText(scratch, EscapeMarkdown(text));
+        return scratch;
+    }
+    catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+    {
+        return null;
+    }
+}
+
+/// Backslash-escape the ASCII punctuation markdown assigns meaning to. Pandoc
+/// accepts an escape before any of these and emits the bare character, and its
+/// LaTeX writer then escapes whatever LaTeX also cares about.
+static string EscapeMarkdown(string text)
+{
+    const string Special = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
+    var sb = new StringBuilder(text.Length + text.Length / 4);
+    foreach (var ch in text)
+    {
+        if (Special.Contains(ch, StringComparison.Ordinal)) sb.Append('\\');
+        sb.Append(ch);
+    }
+    return sb.ToString();
+}
+
+static bool IsPlainText(string file) => Fs.Ext(file) is ".txt" or ".text" or ".log" or "";
+static bool IsMarkdown(string file) => Fs.Ext(file) is ".md" or ".markdown";
+
+static IEnumerable<string> FirstLines(string text, int count)
+    => text.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+           .Select(l => l.TrimEnd())
+           .Where(l => l.Length > 0)
+           .Take(count);

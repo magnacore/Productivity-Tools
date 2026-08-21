@@ -1,0 +1,62 @@
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for mkv-extract-track.
+//
+// mkvinfo is printed for each file so the track IDs can be read off, then the
+// track for that file is asked for and mkv-extract-track is called for it alone.
+// That keeps the per-file choice the prompt used to give, which one --track for a
+// whole batch would lose.
+
+var a = new Args("mkv-extract-track-tui", "Choose a track per file in a dialog, then run mkv-extract-track")
+    .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Files to extract from")
+    .Parse(args);
+
+var allFiles = Fs.SortedFiles(a.Rest);
+int failures = 0;
+
+foreach (var file in allFiles)
+{
+    if (!Fs.IsMedia(file)) continue;
+
+    Ui.Begin($"Tracks in {file}");
+
+    // Shown, not captured: the track table is the point.
+    Proc.Run("mkvinfo", file);
+
+    var track = Dlg.Input("Extract Track", $"Which track to extract from\n{Path.GetFileName(file)}?", "0");
+
+    if (track is null)
+    {
+        Ui.Warn($"Skipped {file}.");
+        continue;
+    }
+
+    if (!int.TryParse(track.Trim(), out var trackId) || trackId < 0)
+    {
+        Ui.Err($"'{track}' is not a track number; skipping {file}.");
+        failures++;
+        continue;
+    }
+
+    var callArgs = new List<string> { "-t", trackId.ToString() };
+    if (a.Flag("delete")) callArgs.Add("-d");
+    callArgs.Add(file);
+
+    if (a.Flag("dry-run"))
+    {
+        Ui.Line($"[dim]mkv-extract-track {string.Join(' ', callArgs)}[/]");
+        continue;
+    }
+
+    if (Proc.Call("mkv-extract-track", callArgs) != 0) failures++;
+}
+
+return failures == 0 ? 0 : 1;

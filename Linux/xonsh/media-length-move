@@ -1,121 +1,96 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
 
-import glob
-import datetime
-import sys
-import os
-import shutil
-import argparse
+// Take media off the top of the current directory until it adds up to roughly a
+// target duration, then move that batch into a folder named for it ("3H", "90M").
+// Turns a large backlog into a session-sized bundle.
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+var a = new Args("media-length-move", "Bundle media files into a folder based on a duration threshold")
+    .Opt("-d", "--duration", @default: "180", help: "Target duration in minutes")
+    .Opt("-s", "--sort", @default: "true", valueOptional: true, constValue: "true",
+         help: "Sort by modified time (on by default). Use '-s false' to sort by name.")
+    .Flag("-n", "--dry-run", help: "Show the selection without moving anything")
+    .Parse(args);
 
-from rich.console import Console
-from rich.table import Table
-from rich.progress import track, Progress
-from rich import print
-from rich.text import Text
-from rich import box
-from rich.markdown import Markdown
+int durationMinutes = a.Int("duration", 180);
+bool sortByTime = a.Bool("sort", true);
+bool dryRun = a.Flag("dry-run");
 
-from utilities import get_mime, get_duration, get_filename_extension
+double targetDurationSeconds = durationMinutes * 60.0;
 
-def str2bool(v):
-    """Helper function to parse boolean arguments from the command line."""
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1', 'on'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0', 'off'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+// Whole hours read better as "3H"; anything else stays in minutes.
+string folderName = durationMinutes % 60 == 0
+    ? $"{durationMinutes / 60}H"
+    : $"{durationMinutes}M";
 
-# Set up argument parsing
-parser = argparse.ArgumentParser(description="Bundle media files into a folder based on a duration threshold.")
-parser.add_argument("-d", "--duration", type=int, default=180, help="Target duration in minutes (default: 120)")
-# Add sort flag, defaulting to True
-parser.add_argument("-s", "--sort", type=str2bool, nargs='?', const=True, default=True, 
-                    help="Sort by modified time (on by default). Use '-s false' to sort by name.")
-args = parser.parse_args()
+Ui.Begin($"Selecting ~{durationMinutes} minutes of media");
 
-target_duration_seconds = args.duration * 60
+var allFiles = Fs.CurrentDirFiles();
 
-# Determine folder name based on the duration (e.g., 2H if 120 mins, or 90M if 90 mins)
-if args.duration % 60 == 0:
-    folder_name = f"{int(args.duration / 60)}H"
-else:
-    folder_name = f"{args.duration}M"
+if (sortByTime) allFiles = [.. allFiles.OrderBy(File.GetLastWriteTime)];
+else allFiles = [.. allFiles.OrderBy(f => f.ToLowerInvariant(), StringComparer.Ordinal)];
 
-console = Console()
-console.rule(f"[bold cyan]Selecting ~{args.duration} minutes of media", style="cyan")
+var table = Ui.NewTable($"Media Selected for '{folderName}' Directory", "Duration", "File name");
+table.Columns[0].RightAligned();
+table.Columns[1].LeftAligned();
 
-# Find all files
-allFiles = [f for f in glob.glob("*.*") if os.path.isfile(f)]
+var filesToMove = new List<string>();
+double totalDuration = 0.0;
 
-# Sort conditionally based on the --sort flag
-if args.sort:
-    # Sort by ascending modified time
-    allFiles.sort(key=lambda x: os.path.getmtime(x))
-else:
-    # Sort by name (alphabetically)
-    allFiles.sort(key=lambda x: x.lower())
+// The bar fills with seconds of media rather than with files, so it shows how
+// close the selection is to the target.
+Ui.Meter("[bold cyan]Scanning media: [/]", targetDurationSeconds, advance =>
+{
+    foreach (var file in allFiles)
+    {
+        // Non-media is skipped silently, to keep the table readable.
+        if (!Fs.IsMedia(file)) continue;
 
-total_duration = 0.0
-files_to_move = []
+        var duration = Media.Duration(file);
 
-table = Table(title=f"Media Selected for '{folder_name}' Directory", row_styles=["dim", ""], box=box.DOUBLE, show_lines=False)
-table.add_column("Duration", justify="right", style="green")
-table.add_column("File name", justify="left")
+        filesToMove.Add(file);
+        totalDuration += duration;
 
-# Iterate over files and track progress by target duration
-with Progress() as progress:
-    scan_task = progress.add_task("[bold cyan]Scanning media: [/bold cyan]", total=target_duration_seconds)
-    
-    for file in allFiles:
-        mimestart = get_mime(file)
-        _, extension = get_filename_extension(file)
+        table.AddRow(
+            Ui.Dim(filesToMove.Count - 1, $"[green]{Media.Hms(duration)}[/]"),
+            Ui.Dim(filesToMove.Count - 1, Ui.Esc(file)));
 
-        if mimestart in ['audio', 'video'] or extension == ".mka":
-            duration = get_duration(file)
-            
-            files_to_move.append(file)
-            total_duration += duration
-            
-            table.add_row(str(datetime.timedelta(seconds=round(duration, 0))), file)
-            
-            # Update the progress bar based on the duration of the media file
-            progress.update(scan_task, completed=min(total_duration, target_duration_seconds))
+        advance(Math.Min(duration, targetDurationSeconds));
 
-            # Stop selecting files once we cross the duration threshold
-            if total_duration >= target_duration_seconds:
-                break
-        else:
-            # Silently skip non-media files to keep output clean
-            pass
+        // Stop at the first file that carries the total past the target.
+        if (totalDuration >= targetDurationSeconds) break;
+    }
+});
 
-# Display summary table
-table.add_row(u'\u2500' * 8, Markdown("---"))
-table.add_row(
-    f"[bold green]{datetime.timedelta(seconds=round(total_duration, 0))}", 
-    Text.from_markup("[bold green]Total selected media duration", justify="left")
-)
-console.print(table)
+Ui.AddSeparator(table);
+table.AddRow($"[bold green]{Media.Hms(totalDuration)}[/]", "[bold green]Total selected media duration[/]");
+Ui.Show(table);
 
-# Move the files if any were selected
-if files_to_move:
-    os.makedirs(folder_name, exist_ok=True)
-    for file in track(files_to_move, description=f"[bold green]Moving to {folder_name}/: [/bold green]"):
-        shutil.move(file, os.path.join(folder_name, file))
-        
-    console.print(f"\n[bold green]Success![/bold green] Moved {len(files_to_move)} files to the [cyan]{folder_name}[/cyan] directory.")
-else:
-    console.print("\n[bold yellow]No media files found to move.[/bold yellow]")
+if (filesToMove.Count == 0)
+{
+    Ui.Warn("\nNo media files found to move.");
+    Ui.End();
+    return 0;
+}
 
-console.rule(style="cyan")
+if (dryRun)
+{
+    Ui.Line($"\n[bold yellow]Dry run:[/] would move {filesToMove.Count} files into [cyan]{folderName}[/].");
+    Ui.End();
+    return 0;
+}
 
-# Play success sound (if the binary exists on your system)
-try:
-    audio-play ~/.local/bin/oxygen-sound-theme/Oxygen-K3B-Finish-Success.ogg &
-except Exception:
-    pass
+Directory.CreateDirectory(folderName);
+
+Ui.Track(filesToMove, $"[bold green]Moving to {folderName}/: [/]", file =>
+{
+    try { Fs.Move(file, Path.Combine(folderName, file)); }
+    catch (Exception ex) { Ui.Line($"[bold red]Could not move {Ui.Esc(file)}: {ex.Message}[/]"); }
+});
+
+Ui.Line($"\n[bold green]Success![/] Moved {filesToMove.Count} files to the [cyan]{folderName}[/] directory.");
+
+return Ui.Done();
