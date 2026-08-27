@@ -11,6 +11,7 @@
 
 var a = new Args("video-process", "Rename downloaded videos and move them to the capture inbox")
     .Flag("-n", "--dry-run", help: "Show what would be renamed and moved, without doing it")
+    .Flag("-f", "--force", help: "Overwrite files already in the destination")
     .Parse(args);
 
 bool dryRun = a.Flag("dry-run");
@@ -56,11 +57,10 @@ if (dryRun)
     return 0;
 }
 
-// pymv shows a progress bar and prompts before overwriting.
-var pymvArgs = new List<string> { "/opt/anaconda3/envs/util/bin/pymv", "-gip" };
-pymvArgs.AddRange(Directory.GetFiles(moveFromPath));
-pymvArgs.Add(Paths.TaskCaptureBin + "/");
+// Downloads and the capture inbox are normally the same filesystem, so this is a
+// rename per file rather than a byte copy. Fs.MoveInto falls back to rsync when they
+// are not.
+var waiting = Directory.GetFiles(moveFromPath).OrderBy(f => f, StringComparer.Ordinal).ToList();
+int failures = waiting.Count == 0 ? 0 : Fs.MoveInto(waiting, Paths.TaskCaptureBin, a.Flag("force"));
 
-if (pymvArgs.Count > 3) Proc.Run("/opt/anaconda3/envs/util/bin/python", pymvArgs);
-
-return Ui.Done();
+return Ui.Done(failures);

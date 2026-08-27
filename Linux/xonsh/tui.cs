@@ -69,6 +69,22 @@ internal static class Dlg
         return index < 0 ? null : index;
     }
 
+    /// Like Choose, but several entries can be marked. Space toggles a mark, Enter
+    /// accepts. Returns the marked indices, an empty array if nothing was marked, or
+    /// null if cancelled.
+    ///
+    /// There is no inline fallback for this one: a Spectre multi-select would need a
+    /// different prompt type, and the only caller (mkv-extract-track-tui) can fall
+    /// back to its base program's --tracks flag instead.
+    public static int[]? ChooseMany(string title, string message, params string[] options)
+    {
+        Term.Drain();
+
+        return TryGui(app => GuiChooseMany(app, title, message, options), out var picks)
+            ? picks
+            : null;
+    }
+
     /// The suite's one "what should happen to the originals?" question.
     ///
     /// Asked in one place because a dozen programs need it and the phrasing had
@@ -147,6 +163,33 @@ internal static class Dlg
 
         RunDialog(app, title, message, list,
                   onAccept: () => answer = list.SelectedItem,
+                  height: options.Length + 7);
+
+        return answer;
+    }
+
+    private static int[]? GuiChooseMany(IApplication app, string title, string message, string[] options)
+    {
+        int[]? answer = null;
+
+        var list = new ListView
+        {
+            X = 1,
+            Y = 2,
+            Width = Dim.Fill(2),
+            Height = options.Length,
+
+            // 2.x spelling of the old AllowsMarking: a checkbox per row, toggled with
+            // Space, while the arrows still move the selection.
+            MarkMultiple = true,
+            ShowMarks = true,
+        };
+
+        list.SetSource(new ObservableCollection<string>(options));
+        list.SelectedItem = 0;
+
+        RunDialog(app, title, message, list,
+                  onAccept: () => answer = [.. list.GetAllMarkedItems()],
                   height: options.Length + 7);
 
         return answer;

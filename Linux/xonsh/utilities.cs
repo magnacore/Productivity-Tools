@@ -1113,6 +1113,141 @@ internal static partial class Fs
         else File.Move(source, destination, overwrite: false);
     }
 
+    // --- Bulk move / copy ----------------------------------------------------
+    //
+    // These replace pymv and pycp, which copied every byte even when the source and
+    // destination shared a filesystem. Measured on 2 GB across 10 files: pymv 1.437 s
+    // against 0.002 s for a rename, and pycp 2.129 s against 0.003 s for a reflink
+    // copy. pycp also stamped its output with the current time instead of the
+    // source's, which is the one thing these folders cannot afford.
+    //
+    // Nothing here is btrfs-specific. A same-filesystem move is rename(2), which is
+    // POSIX. `cp --reflink=auto` clones instantly where the filesystem supports it
+    // (btrfs, xfs) and silently falls back to a normal copy where it does not (ext4)
+    // -- unlike --reflink=always, which hard-fails with "Operation not supported".
+
+    /// Whether two paths sit on the same filesystem, so a move between them is a
+    /// rename rather than a copy.
+    ///
+    /// Compared by device id. The destination may not exist yet, so the nearest
+    /// existing ancestor is measured instead.
+    public static bool SameFilesystem(string first, string second)
+    {
+        var a = DeviceId(first);
+        var b = DeviceId(second);
+
+        // Unknown on either side: assume they differ, which picks the slower but
+        // always-correct path.
+        return a.Length > 0 && a == b;
+    }
+
+    private static string DeviceId(string path)
+    {
+        var probe = Path.GetFullPath(path);
+
+        while (probe.Length > 0 && !Directory.Exists(probe) && !File.Exists(probe))
+        {
+            var parent = Path.GetDirectoryName(probe);
+            if (parent is null || parent == probe) break;
+            probe = parent;
+        }
+
+        return Proc.Capture("stat", "-c", "%d", probe);
+    }
+
+    /// Move files into a directory. Returns the number that failed.
+    ///
+    /// Same filesystem: a rename per file, which is instant, with a bar counting
+    /// files. Across filesystems every byte has to travel, so rsync takes over and
+    /// reports its own byte-level progress -- the one case where a file counter tells
+    /// you nothing useful about a single large file.
+    public static int MoveInto(IReadOnlyList<string> files, string destinationDir, bool force)
+        => Transfer(files, destinationDir, force, move: true);
+
+    /// Copy files into a directory. Returns the number that failed.
+    public static int CopyInto(IReadOnlyList<string> files, string destinationDir, bool force)
+        => Transfer(files, destinationDir, force, move: false);
+
+    private static int Transfer(IReadOnlyList<string> files, string destinationDir,
+                                bool force, bool move)
+    {
+        if (files.Count == 0) return 0;
+
+        Directory.CreateDirectory(destinationDir);
+
+        if (!SameFilesystem(files[0], destinationDir))
+            return Rsync(files, destinationDir, force, move);
+
+        return move ? RenameInto(files, destinationDir, force)
+                    : ReflinkInto(files, destinationDir, force);
+    }
+
+    /// rename(2) per file, for when the destination shares the filesystem.
+    private static int RenameInto(IReadOnlyList<string> files, string destinationDir, bool force)
+    {
+        int failures = 0;
+
+        Ui.Track(files, "[bold cyan]Moving : [/]", file =>
+        {
+            var target = Path.Combine(destinationDir, Path.GetFileName(file));
+
+            if (!force && (File.Exists(target) || Directory.Exists(target)))
+            {
+                Ui.Line($"[yellow]Already there, left alone: {Ui.Esc(Path.GetFileName(file))}[/]");
+                return;
+            }
+
+            try
+            {
+                if (force && File.Exists(target)) File.Delete(target);
+                Move(file, target);
+            }
+            catch (Exception ex) when (IsExpectedIoFailure(ex))
+            {
+                Ui.Line($"[bold red]Could not move {Ui.Esc(file)}: {ex.Message}[/]");
+                Interlocked.Increment(ref failures);
+            }
+        });
+
+        return failures;
+    }
+
+    /// One cp for the whole batch. --reflink=auto so a copy-on-write filesystem
+    /// clones instead of copying, and --preserve=timestamps because these folders are
+    /// read in modified-time order.
+    private static int ReflinkInto(IReadOnlyList<string> files, string destinationDir, bool force)
+    {
+        var callArgs = new List<string> { "--reflink=auto", "--preserve=timestamps", "-r" };
+        if (!force) callArgs.Add("-n");
+
+        callArgs.AddRange(files);
+        callArgs.Add(destinationDir + Path.DirectorySeparatorChar);
+
+        Ui.Info($"Copying {files.Count} item(s)...");
+
+        return Proc.Ok("cp", callArgs) ? 0 : files.Count;
+    }
+
+    /// Across filesystems, where the bytes really do have to move.
+    private static int Rsync(IReadOnlyList<string> files, string destinationDir,
+                             bool force, bool move)
+    {
+        // -a carries timestamps and permissions across; progress2 reports the whole
+        // transfer rather than restarting the meter per file.
+        var callArgs = new List<string> { "-a", "--info=progress2" };
+
+        if (!force) callArgs.Add("--ignore-existing");
+        if (move) callArgs.Add("--remove-source-files");
+
+        callArgs.AddRange(files);
+        callArgs.Add(destinationDir + Path.DirectorySeparatorChar);
+
+        Ui.Info($"{(move ? "Moving" : "Copying")} {files.Count} item(s) across filesystems...");
+
+        // Not quiet: rsync's own progress display is the point here.
+        return Proc.Run("rsync", callArgs) == 0 ? 0 : files.Count;
+    }
+
     /// handle_original_file(): either trash the source, or tuck it away under
     /// ./Original_<folder>/ so the conversion is reversible.
     public static void HandleOriginal(string file, bool delete, string folder = "Files")
@@ -1674,8 +1809,7 @@ internal static class Sys
         }
     }
 
-    /// Move everything inside a directory (not the directory itself) elsewhere,
-    /// via pymv, which shows a progress bar and prompts before overwriting.
+    /// Move everything inside a directory (not the directory itself) elsewhere.
     ///
     /// The contents are listed explicitly rather than passing a glob, so a source
     /// directory that is empty is a no-op instead of an error about "dir/*".
@@ -1701,17 +1835,13 @@ internal static class Sys
 
         if (DryRun)
         {
-            Ui.Line($"[dim]pymv -gip {Ui.Esc(sourceDir)}/* {Ui.Esc(destinationDir)}[/]");
+            Ui.Line($"[dim]move {Ui.Esc(sourceDir)}/* -> {Ui.Esc(destinationDir)}[/]");
             return;
         }
 
-        Directory.CreateDirectory(destinationDir);
-
-        var pymvArgs = new List<string> { "/opt/anaconda3/envs/util/bin/pymv", "-gip" };
-        pymvArgs.AddRange(entries);
-        pymvArgs.Add(destinationDir);
-
-        Proc.Run("/opt/anaconda3/envs/util/bin/python", pymvArgs);
+        // force: these are backup stages moving a queue onward, where the destination
+        // holding an older copy of the same name is expected.
+        Fs.MoveInto(entries, destinationDir, force: true);
     }
 
     /// The rsync log every laptop backup writes, restarted each run.
