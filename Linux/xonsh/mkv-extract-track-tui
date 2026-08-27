@@ -8,46 +8,64 @@
 
 // Dialog front end for mkv-extract-track.
 //
-// mkvinfo is printed for each file so the track IDs can be read off, then the
-// track for that file is asked for and mkv-extract-track is called for it alone.
-// That keeps the per-file choice the prompt used to give, which one --track for a
-// whole batch would lose.
+// Reads each file's track layout with `mkvmerge -J` and offers it as a marked list —
+// Space marks a track, Enter accepts — so video, audio and subtitle tracks can be
+// picked out by what they are rather than by remembering a number from mkvinfo.
+//
+// Asked per file, because two files rarely have the same track layout.
 
-var a = new Args("mkv-extract-track-tui", "Choose a track per file in a dialog, then run mkv-extract-track")
+using System.Text.Json;
+
+var a = new Args("mkv-extract-track-tui", "Pick tracks from a list, then run mkv-extract-track")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Files to extract from")
     .Parse(args);
 
 var allFiles = Fs.SortedFiles(a.Rest);
+
+// Asked once for the whole run rather than per file, since it is a policy rather
+// than a per-file decision.
+var deleteChoice = a.Flag("delete") ? true : Dlg.DeleteOriginals("Media");
+if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
 int failures = 0;
 
 foreach (var file in allFiles)
 {
     if (!Fs.IsMedia(file)) continue;
 
-    Ui.Begin($"Tracks in {file}");
+    var tracks = ReadTracks(file);
 
-    // Shown, not captured: the track table is the point.
-    Proc.Run("mkvinfo", file);
+    if (tracks.Count == 0)
+    {
+        Ui.Warn($"No tracks found in {file}; skipping.");
+        continue;
+    }
 
-    var track = Dlg.Input("Extract Track", $"Which track to extract from\n{Path.GetFileName(file)}?", "0");
+    var labels = tracks.Select(Describe).ToArray();
 
-    if (track is null)
+    var picked = Dlg.ChooseMany(
+        "Extract Tracks",
+        $"{Path.GetFileName(file)}\n\nSpace marks a track, Enter extracts the marked ones.",
+        labels);
+
+    if (picked is null)
     {
         Ui.Warn($"Skipped {file}.");
         continue;
     }
 
-    if (!int.TryParse(track.Trim(), out var trackId) || trackId < 0)
+    if (picked.Length == 0)
     {
-        Ui.Err($"'{track}' is not a track number; skipping {file}.");
-        failures++;
+        Ui.Warn($"No track marked for {file}; skipping.");
         continue;
     }
 
-    var callArgs = new List<string> { "-t", trackId.ToString() };
-    if (a.Flag("delete")) callArgs.Add("-d");
+    var ids = string.Join(',', picked.Select(i => tracks[i].Id));
+
+    var callArgs = new List<string> { "-t", ids };
+    if (deleteChoice.Value) callArgs.Add("-d");
     callArgs.Add(file);
 
     if (a.Flag("dry-run"))
@@ -60,3 +78,62 @@ foreach (var file in allFiles)
 }
 
 return failures == 0 ? 0 : 1;
+
+/// One row of the list: what the track is, in the terms someone choosing would use.
+static string Describe(TrackInfo track)
+{
+    var detail = new List<string> { track.Codec };
+
+    if (!string.IsNullOrWhiteSpace(track.Language) && track.Language != "und")
+        detail.Add(track.Language);
+
+    if (!string.IsNullOrWhiteSpace(track.Name)) detail.Add(track.Name);
+
+    return $"{track.Id}  {track.Kind,-9}  {string.Join("  ", detail)}";
+}
+
+/// The tracks in a Matroska file, from `mkvmerge -J`.
+///
+/// The same source mkv-extract-track itself reads, so the IDs listed here are exactly
+/// the IDs it will accept.
+static List<TrackInfo> ReadTracks(string file)
+{
+    var tracks = new List<TrackInfo>();
+    var json = Proc.Capture("mkvmerge", "-J", file);
+
+    if (string.IsNullOrWhiteSpace(json)) return tracks;
+
+    try
+    {
+        using var document = JsonDocument.Parse(json);
+
+        if (!document.RootElement.TryGetProperty("tracks", out var array)) return tracks;
+
+        foreach (var element in array.EnumerateArray())
+        {
+            if (!element.TryGetProperty("id", out var idValue) || !idValue.TryGetInt32(out var id))
+                continue;
+
+            var kind = element.TryGetProperty("type", out var t) ? t.GetString() ?? "track" : "track";
+            var codec = element.TryGetProperty("codec", out var c) ? c.GetString() ?? "" : "";
+
+            string language = "", name = "";
+
+            if (element.TryGetProperty("properties", out var properties))
+            {
+                if (properties.TryGetProperty("language", out var l)) language = l.GetString() ?? "";
+                if (properties.TryGetProperty("track_name", out var n)) name = n.GetString() ?? "";
+            }
+
+            tracks.Add(new TrackInfo(id, kind, codec, language, name));
+        }
+    }
+    catch (JsonException ex)
+    {
+        Ui.Warn($"Could not read the track list of {file}: {ex.Message}");
+    }
+
+    return tracks;
+}
+
+internal sealed record TrackInfo(int Id, string Kind, string Codec, string Language, string Name);

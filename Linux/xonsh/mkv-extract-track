@@ -4,44 +4,184 @@
 #:property Configuration=Release
 #:include utilities.cs
 
-// Pull a single track out of a Matroska file. mkvinfo is printed first so you can
-// read off the track IDs, then you pick one per file.
+// Pull one or more tracks out of Matroska files.
+//
+// Track IDs come from `mkvmerge -J`, the same source mkv-extract-track-tui reads to
+// build its list, so the numbers shown there are the numbers to pass here.
+//
+//     mkv-extract-track -t 0,3,4 lecture.mkv
+//
+// Every selected track is extracted in a single mkvextract call. Each output is named
+// after its track, since several of them now land side by side.
 
-var a = new Args("mkv-extract-track", "Extract a chosen track from Matroska files")
-    .Opt("-t", "--track", required: true,
-         help: "Track ID to extract, applied to every file (mkvinfo lists them)")
+using System.Text.Json;
+
+var a = new Args("mkv-extract-track", "Extract chosen tracks from Matroska files")
+    .Opt("-t", "--tracks", required: true,
+         help: "Track IDs to extract, comma separated (e.g. 0,3,4); mkvmerge -J lists them")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
     .Rest("files", min: 1, help: "Files to extract from")
     .Parse(args);
 
+var wanted = ParseTrackIds(a.Str("tracks"));
+
+if (wanted.Count == 0)
+{
+    Ui.Err("--tracks needs at least one track ID, for example: -t 0,3");
+    Snd.Error();
+    return 2;
+}
+
 var allFiles = Fs.SortedFiles(a.Rest);
 
-Ui.Begin("Extracting track form .mkv...");
+Ui.Begin("Extracting tracks from .mkv...");
 
 bool deleteOriginals = a.Flag("delete");
+int failures = 0;
 
 foreach (var file in allFiles)
 {
     if (!Fs.IsMedia(file)) continue;
 
-    Ui.Begin($"Extracting track form {file}");
-
-    var trackId = a.Int("track");
     var (filename, _) = Fs.SplitExt(file);
 
-    // The output keeps a ".rename" suffix on purpose: only you know what
-    // container the extracted track actually belongs in.
-    if (Proc.Ok("mkvextract", file, "tracks", $"{trackId}:{filename}.rename"))
+    // Read the layout so each output can be named for what it actually is. A file
+    // that has no track with a requested ID is reported rather than silently skipped.
+    var tracks = ReadTracks(file);
+    var targets = new List<string>();
+
+    foreach (var id in wanted)
     {
-        // Before the original is moved away.
-        Fs.CopyTimestamp(file, $"{filename}.rename");
-        Ui.Good($" Extracted: {file}");
+        var track = tracks.FirstOrDefault(t => t.Id == id);
+
+        if (track is null)
+        {
+            Ui.Warn($"{file} has no track {id}; skipping that one.");
+            continue;
+        }
+
+        targets.Add($"{id}:{filename}-track{id}-{track.Kind}{track.Extension}");
+    }
+
+    if (targets.Count == 0)
+    {
+        Ui.Err($" No requested track exists in {file}");
+        failures++;
+        continue;
+    }
+
+    var callArgs = new List<string> { file, "tracks" };
+    callArgs.AddRange(targets);
+
+    if (Proc.Ok("mkvextract", callArgs))
+    {
+        // Before the original is moved away, so a modified-time sort keeps the
+        // extracted tracks beside the file they came from.
+        foreach (var target in targets)
+            Fs.CopyTimestamp(file, target[(target.IndexOf(':') + 1)..]);
+
+        Ui.Good($" Extracted {targets.Count} track(s) from {file}");
         Fs.HandleOriginal(file, deleteOriginals, "Media");
     }
     else
     {
-        Ui.Err($" Unable to extract: {file}");
+        Ui.Err($" Unable to extract from {file}");
+        failures++;
     }
 }
 
-return Ui.Done();
+return Ui.Done(failures);
+
+/// "0,3, 4" -> [0, 3, 4], keeping the order given and dropping duplicates.
+static List<int> ParseTrackIds(string text)
+{
+    var ids = new List<int>();
+
+    foreach (var piece in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        if (int.TryParse(piece, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id)
+            && id >= 0 && !ids.Contains(id))
+        {
+            ids.Add(id);
+        }
+    }
+
+    return ids;
+}
+
+/// The tracks in a Matroska file, from `mkvmerge -J`.
+///
+/// JSON rather than mkvinfo: mkvinfo is meant to be read by people and its layout has
+/// no stable shape to parse, while -J is a documented structure carrying the ID, the
+/// type and the codec ID all in one place.
+static List<TrackInfo> ReadTracks(string file)
+{
+    var tracks = new List<TrackInfo>();
+    var json = Proc.Capture("mkvmerge", "-J", file);
+
+    if (string.IsNullOrWhiteSpace(json)) return tracks;
+
+    try
+    {
+        using var document = JsonDocument.Parse(json);
+
+        if (!document.RootElement.TryGetProperty("tracks", out var array)) return tracks;
+
+        foreach (var element in array.EnumerateArray())
+        {
+            if (!element.TryGetProperty("id", out var idValue) || !idValue.TryGetInt32(out var id))
+                continue;
+
+            var kind = element.TryGetProperty("type", out var typeValue)
+                ? typeValue.GetString() ?? "track"
+                : "track";
+
+            var codecId = element.TryGetProperty("properties", out var properties)
+                          && properties.TryGetProperty("codec_id", out var codecValue)
+                ? codecValue.GetString() ?? string.Empty
+                : string.Empty;
+
+            tracks.Add(new TrackInfo(id, kind, codecId));
+        }
+    }
+    catch (JsonException ex)
+    {
+        Ui.Warn($"Could not read the track list of {file}: {ex.Message}");
+    }
+
+    return tracks;
+}
+
+/// One track, and the file extension its codec deserves.
+internal sealed record TrackInfo(int Id, string Kind, string CodecId)
+{
+    /// Matroska codec IDs are stable and documented, so the common ones can be named
+    /// properly. Anything unrecognised keeps ".rename", the suite's long-standing
+    /// marker for "only you know what container this belongs in".
+    public string Extension => CodecId switch
+    {
+        "V_MPEG4/ISO/AVC"   => ".h264",
+        "V_MPEGH/ISO/HEVC"  => ".h265",
+        "V_AV1"             => ".av1",
+        "V_VP8"             => ".vp8",
+        "V_VP9"             => ".vp9",
+        "A_OPUS"            => ".opus",
+        "A_VORBIS"          => ".ogg",
+        "A_FLAC"            => ".flac",
+        "A_AC3"             => ".ac3",
+        "A_EAC3"            => ".eac3",
+        "A_DTS"             => ".dts",
+        "A_TRUEHD"          => ".thd",
+        "A_MPEG/L3"         => ".mp3",
+        "A_MPEG/L2"         => ".mp2",
+        "S_TEXT/UTF8"       => ".srt",
+        "S_TEXT/ASS"        => ".ass",
+        "S_TEXT/SSA"        => ".ssa",
+        "S_TEXT/WEBVTT"     => ".vtt",
+        "S_HDMV/PGS"        => ".sup",
+        "S_VOBSUB"          => ".sub",
+        var c when c.StartsWith("A_AAC", StringComparison.Ordinal)  => ".aac",
+        var c when c.StartsWith("A_PCM", StringComparison.Ordinal)  => ".wav",
+        _ => ".rename",
+    };
+}
