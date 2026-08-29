@@ -77,13 +77,12 @@ else
     EmptyDirectory(Path.Combine(Paths.Home, ".cache"));
     EmptyDirectory(Path.Combine(Paths.Home, ".var", "app", "net.sourceforge.liferea", "cache"));
 
-    // The C# suite's compiled output lives in ~/.local/share/dotnet/runfile.
-    // The xonsh original wiped it outright, which would now force every script
-    // in this collection to rebuild from scratch — roughly 45 minutes of
-    // recompiling, every other Saturday. Prune only what has gone stale.
-    Ui.Info("Prune old .NET file-based app build artifacts...");
-    Sys.Run("/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet",
-            "clean", "file-based-app-artifacts", "--days", "30");
+    // The C# suite's compiled output. Emptied outright rather than pruned: the
+    // directory is keyed by program path and rebuilds itself on demand, so the only
+    // cost is that the next run of each program pays its build once. Nothing in here
+    // is state worth keeping — the SDK itself lives under /opt, not here.
+    Ui.Info("Clear .NET build cache (it rebuilds on demand)...");
+    EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "dotnet"));
 
     Ui.Info("Clean Xonsh history...");
     EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "xonsh"));
