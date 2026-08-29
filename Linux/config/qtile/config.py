@@ -70,7 +70,7 @@ keys = [
     # My shortcuts
     Key([mod], "t", lazy.spawn(myTerm+f" --disable-server --initial-title 'xfce4-terminal' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh'"), desc="Launch terminal"),
     Key([mod, "shift"], "v", lazy.spawn(f"/opt/VVV-1.5.0-x86_64/vvv-start.sh"), desc="Launch VVV"),
-    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open'"), desc="Launch Ranger"),
+    Key([mod], "z", lazy.spawn(myTerm+f" --disable-server --initial-title 'Ranger' -e '/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open'"), desc="Launch Ranger"),
     Key([mod], "b", lazy.spawn(myBrowser), desc='My Browser' ),
     #Key([mod, "shift"], "c", lazy.spawn(myTerm+" --disable-server -e 'flatpak run com.github.miguelmota.Cointop'"), desc='Cointop' ),
     Key([mod], "d", lazy.spawn(f"/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet {myhome}/.local/bin/clipboard-convert-text"), desc="Save clipboard to text"),
@@ -78,6 +78,8 @@ keys = [
     Key([mod], "v", lazy.spawn(f"/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet {myhome}/.local/bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
     # Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Canger' -e '{myhome}/.local/bin/canger'"), desc="Launch Canger"),
+
 
     ## Rofi
     Key([mod], "r", lazy.spawn("rofi -show drun -show-icons -dpi 1"), desc='Run Rofi Application Launcher'),
@@ -663,7 +665,8 @@ def start_once():
         f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
         "/usr/local/bin/greenclip daemon".split(),
         ["qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", "/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh"],
-        ["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open"],
+        #["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open"],
+        ["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/.local/bin/canger"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         myBrowser.split(),
