@@ -77,6 +77,22 @@ else
     EmptyDirectory(Path.Combine(Paths.Home, ".cache"));
     EmptyDirectory(Path.Combine(Paths.Home, ".var", "app", "net.sourceforge.liferea", "cache"));
 
+    // The C# suite's compiled output. Cleared rather than pruned: the directory is
+    // keyed by program path and rebuilds itself on demand, so the only cost is that
+    // the next run of each program pays its build once.
+    Ui.Info("Clear .NET build cache (it rebuilds on demand)...");
+    ClearBuildCache();
+
+    // The downloaded packages themselves — a bigger reclaim than the build cache
+    // above, around half a gigabyte across the package store and the http cache.
+    //
+    // Unlike the build cache this one cannot be rebuilt offline: the next build of
+    // anything has to fetch Spectre.Console, Terminal.Gui, PdfPig, ScottPlot and the
+    // Google SDKs from nuget.org again. Run the deep clean before going offline for a
+    // while and the first program you reach for will fail to build.
+    Ui.Info("Clear NuGet package caches...");
+    Sys.Run("/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet", "nuget", "locals", "all", "--clear");
+
     Ui.Info("Clean Xonsh history...");
     EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "xonsh"));
 
@@ -113,13 +129,6 @@ else
     Ui.Info("Free container space...");
     Sys.Run("podman", "system", "prune");
     Sys.Run("podman", "system", "reset");
-
-    // The C# suite's compiled output. Emptied outright rather than pruned: the
-    // directory is keyed by program path and rebuilds itself on demand, so the only
-    // cost is that the next run of each program pays its build once. Nothing in here
-    // is state worth keeping — the SDK itself lives under /opt, not here.
-    // Ui.Info("Clear .NET build cache (it rebuilds on demand)...");
-    // EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "dotnet"));
 }
 
 Proc.Call("hdd-size");
@@ -128,6 +137,92 @@ Sys.Stamp("system-update");
 
 Ui.End();
 return 0;
+
+/// Empty the .NET build cache, skipping whatever a running process still needs.
+///
+/// A plain "rm -rf ~/.local/share/dotnet/*" cannot be used here, and the reason is
+/// worth spelling out. update-shutdown calls this program, so when this program wiped
+/// the cache it also deleted update-shutdown's own Spectre.Console.dll. Assemblies
+/// load lazily, so the parent did not fall over at once — it carried on until it
+/// reached Ui.Info("Shutting down...") after this returned, and only then died with
+///
+///     FileNotFoundException: Could not load file or assembly 'Spectre.Console'
+///
+/// which meant the machine never shut down. Anything else that calls this program is
+/// exposed the same way.
+///
+/// /proc/&lt;pid&gt;/maps lists the files each process has mapped, and that is exactly the
+/// set that has to survive. Those directories are left alone and cleared by the next
+/// run, once nothing is using them.
+static void ClearBuildCache()
+{
+    var root = Path.Combine(Paths.Home, ".local", "share", "dotnet", "runfile");
+
+    if (!Directory.Exists(root))
+    {
+        Ui.Line("[dim]No build cache to clear.[/]");
+        return;
+    }
+
+    var inUse = DirectoriesInUse(root);
+    int cleared = 0, kept = 0;
+
+    foreach (var directory in Directory.GetDirectories(root))
+    {
+        if (inUse.Contains(Path.GetFileName(directory))) { kept++; continue; }
+
+        if (Sys.DryRun)
+        {
+            Ui.Line($"[dim]rm -rf {Ui.Esc(directory)}[/]");
+            cleared++;
+            continue;
+        }
+
+        try
+        {
+            Directory.Delete(directory, recursive: true);
+            cleared++;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Ui.Warn($"Could not remove {directory}: {ex.Message}");
+        }
+    }
+
+    Ui.Good($"Cleared {cleared} build cache(s)" +
+            (kept == 0 ? "." : $", kept {kept} still in use."));
+}
+
+/// The names of the cache directories some live process has a file mapped from.
+static HashSet<string> DirectoriesInUse(string root)
+{
+    var names = new HashSet<string>(StringComparer.Ordinal);
+    var prefix = root + Path.DirectorySeparatorChar;
+
+    foreach (var process in Directory.GetDirectories("/proc"))
+    {
+        if (!int.TryParse(Path.GetFileName(process), out _)) continue;
+
+        try
+        {
+            foreach (var line in File.ReadLines(Path.Combine(process, "maps")))
+            {
+                int at = line.IndexOf(prefix, StringComparison.Ordinal);
+                if (at < 0) continue;
+
+                var rest = line[(at + prefix.Length)..];
+                int slash = rest.IndexOf(Path.DirectorySeparatorChar);
+                if (slash > 0) names.Add(rest[..slash]);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Processes come and go, and other users' are not ours to read.
+        }
+    }
+
+    return names;
+}
 
 /// Move matching entries into the capture inbox, numbering rather than
 /// overwriting anything already there with the same name.
