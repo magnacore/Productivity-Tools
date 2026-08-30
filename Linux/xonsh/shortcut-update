@@ -77,13 +77,6 @@ else
     EmptyDirectory(Path.Combine(Paths.Home, ".cache"));
     EmptyDirectory(Path.Combine(Paths.Home, ".var", "app", "net.sourceforge.liferea", "cache"));
 
-    // The C# suite's compiled output. Emptied outright rather than pruned: the
-    // directory is keyed by program path and rebuilds itself on demand, so the only
-    // cost is that the next run of each program pays its build once. Nothing in here
-    // is state worth keeping — the SDK itself lives under /opt, not here.
-    Ui.Info("Clear .NET build cache (it rebuilds on demand)...");
-    EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "dotnet"));
-
     Ui.Info("Clean Xonsh history...");
     EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "xonsh"));
 
@@ -120,6 +113,13 @@ else
     Ui.Info("Free container space...");
     Sys.Run("podman", "system", "prune");
     Sys.Run("podman", "system", "reset");
+
+    // The C# suite's compiled output. Emptied outright rather than pruned: the
+    // directory is keyed by program path and rebuilds itself on demand, so the only
+    // cost is that the next run of each program pays its build once. Nothing in here
+    // is state worth keeping — the SDK itself lives under /opt, not here.
+    // Ui.Info("Clear .NET build cache (it rebuilds on demand)...");
+    // EmptyDirectory(Path.Combine(Paths.Home, ".local", "share", "dotnet"));
 }
 
 Proc.Call("hdd-size");
