@@ -1,0 +1,21 @@
+# Nothing in this folder is generated — the .NET build cache lives in
+# ~/.local/share/dotnet/runfile, outside the tree, and shortcut-update clears it.
+# These are only guards against debris landing here by accident.
+
+*.log
+*.bak
+*.bkp
+*.tmp
+.tmp-*
+
+# Scratch programs used while testing; never meant to be kept.
+zz-*
+
+# OS droppings, the same ones shortcut-update sweeps from $HOME.
+.DS_Store
+desktop.ini
+__MACOSX/
+
+# Test project build output.
+tests/bin/
+tests/obj/

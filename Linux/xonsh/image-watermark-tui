@@ -11,6 +11,7 @@
 
 var a = Jobs.Add(new Args("image-watermark-tui", "Watermark many images with text entered in a dialog")
     .Opt("-t", "--text", help: "Watermark text, skipping the dialog")
+    .Flag("-n", "--dry-run", help: "Show the composed commands without running them")
     .Rest("files", min: 1, help: "Images to watermark"))
     .Parse(args);
 
@@ -71,6 +72,14 @@ Ui.Track2(cleanFileNames,
 
     // Font size 72, spacing 50, opacity 150 out of 255 — legible over the image
     // without hiding it.
+    if (a.Flag("dry-run"))
+    {
+        Ui.Line($"[dim]image-watermark {Ui.Esc(image)} {Ui.Esc(newFilename)} " +
+                $"{Ui.Esc(watermarkText)} 72 50 150[/]");
+        advance(1);
+        return;
+    }
+
     if (Proc.Call("image-watermark",
                   [image, newFilename, watermarkText, "72", "50", "150"], quiet: true) == 0)
     {

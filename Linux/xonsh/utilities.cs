@@ -636,7 +636,24 @@ internal static class Proc
         // still reading stdout.
         var drainErr = p.StandardError.ReadToEndAsync();
 
-        while (p.StandardOutput.ReadLine() is { } line) onLine(line);
+        // Split on carriage returns as well as newlines. A tool that redraws a
+        // progress meter in place ends each update with \r and only emits \n when it
+        // moves on to the next file, so ReadLine would report a single line per file
+        // and miss every update in between — which is precisely rsync's behaviour.
+        var pending = new StringBuilder();
+
+        for (int c = p.StandardOutput.Read(); c >= 0; c = p.StandardOutput.Read())
+        {
+            if (c is '\n' or '\r')
+            {
+                if (pending.Length > 0) { onLine(pending.ToString()); pending.Clear(); }
+                continue;
+            }
+
+            pending.Append((char)c);
+        }
+
+        if (pending.Length > 0) onLine(pending.ToString());
 
         p.WaitForExit();
         drainErr.Wait();
@@ -1229,23 +1246,119 @@ internal static partial class Fs
     }
 
     /// Across filesystems, where the bytes really do have to move.
-    private static int Rsync(IReadOnlyList<string> files, string destinationDir,
+    ///
+    /// One rsync per entry rather than one for the batch, so each gets its own bar
+    /// with its own percentage and estimate, under a bar counting the batch. rsync's
+    /// own --info=progress2 meter is aggregate-only: it reports the whole transfer
+    /// and never names a file, which is why a long move looked like nothing was
+    /// happening. Run per entry, that same meter becomes the entry's own progress.
+    ///
+    /// Serial on purpose. Several concurrent transfers onto one external drive make
+    /// it seek between them and finish later than doing them in turn.
+    ///
+    /// Two levels of directory here, and they are treated differently — the xonsh
+    /// original ran "pymv <CATEGORY>/* <dest>/", whose glob is what draws the line.
+    ///
+    ///   The category folder itself is never an entry, because the caller passes its
+    ///   *contents*. It survives, emptied, which is the point: those lettered folders
+    ///   are the categories things get sorted into again next time.
+    ///
+    ///   An entry that is a directory is content, and moves whole. rsync's
+    ///   --remove-source-files takes only the files it transferred and leaves the
+    ///   folders standing, so the emptied entry is removed here to match what a real
+    ///   move does.
+    private static int Rsync(IReadOnlyList<string> entries, string destinationDir,
                              bool force, bool move)
     {
-        // -a carries timestamps and permissions across; progress2 reports the whole
-        // transfer rather than restarting the meter per file.
-        var callArgs = new List<string> { "-a", "--info=progress2" };
+        int failures = 0;
+        var verb = move ? "Moving" : "Copying";
 
-        if (!force) callArgs.Add("--ignore-existing");
-        if (move) callArgs.Add("--remove-source-files");
+        Ui.Track2(entries,
+            $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{verb} {entries.Count} item(s):"))}[/]",
+            (entry, addBar) =>
+            {
+                var advance = addBar(
+                    $"[bold cyan]{Ui.Esc(Ui.FitDescription(Path.GetFileName(entry) + ":"))}[/]", 100);
 
-        callArgs.AddRange(files);
-        callArgs.Add(destinationDir + Path.DirectorySeparatorChar);
+                int reported = 0;
 
-        Ui.Info($"{(move ? "Moving" : "Copying")} {files.Count} item(s) across filesystems...");
+                // -a carries timestamps and permissions across, which matters here:
+                // these folders are read in modified-time order.
+                var callArgs = new List<string> { "-a", "--info=progress2" };
 
-        // Not quiet: rsync's own progress display is the point here.
-        return Proc.Run("rsync", callArgs) == 0 ? 0 : files.Count;
+                if (!force) callArgs.Add("--ignore-existing");
+                if (move) callArgs.Add("--remove-source-files");
+
+                callArgs.Add(entry);
+                callArgs.Add(destinationDir + Path.DirectorySeparatorChar);
+
+                bool ok = Proc.OkStreaming("rsync", callArgs, line =>
+                {
+                    var percent = ProgressPercent(line);
+                    if (percent > reported)
+                    {
+                        advance(percent - reported);
+                        reported = percent;
+                    }
+                });
+
+                if (!ok)
+                {
+                    Ui.Line($"[bold red]Could not {verb.ToLowerInvariant()} {Ui.Esc(entry)}[/]");
+                    Interlocked.Increment(ref failures);
+                    return;
+                }
+
+                if (reported < 100) advance(100 - reported);
+
+                if (move) RemoveEmptiedEntry(entry);
+            },
+            maxParallel: 1);
+
+        return failures;
+    }
+
+    /// The percentage out of an rsync progress line, or 0 for anything else.
+    ///
+    /// The line looks like "  62,914,560  33%  844.63MB/s  0:00:00 (xfr#1, …)"; the
+    /// percentage is the only run of digits immediately followed by a per-cent sign.
+    private static int ProgressPercent(string line)
+    {
+        for (int i = 0; i < line.Length; i++)
+        {
+            if (line[i] != '%') continue;
+
+            int end = i;
+            int start = i;
+            while (start > 0 && char.IsAsciiDigit(line[start - 1])) start--;
+
+            if (start < end && int.TryParse(line.AsSpan(start, end - start), out var percent))
+                return Math.Clamp(percent, 0, 100);
+        }
+
+        return 0;
+    }
+
+    /// Remove a moved directory entry once rsync has emptied it.
+    ///
+    /// Only ever an entry — one of the things being moved — never the folder they came
+    /// out of, which the caller keeps. Bails out if any file survived, since then the
+    /// transfer did not cover everything and the source is not ours to remove.
+    private static void RemoveEmptiedEntry(string entry)
+    {
+        // A plain file has already been taken by rsync itself.
+        if (!Directory.Exists(entry)) return;
+
+        if (Directory.EnumerateFiles(entry, "*", SearchOption.AllDirectories).Any()) return;
+
+        try
+        {
+            Directory.Delete(entry, recursive: true);
+        }
+        catch (Exception ex) when (IsExpectedIoFailure(ex))
+        {
+            Ui.Warn($"Could not remove the emptied {entry}: {ex.Message}");
+        }
     }
 
     /// handle_original_file(): either trash the source, or tuck it away under

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unit tests for utilities.cs.
+
+    utilities.cs is #:include'd into all 104 programs, so a bug in it reaches every
+    one of them. It holds nothing but type declarations, which is what lets an
+    ordinary project compile it as a source file — the programs themselves are
+    top-level statements in file-based apps and cannot be referenced at all.
+
+    Only the pure logic is covered here. Anything that shells out or draws to the
+    terminal is left to the invariant checks and to running the programs.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <!-- Matches the programs: without this, string.Normalize is a no-op and the
+         slug tests would pass for the wrong reason. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- .NET 10 dropped the VSTest path for Microsoft.Testing.Platform, so `dotnet
+         test` needs this to drive the xunit v3 runner. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../utilities.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+  </ItemGroup>
+
+</Project>

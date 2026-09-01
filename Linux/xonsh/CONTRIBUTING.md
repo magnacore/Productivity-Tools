@@ -75,13 +75,43 @@ git branch -d hotfix/1.1.1
 ## Before merging anything into develop
 
 ```sh
-./build-all.sh
+./check.sh          # unit tests + invariants
+./build-all.sh      # must end: built N, failed 0, warnings 0
 ```
 
-It must end with `built N, failed 0, warnings 0`. It passes `--no-incremental`, so
-warnings are surfaced rather than hidden behind a cached build — a cached build prints
-nothing, which is how an IL2026 sat unnoticed in `ocr-genai` until it failed at
-runtime.
+`build-all.sh` passes `--no-incremental`, so warnings are surfaced rather than hidden
+behind a cached build — a cached build prints nothing, which is how an IL2026 sat
+unnoticed in `ocr-genai` until it failed at runtime.
+
+`./check.sh --fast` skips the `--help` sweep, which is the slow part.
+
+### What check.sh covers
+
+**Unit tests** (`tests/`) for `utilities.cs`. That file is `#:include`d into all 104
+programs, so a bug in it reaches every one of them — and it holds nothing but type
+declarations, which is what lets an ordinary project compile it as a source file. The
+programs themselves are top-level statements in file-based apps and cannot be
+referenced at all, so they are covered by the invariants below and by running them.
+
+Only pure logic is unit-tested: `Args`, `Fs.SplitExt`, `Fs.Slug`, `Media.Hms`,
+`Num.ToWords`, `Ui.FitDescription`, `Fs.FindUrls`, `Fs.TitleCase`. Anything that shells
+out or draws to the terminal is not.
+
+**Invariants** that no compiler can check, each of which has been broken at least once:
+
+| Check | Why |
+| --- | --- |
+| no base program prompts | a prompting CLI cannot be driven from cron, a pipe or another program, and dies outright with no terminal |
+| wrappers use dialogs, not dropdowns | except the three password/OTP pickers, where a searchable list beats a Terminal.Gui one |
+| every `-tui` has `--dry-run` | the only way to see what a wrapper would run |
+| no package version drift | two versions means two copies of a dependency and two build caches |
+| all programs executable | a clone without the exec bit is inert |
+| no `pymv`/`pycp` dependency | removed for being ~700x slower than a rename, and for losing timestamps |
+| every wrapper's base program exists | a wrapper pointing at a renamed program fails only when you press the key |
+| `--help` works everywhere | proves each program compiles and parses its own arguments |
+
+Adding a check is usually cheaper than the bug it prevents. The `--dry-run` one found a
+real gap the first time it ran.
 
 ## What this repository does not cover
 
