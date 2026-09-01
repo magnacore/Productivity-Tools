@@ -25,7 +25,7 @@ mod3 = "shift"
 # terminal = guess_terminal()
 myTerm = "xfce4-terminal"	# My terminal of choice
 #myBrowser = "firefox"	# My browser of choice
-myBrowser = "flatpak run io.gitlab.librewolf-community"
+myBrowser = "flatpak run app.zen_browser.zen"
 
 keys = [
     # Switch between windows
@@ -78,7 +78,7 @@ keys = [
     Key([mod], "v", lazy.spawn(f"/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet {myhome}/.local/bin/clipboard-youtube-save"), desc="Save YouTube URLs in a text file"),
     # Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
-    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Canger' -e '{myhome}/.local/bin/canger'"), desc="Launch Canger"),
+    Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Canger' -e '/usr/local/bin/canger'"), desc="Launch Canger"),
 
 
     ## Rofi
@@ -101,7 +101,7 @@ keys = [
 # Run xprop | grep WM_CLASS | awk '{print $4}' in terminal to find wm_class
 groups = [Group("1", layout='treetab', matches=[Match(wm_class=re.compile(r"^(Station|Ferdium|fr.handbrake.ghb|thunderbird-esr|Transmission-gtk)$"))]),
           Group("2", layout='bsp'),
-          Group("3", layout='bsp', matches=[Match(wm_class=re.compile(r"^(firefox-esr|librewolf)$"))]),
+          Group("3", layout='bsp', matches=[Match(wm_class=re.compile(r"^(firefox-esr|librewolf|zen)$"))]),
           Group("4", layout='max'),
           Group("5", layout='bsp'),
           Group("6", layout='bsp'),
@@ -666,13 +666,13 @@ def start_once():
         "/usr/local/bin/greenclip daemon".split(),
         ["qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", "/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh"],
         #["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open"],
-        ["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"{myhome}/.local/bin/canger"],
+        ["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", "/usr/local/bin/canger"],
         "/usr/bin/syncthing serve --no-browser --logfile=default".split(),
         f"qtile run-cmd --group 1 {myTerm} --disable-server -e cmus".split(),
         myBrowser.split(),
         #"flatpak run fr.handbrake.ghb".split(),
         "flatpak run org.mozilla.thunderbird_esr".split(),
-        "flatpak run org.ferdium.Ferdium".split(),
+        #"flatpak run org.ferdium.Ferdium".split(),
         "transmission-gtk",
     ]
 
