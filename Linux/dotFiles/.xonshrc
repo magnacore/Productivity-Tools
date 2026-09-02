@@ -14,6 +14,14 @@ $TERMINFO="/usr/share/terminfo"
 $PYTHONPYCACHEPREFIX = p"~/.cache/python"
 $XONSH_SUBPROC_RAISE_ERROR = False
 
+# The json history backend deadlocks on exit: since 0.23.0 (PR #6249) its at_exit
+# flush does cond.wait_for(i_am_at_the_front) with no timeout, so a background
+# flusher that cannot finish during shutdown blocks the shell forever. systemd then
+# waits out the full 45s TimeoutStopSec on session-N.scope, which holds the whole
+# desktop. sqlite has no such path: its flush() is base.History.flush() (a no-op)
+# and append() writes each command straight to disk, so nothing is lost.
+$XONSH_HISTORY_BACKEND = 'sqlite'
+
 # =================================== aliases =================================
 # We can also source aliases from bash : source-bash .bash_aliases if we want to use the same aliases between xonsh and bash
 
