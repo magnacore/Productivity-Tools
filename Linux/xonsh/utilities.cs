@@ -1540,11 +1540,6 @@ internal static class Media
                                            IReadOnlyList<string> args,
                                            Action<double> advance)
     {
-        const string Marker = "out_time_us=";
-
-        double duration = Duration(source);
-        double reported = 0;
-
         // Only ever remove a file this call created. ffmpeg is asked to refuse an
         // existing output in places (video-convert-audio passes -n), and that
         // refusal is a failure in which the existing file is untouched and must
@@ -1558,6 +1553,63 @@ internal static class Media
         bool destinationExisted = existing.Exists;
         long existingLength = destinationExisted ? existing.Length : 0;
         DateTime existingWritten = destinationExisted ? existing.LastWriteTimeUtc : default;
+
+        var (ok, reported) = RunWithProgress(source, args, advance);
+
+        // A zero exit is necessary but not sufficient: require that the output was
+        // actually written. Otherwise a refusal or a silent failure passes for a
+        // conversion and the source gets treated as done.
+        if (ok)
+        {
+            var written = new FileInfo(destination);
+
+            ok = destinationExisted
+                ? written.Exists && (written.Length != existingLength ||
+                                     written.LastWriteTimeUtc != existingWritten)
+                : written.Exists && written.Length > 0;
+        }
+
+        // ffmpeg's last report usually stops a little short of the true end. Topping
+        // up only once the run counts as a success is deliberate: a failure is then
+        // left visibly short of the end rather than showing a full bar.
+        if (ok && reported < 100) advance(100 - reported);
+
+        if (!ok && !destinationExisted)
+        {
+            try
+            {
+                if (File.Exists(destination)) File.Delete(destination);
+            }
+            catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+            {
+                Ui.Warn($"Could not remove the failed output {destination}: {ex.Message}");
+            }
+        }
+
+        return ok;
+    }
+
+    /// The progress-reporting core of ConvertWithProgress, for a run that leaves
+    /// nothing on disk to check.
+    ///
+    /// video-convert-whatsapp's first pass is the case that needs this: it only
+    /// measures the video, sending its output to /dev/null and leaving a statistics
+    /// log behind, so ConvertWithProgress's written-output test has nothing to look at
+    /// and would call every such run a failure. The percentage means the same thing
+    /// either way — how far through the source's running time ffmpeg has reached — so
+    /// an analysis pass gets a real bar rather than a spinner.
+    ///
+    /// Returns whether ffmpeg exited cleanly and the highest percentage it reported.
+    /// The bar is deliberately not topped up to 100 here: only the caller knows whether
+    /// the run counts as a success, and a bar left short is how a failure shows itself.
+    public static (bool Ok, double Reported) RunWithProgress(string source,
+                                                            IReadOnlyList<string> args,
+                                                            Action<double> advance)
+    {
+        const string Marker = "out_time_us=";
+
+        double duration = Duration(source);
+        double reported = 0;
 
         // A global option, so it is safe at the front, before the caller's -i.
         var full = new List<string> { "-progress", "pipe:1" };
@@ -1577,35 +1629,7 @@ internal static class Media
             }
         });
 
-        // A zero exit is necessary but not sufficient: require that the output was
-        // actually written. Otherwise a refusal or a silent failure passes for a
-        // conversion and the source gets treated as done.
-        if (ok)
-        {
-            var written = new FileInfo(destination);
-
-            ok = destinationExisted
-                ? written.Exists && (written.Length != existingLength ||
-                                     written.LastWriteTimeUtc != existingWritten)
-                : written.Exists && written.Length > 0;
-        }
-
-        // ffmpeg's last report usually stops a little short of the true end.
-        if (ok && reported < 100) advance(100 - reported);
-
-        if (!ok && !destinationExisted)
-        {
-            try
-            {
-                if (File.Exists(destination)) File.Delete(destination);
-            }
-            catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
-            {
-                Ui.Warn($"Could not remove the failed output {destination}: {ex.Message}");
-            }
-        }
-
-        return ok;
+        return (ok, reported);
     }
 
     public static double Duration(string file)

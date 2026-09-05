@@ -20,14 +20,27 @@ var timestamp = Fs.Timestamp();
 
 Ui.Begin("Convert videos for sharing on WhatsApp");
 
-foreach (var file in a.Rest)
-{
-    if (!Fs.IsVideo(file))
-    {
-        Ui.Warn($"Skipping {file}");
-        continue;
-    }
+var allFiles = Fs.SortedFiles(a.Rest);
+var videos = allFiles.Where(Fs.IsVideo).ToList();
 
+foreach (var skipped in allFiles.Where(f => !Fs.IsVideo(f)))
+    Ui.Warn($"Skipping {skipped}");
+
+if (videos.Count == 0) return Ui.NoFiles("No videos selected!");
+
+int failures = 0;
+
+// Serial on purpose — maxParallel: 1 rather than a -j flag. Both passes share one
+// "-passlogfile temp_log", and pass 2 reads back the statistics pass 1 wrote there, so
+// two videos encoding at once would overwrite each other's log and pass 2 would size
+// its bitrate from the wrong film. The nested display is still worth having: it is what
+// carries the per-pass percentage.
+//
+// The bars below come from ffmpeg's own "-progress pipe:1" reports, measured against
+// the source's running time, so they move with the encode rather than guessing.
+Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Count} video(s):"))}[/]",
+          (file, addBar) =>
+{
     var (filename, _) = Fs.SplitExt(file);
     var convertedDir = $"{filename}-{timestamp}";
     var splitDir = $"{filename}-split-{timestamp}";
@@ -37,39 +50,73 @@ foreach (var file in a.Rest)
 
     // The tag rides along in the file name so the converted copy is obvious.
     var fullFilename = $"{filename} #whatsapp.mp4";
+    var converted = Path.Combine(convertedDir, fullFilename);
 
-    Ui.Info($"Converting {file} (pass 1 of 2)...");
-    bool pass1 = Proc.Ok("ffmpeg", "-i", file, "-c:v", "libx264", "-b:v", $"{bitrate}k",
-                         "-crf", "23", "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
-                         "-pass", "1", "-r", "30", "-an", "-passlogfile", "temp_log",
-                         "-f", "null", "/dev/null");
+    // Shared between the two passes so the encoder settings pass 1 measures are the
+    // ones pass 2 encodes with.
+    string[] common =
+    [
+        "-c:v", "libx264", "-b:v", $"{bitrate}k", "-crf", "23",
+        "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
+    ];
+
+    // Pass 1 writes its output to /dev/null and leaves only temp_log behind, so there
+    // is no file for ConvertWithProgress to check and RunWithProgress is the right
+    // half of it to call. Its bar still measures the real thing: this pass reads the
+    // whole video, and takes a comparable share of the total time.
+    var pass1Bar = addBar(
+        $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file} (pass 1 of 2):"))}[/]", 100);
+
+    List<string> pass1Args =
+    [
+        "-i", file, ..common,
+        "-pass", "1", "-r", "30", "-an", "-passlogfile", "temp_log",
+        "-f", "null", "/dev/null",
+    ];
+
+    var (pass1, reported1) = Media.RunWithProgress(file, pass1Args, pass1Bar);
 
     if (!pass1)
     {
-        Ui.Err($"First pass failed for {file}");
+        Ui.Line($"[bold red]First pass failed for {Ui.Esc(file)}[/]");
         Snd.Error();
-        continue;
+        Interlocked.Increment(ref failures);
+        return;
     }
 
-    Ui.Info($"Converting {file} (pass 2 of 2)...");
-    bool pass2 = Proc.Ok("ffmpeg", "-i", file, "-c:v", "libx264", "-b:v", $"{bitrate}k",
-                         "-crf", "23", "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
-                         "-pass", "2", "-r", "30", "-fps_mode", "cfr", "-n",
-                         "-c:a", "aac", "-b:a", "32k", "-ac", "1",
-                         "-passlogfile", "temp_log",
-                         Path.Combine(convertedDir, fullFilename));
+    // ffmpeg's last report stops a little short of the end; only fill the bar now that
+    // the pass has succeeded, so a failure above stays visibly incomplete.
+    if (reported1 < 100) pass1Bar(100 - reported1);
+
+    var pass2Bar = addBar(
+        $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file} (pass 2 of 2):"))}[/]", 100);
+
+    // This pass writes the real file, so the written-output check matters here: -n
+    // makes ffmpeg refuse an existing output and still exit 0, and ConvertWithProgress
+    // is what catches that.
+    List<string> pass2Args =
+    [
+        "-i", file, ..common,
+        "-pass", "2", "-r", "30", "-fps_mode", "cfr", "-n",
+        "-c:a", "aac", "-b:a", "32k", "-ac", "1",
+        "-passlogfile", "temp_log", converted,
+    ];
+
+    bool pass2 = Media.ConvertWithProgress(file, converted, pass2Args, pass2Bar);
 
     if (!pass2)
     {
-        Ui.Err($"Second pass failed for {file}");
+        Ui.Line($"[bold red]Second pass failed for {Ui.Esc(file)}[/]");
         Snd.Error();
-        continue;
+        Interlocked.Increment(ref failures);
+        return;
     }
 
     // The converted copy carries the source's date.
-    Fs.CopyTimestamp(file, Path.Combine(convertedDir, fullFilename));
+    Fs.CopyTimestamp(file, converted);
 
-    // Segment the converted copy. -c copy, so this is a cut, not another encode.
+    // Segment the converted copy. -c copy, so this is a cut, not another encode, and
+    // it finishes fast enough not to be worth a bar of its own.
     foreach (var video in Directory.EnumerateFiles(convertedDir, "*", SearchOption.AllDirectories))
     {
         Proc.Ok("ffmpeg", "-i", video, "-c", "copy", "-f", "segment",
@@ -84,8 +131,8 @@ foreach (var file in a.Rest)
     foreach (var part in Directory.GetFiles(splitDir).OrderBy(f => f, StringComparer.Ordinal))
         Fs.CopyTimestamp(file, part, segment++);
 
-    Ui.Ok($"Converted and split {file}");
-}
+    Ui.Line($"[green]Converted and split {Ui.Esc(file)}[/]");
+}, maxParallel: 1);
 
 // The two-pass log files are scratch data and are of no use once pass 2 is done.
 foreach (var log in Directory.GetFiles(".", "temp_log*"))
@@ -93,4 +140,4 @@ foreach (var log in Directory.GetFiles(".", "temp_log*"))
     try { File.Delete(log); } catch { /* a leftover log is harmless */ }
 }
 
-return Ui.Done();
+return Ui.Done(failures);
