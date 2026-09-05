@@ -59,13 +59,12 @@ done
 [ -z "$offenders" ] && pass "no base program prompts" \
                     || fail "these prompt but are not -tui wrappers:$offenders"
 
-# 2. Only the password/OTP pickers may use a Spectre dropdown inside a wrapper,
-#    where a searchable list beats a Terminal.Gui one.
+# 2. No wrapper uses a Spectre dropdown. The password/OTP pickers used to be
+#    exempt; they now go through Ui.Pick (fzf), so the rule is absolute.
 offenders=""
 for p in "$REPO"/*-tui; do
-    name="$(basename "$p")"
-    case "$name" in password-copy-tui|password-show-tui|otp-copy-tui) continue ;; esac
-    grep -qE 'Ui\.(Select|Confirm|Ask|AskInt|AskDouble)\(' "$p" && offenders="$offenders $name"
+    grep -qE 'Ui\.(Select|Confirm|Ask|AskInt|AskDouble)\(' "$p" \
+        && offenders="$offenders $(basename "$p")"
 done
 [ -z "$offenders" ] && pass "wrappers use dialogs, not dropdowns" \
                     || fail "wrappers still using a dropdown:$offenders"

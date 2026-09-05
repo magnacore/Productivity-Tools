@@ -406,6 +406,58 @@ internal static class Ui
         Environment.Exit(0);
     }
 
+    /// Choose one of many, by typing to narrow the list down.
+    ///
+    /// Backed by fzf, which filters as you type rather than merely marking a match.
+    /// Spectre's SelectionPrompt has a SearchEnabled flag, but in 0.57.2 it neither
+    /// filters the list nor moves the cursor to a hit — typing "goo" against a dozen
+    /// entries left all twelve on screen with the selection still on the first — so
+    /// there was no way to reach the second match. simple_term_menu, which the xonsh
+    /// original used, filtered; this restores that.
+    ///
+    /// Returns null when nothing was chosen: Escape, an empty list, or no match.
+    /// Falls back to Select when fzf is not installed, so the picker still works.
+    public static string? Pick(IReadOnlyList<string> options, string title)
+    {
+        if (options.Count == 0) return null;
+        if (options.Count == 1) return options[0];
+
+        // Nothing to pick with. Better a declined choice than a stack trace: the
+        // caller already treats null as "the user did not choose".
+        if (!Interactive)
+        {
+            Err($"{title} needs a terminal to choose from.");
+            return null;
+        }
+
+        if (!Proc.Exists("fzf")) return Select(options, title);
+
+        Term.Drain();
+        Term.KeyboardTaken();
+
+        // fzf draws on the terminal and writes only the choice to stdout, so its
+        // interface and its answer never mix.
+        var (code, output) = Proc.PipeCapture(
+            string.Join('\n', options) + '\n',
+            "fzf",
+            [
+                $"--prompt={title} ",
+                // No --height, so fzf takes the whole terminal. It was 60%, which
+                // left the lower half of the screen blank while a 275-entry store
+                // scrolled inside the top half. Measured in a 40-row terminal: 60%
+                // gave 23 usable rows against 39 without it. Full height also puts
+                // fzf on the alternate screen, so the terminal comes back as it was.
+                "--reverse",          // list under the prompt, matching the Spectre menus
+                "--no-multi",
+                "--cycle",            // wrap around, as the Spectre menus do
+                "--info=inline",      // match count on the prompt line, not its own
+            ]);
+
+        // 0 chose something. 1 is "no match", 130 is Escape or Ctrl-C; both mean the
+        // user declined, which is not an error.
+        return code == 0 && output.Trim().Length > 0 ? output.Trim() : null;
+    }
+
     /// The suite's ubiquitous ["No", "Yes"] menu, with "No" listed first so it is
     /// the resting selection — same as every simple_term_menu call being replaced.
     public static bool Confirm(string question)
@@ -751,6 +803,32 @@ internal static class Proc
         p.StandardInput.Close();
         p.WaitForExit();
         return p.ExitCode;
+    }
+
+    /// Feed a program on stdin and read back what it writes to stdout.
+    ///
+    /// For a filter: the data goes in, the answer comes out. Anything the program
+    /// draws for the user goes to the terminal directly and is not captured, which is
+    /// how fzf keeps its interface and its answer on separate channels.
+    public static (int Code, string Output) PipeCapture(string stdinText, string exe,
+                                                        IEnumerable<string> args)
+    {
+        var psi = NewPsi(exe, args, cwd: null, env: null);
+        psi.RedirectStandardInput = true;
+        psi.RedirectStandardOutput = true;
+
+        using var p = Process.Start(psi);
+        if (p is null) return (127, string.Empty);
+
+        // Read stdout on its own task: a filter that outgrows the pipe buffer would
+        // otherwise block writing while we are still feeding it.
+        var output = p.StandardOutput.ReadToEndAsync();
+
+        p.StandardInput.Write(stdinText);
+        p.StandardInput.Close();
+        p.WaitForExit();
+
+        return (p.ExitCode, output.Result);
     }
 
     /// xonsh  cmd ... &  — fire and forget, output discarded, parent never waits.
