@@ -662,7 +662,7 @@ auto_minimize = True
 @hook.subscribe.startup_once
 def start_once():
     processes = [
-        f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh {myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
+        f"{myhome}/.local/bin/audio-play {myhome}/.local/bin/oxygen-sound-theme/Oxygen-Sys-Log-In.ogg".split(),
         "/usr/local/bin/greenclip daemon".split(),
         ["qtile", "run-cmd", "--group", "2", f"{myTerm}", "--disable-server", "-e", "/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh"],
         #["qtile", "run-cmd", "--group", "4", f"{myTerm}", "--disable-server", "-e", f"/opt/anaconda3/envs/xonsh/bin/python /opt/anaconda3/envs/xonsh/bin/xonsh /usr/local/bin/ranger-open"],
