@@ -7,12 +7,12 @@
 // Vigenere-decrypt the clipboard in place — the inverse of
 // clipboard-vigenere-encrypt, using the same stored keyword.
 
-var a = new Args("clipboard-vigenere-decrypt", "Vigenere-decrypt the clipboard in place")
+ArgVals a = new Args("clipboard-vigenere-decrypt", "Vigenere-decrypt the clipboard in place")
     .Parse(args);
 
 Ui.Begin("Decrypting clipboard using Vigenere Cipher...");
 
-var keyFile = Path.Combine(Paths.SensitiveData, "vigenere_master_password.txt");
+string keyFile = Path.Combine(Paths.SensitiveData, "vigenere_master_password.txt");
 
 if (!File.Exists(keyFile))
 {
@@ -22,7 +22,7 @@ if (!File.Exists(keyFile))
     return 1;
 }
 
-var keyword = File.ReadLines(keyFile).FirstOrDefault()?.Trim();
+string? keyword = File.ReadLines(keyFile).FirstOrDefault()?.Trim();
 
 if (string.IsNullOrEmpty(keyword))
 {
@@ -32,7 +32,7 @@ if (string.IsNullOrEmpty(keyword))
     return 1;
 }
 
-var clipboardContent = Clip.Paste();
+string clipboardContent = Clip.Paste();
 
 if (clipboardContent.Length == 0)
 {
@@ -42,8 +42,8 @@ if (clipboardContent.Length == 0)
     return 1;
 }
 
-var key = Crypto.VigenereKey(clipboardContent, keyword);
-var plainText = Crypto.Decrypt(clipboardContent, key);
+string key = Crypto.VigenereKey(clipboardContent, keyword);
+string plainText = Crypto.Decrypt(clipboardContent, key);
 
 Clip.Copy(plainText);
 

@@ -121,6 +121,25 @@ else
                         || fail "--help failed for:$offenders"
 fi
 
+# 9. Explicit types, never `var`. AGENT.md has always required this, but nothing
+#    enforced it and the suite quietly drifted to 798 uses. Beyond house style, the
+#    concrete cost is hidden nullability: `var parent = Path.GetDirectoryName(p)` is a
+#    string? and nothing on the line says so, which makes the null check below it look
+#    like defensive habit rather than a requirement.
+#
+#    Comment lines are skipped so this very rule can be written about in prose. The
+#    pattern wants a declaration -- `var` followed by a name or a deconstruction --
+#    rather than the bare word, so "var" inside a string or an identifier is ignored.
+offenders=""
+for src in $(programs) utilities.cs tui.cs $(cd "$REPO" && echo tests/*.cs); do
+    [ -f "$REPO/$src" ] || continue
+    n=$(grep -nE '(^|[[:space:];({])var[[:space:]]+[A-Za-z_(]' "$REPO/$src" 2>/dev/null \
+        | grep -cvE '^[0-9]+:[[:space:]]*(//|\*|/\*)') || true
+    [ "${n:-0}" -gt 0 ] && offenders="$offenders $src($n)"
+done
+[ -z "$offenders" ] && pass "explicit types, no var" \
+                    || fail "var used in:$offenders"
+
 echo
 if [ "$failures" -eq 0 ]; then
     echo "all checks passed"

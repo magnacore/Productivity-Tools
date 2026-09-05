@@ -7,11 +7,11 @@
 // Play the video whose URL sits on the first line of a text file, streaming it
 // straight into mpv without ever writing it to disk.
 
-var a = new Args("video-stream", "Stream the video URL on the first line of a text file")
+ArgVals a = new Args("video-stream", "Stream the video URL on the first line of a text file")
     .Pos("file", "The text file to process")
     .Parse(args);
 
-var inputFile = a.Str("file");
+string inputFile = a.Str("file");
 
 if (!File.Exists(inputFile))
 {
@@ -44,7 +44,7 @@ Ui.Begin("Streaming video...");
 // yt-dlp muxes to stdout and mpv reads from stdin, so nothing is stored. The
 // format cap keeps the stream at a bitrate that plays smoothly while downloading.
 // A pipe is the mechanism here, so this genuinely needs a shell.
-var quoted = firstLine.Replace("'", @"'\''");
+string quoted = firstLine.Replace("'", @"'\''");
 int code = Proc.Shell(
     "/opt/anaconda3/envs/util/bin/yt-dlp " +
     "-f \"bestvideo[height<=?1080]+bestaudio[abr<=130]/best[height<=?1080]\" " +

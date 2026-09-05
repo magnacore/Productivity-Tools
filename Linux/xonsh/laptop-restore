@@ -13,13 +13,13 @@
 //
 // Mount the disk first with laptop-backup-full-mount.
 
-var a = Sys.WithDryRun(new Args("laptop-restore", "Restore $HOME directories from the full-backup disk"))
+ArgVals a = Sys.WithDryRun(new Args("laptop-restore", "Restore $HOME directories from the full-backup disk"))
     .Opt("-s", "--source", help: "Backup root to restore from")
     .Rest("directories", min: 0, help: "Only restore these directories (default: all)")
     .Parse(args);
 Sys.Apply(a);
 
-var fromPath = a.StrOrNull("source")
+string fromPath = a.StrOrNull("source")
     ?? Path.Combine(Paths.Media, "laptop_backup_full", "@current");
 
 if (!Sys.DryRun && !Directory.Exists(fromPath))
@@ -43,12 +43,12 @@ string[] allDirectories =
 ];
 
 // Restoring one directory is the common case after losing just one thing.
-var directories = a.Rest.Count > 0 ? [.. a.Rest] : allDirectories;
+string[] directories = a.Rest.Count > 0 ? [.. a.Rest] : allDirectories;
 
-foreach (var directory in directories)
+foreach (string directory in directories)
 {
-    var source = Path.Combine(fromPath, directory) + "/";
-    var destination = Path.Combine(Paths.Home, directory) + "/";
+    string source = Path.Combine(fromPath, directory) + "/";
+    string destination = Path.Combine(Paths.Home, directory) + "/";
 
     Ui.Info($"Restoring {directory}...");
     Sys.Rsync("--delete", "--progress", "-vahi", source, destination);

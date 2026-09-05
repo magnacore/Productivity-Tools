@@ -1,0 +1,22 @@
+# Style rules for the C# suite, enforced rather than remembered.
+#
+# The one rule that matters here is "no var". AGENT.md has always said so, but
+# nothing checked it and the codebase drifted to 798 uses before anyone noticed.
+# check.sh now greps for it, and these settings let `dotnet format` do the same
+# work mechanically, with Roslyn's own type inference rather than a guess.
+
+root = true
+
+[*.cs]
+# Explicit types everywhere. A statically typed language should say what the
+# type is -- especially where it is nullable, which `var` hides: `var parent =
+# Path.GetDirectoryName(p)` is a string?, and nothing on the line says so.
+csharp_style_var_for_built_in_types = false:warning
+csharp_style_var_when_type_is_apparent = false:warning
+csharp_style_var_elsewhere = false:warning
+dotnet_diagnostic.IDE0008.severity = warning
+
+# ...but do not then write the type twice. With the type named on the left,
+# `new()` on the right is the whole point of target-typed new.
+csharp_style_implicit_object_creation_when_type_is_apparent = true:warning
+dotnet_diagnostic.IDE0090.severity = warning

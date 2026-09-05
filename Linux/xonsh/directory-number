@@ -7,11 +7,11 @@
 // Zero-pad numeric directory names one level down ("1 Intro" -> "001 Intro"), then
 // prefix the files in each with that directory's index, so a course numbers itself.
 
-var a = new Args("directory-number", "Zero-pad numbered directories and number their files")
+ArgVals a = new Args("directory-number", "Zero-pad numbered directories and number their files")
     .Pos("directory", "The directory to process")
     .Parse(args);
 
-var walkDir = a.Str("directory").TrimEnd('/');
+string walkDir = a.Str("directory").TrimEnd('/');
 
 if (!Directory.Exists(walkDir))
 {
@@ -22,13 +22,13 @@ if (!Directory.Exists(walkDir))
 Ui.Begin($"Numbering directories and files in {walkDir}");
 
 // --- Pad numeric prefixes to three digits -----------------------------------
-foreach (var subdir in Directory.GetDirectories(walkDir).OrderBy(d => d, StringComparer.Ordinal))
+foreach (string? subdir in Directory.GetDirectories(walkDir).OrderBy(d => d, StringComparer.Ordinal))
 {
-    var name = Path.GetFileName(subdir);
+    string name = Path.GetFileName(subdir);
     if (name.Length < 2 || !char.IsDigit(name[0])) continue;
 
     // One leading digit needs two zeros, two need one, three or more are done.
-    var padded = char.IsDigit(name[1]) ? (name.Length > 2 && char.IsDigit(name[2]) ? null : "0" + name)
+    string? padded = char.IsDigit(name[1]) ? (name.Length > 2 && char.IsDigit(name[2]) ? null : "0" + name)
                                        : "00" + name;
     if (padded is null) continue;
 
@@ -38,15 +38,15 @@ foreach (var subdir in Directory.GetDirectories(walkDir).OrderBy(d => d, StringC
 
 // --- Prefix files with the index of the directory holding them ---------------
 // The top directory is index 0, then each immediate subdirectory in name order.
-var roots = new List<string> { walkDir };
+List<string> roots = new() { walkDir };
 roots.AddRange(Directory.GetDirectories(walkDir).OrderBy(d => d, StringComparer.Ordinal));
 
 int i = 0;
-foreach (var root in roots)
+foreach (string root in roots)
 {
-    foreach (var file in Directory.GetFiles(root).OrderBy(f => f, StringComparer.Ordinal))
+    foreach (string? file in Directory.GetFiles(root).OrderBy(f => f, StringComparer.Ordinal))
     {
-        var newName = $"{i:D3}_{Path.GetFileName(file)}";
+        string newName = $"{i:D3}_{Path.GetFileName(file)}";
         try { Fs.Move(file, Path.Combine(root, newName)); }
         catch (Exception ex) { Ui.Warn($"Could not rename {Path.GetFileName(file)}: {ex.Message}"); }
     }

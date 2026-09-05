@@ -9,24 +9,24 @@
 
 using UglyToad.PdfPig.Writer;
 
-var a = new Args("pdf-combine", "Merge PDFs into a single file")
+ArgVals a = new Args("pdf-combine", "Merge PDFs into a single file")
     .Rest("files", min: 1, help: "PDFs to merge, in page order")
     .Parse(args);
 
 Ui.Begin("Combining pdf....");
 
 // Sorted, because the file order decides the page order.
-var pdfs = Fs.SortedFiles(a.Rest).Where(Fs.IsPdf).ToList();
+List<string> pdfs = Fs.SortedFiles(a.Rest).Where(Fs.IsPdf).ToList();
 
 if (pdfs.Count == 0) return Ui.NoFiles("No PDFs selected!");
 
-foreach (var pdf in pdfs) Ui.Line($"[green]Merging {Ui.Esc(pdf)}[/]");
+foreach (string pdf in pdfs) Ui.Line($"[green]Merging {Ui.Esc(pdf)}[/]");
 
-var outputFilename = $"combined_{Fs.Timestamp()}.pdf";
+string outputFilename = $"combined_{Fs.Timestamp()}.pdf";
 
 try
 {
-    using var output = File.Create(outputFilename);
+    using FileStream output = File.Create(outputFilename);
     PdfMerger.Merge(output, [.. pdfs]);
 }
 catch (Exception ex)

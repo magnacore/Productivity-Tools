@@ -10,17 +10,17 @@
 Ui.Begin("Space used: ");
 
 // `df -h /home | grep /dev` — a pipe is the point here, so use a real shell.
-var dfLine = Proc.ShellCapture("df -h /home | grep /dev").Trim();
-var fields = dfLine.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+string dfLine = Proc.ShellCapture("df -h /home | grep /dev").Trim();
+string[] fields = dfLine.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
 if (fields.Length >= 5)
 {
-    var total = fields[1];
-    var used = fields[2];
-    var free = fields[3];
+    string total = fields[1];
+    string used = fields[2];
+    string free = fields[3];
 
     // The capacity column looks like "83%"; drop the sign to do arithmetic on it.
-    int.TryParse(fields[4].TrimEnd('%'), out var usedPercentage);
+    int.TryParse(fields[4].TrimEnd('%'), out int usedPercentage);
 
     Ui.Info("Used Disk Space: ");
     Ui.Line($"{Ui.Esc(used)} of {Ui.Esc(total)} or {usedPercentage}% of disk is used.\n");

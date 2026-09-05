@@ -53,7 +53,7 @@ internal static class Dlg
     {
         Term.Drain();
 
-        if (TryGui(app => GuiChoose(app, title, message, options), out var choice))
+        if (TryGui(app => GuiChoose(app, title, message, options), out int? choice))
             return choice;
 
         // --- Inline fallback ---
@@ -64,8 +64,8 @@ internal static class Dlg
         }
 
         Ui.Begin(title);
-        var picked = Ui.Select([.. options, "Cancel"], message);
-        var index = Array.IndexOf(options, picked);
+        string picked = Ui.Select([.. options, "Cancel"], message);
+        int index = Array.IndexOf(options, picked);
         return index < 0 ? null : index;
     }
 
@@ -80,7 +80,7 @@ internal static class Dlg
     {
         Term.Drain();
 
-        return TryGui(app => GuiChooseMany(app, title, message, options), out var picks)
+        return TryGui(app => GuiChooseMany(app, title, message, options), out int[]? picks)
             ? picks
             : null;
     }
@@ -101,7 +101,7 @@ internal static class Dlg
     {
         // Built on Choose rather than YesNo so that KEEPING is the resting choice.
         // YesNo lists Yes first, which would put "trash them" one stray Enter away.
-        var choice = Dlg.Choose(
+        int? choice = Dlg.Choose(
             "Original Files",
             $"What should happen to the original files?",
             $"Keep them  -  filed under ./Original_{kind}/",
@@ -113,7 +113,7 @@ internal static class Dlg
     /// A yes/no question. Returns null if cancelled.
     public static bool? YesNo(string title, string message)
     {
-        var choice = Choose(title, message, "Yes", "No");
+        int? choice = Choose(title, message, "Yes", "No");
         return choice switch { 0 => true, 1 => false, _ => null };
     }
 
@@ -123,7 +123,7 @@ internal static class Dlg
     {
         Term.Drain();
 
-        if (TryGui(app => GuiInput(app, title, message, initialValue), out var text))
+        if (TryGui(app => GuiInput(app, title, message, initialValue), out string? text))
             return text;
 
         // --- Inline fallback ---
@@ -147,7 +147,7 @@ internal static class Dlg
         // buttons, which navigate with Tab and Left/Right, so the up and down
         // arrows do nothing. This is a vertical list whose SelectedItem tracks the
         // arrow keys, matching the prompt_toolkit radiolist_dialog it replaces.
-        var list = new ListView
+        ListView list = new()
         {
             X = 1,
             Y = 2,
@@ -172,7 +172,7 @@ internal static class Dlg
     {
         int[]? answer = null;
 
-        var list = new ListView
+        ListView list = new()
         {
             X = 1,
             Y = 2,
@@ -199,7 +199,7 @@ internal static class Dlg
     {
         string? answer = null;
 
-        var field = new TextField
+        TextField field = new()
         {
             X = 1,
             Y = 2,
@@ -221,16 +221,16 @@ internal static class Dlg
     private static void RunDialog(IApplication app, string title, string message,
                                   View input, Action onAccept, int height)
     {
-        var dialog = new Dialog
+        Dialog dialog = new()
         {
             Title = title,
             Width = Dim.Percent(70),
             Height = Math.Min(height, Math.Max(MinimumHeight, app.Screen.Height - 4)),
         };
 
-        var prompt = new Label { X = 1, Y = 0, Text = message };
+        Label prompt = new() { X = 1, Y = 0, Text = message };
 
-        var ok = new Button { Text = "_Ok", IsDefault = true, X = Pos.Center() - 8, Y = Pos.AnchorEnd(1) };
+        Button ok = new() { Text = "_Ok", IsDefault = true, X = Pos.Center() - 8, Y = Pos.AnchorEnd(1) };
         ok.Accepting += (_, e) =>
         {
             onAccept();
@@ -238,7 +238,7 @@ internal static class Dlg
             app.RequestStop(dialog);
         };
 
-        var cancel = new Button { Text = "_Cancel", X = Pos.Center() + 2, Y = Pos.AnchorEnd(1) };
+        Button cancel = new() { Text = "_Cancel", X = Pos.Center() + 2, Y = Pos.AnchorEnd(1) };
         cancel.Accepting += (_, e) =>
         {
             e.Handled = true;
@@ -285,7 +285,7 @@ internal static class Dlg
         // Console.WindowWidth is an ioctl: it writes nothing and reads nothing, so
         // asking it first cannot disturb anything. Terminal.Gui is only started
         // once we are committed to using it.
-        var (width, height) = TerminalSize();
+        (int width, int height) = TerminalSize();
         if (width < MinimumWidth || height < MinimumHeight)
         {
             Fallback($"terminal is {width}x{height}, need at least {MinimumWidth}x{MinimumHeight}");
@@ -400,12 +400,12 @@ internal static class Dlg
     {
         try
         {
-            var background = new TgColor(0x27, 0x28, 0x22);   // Monokai ground
-            var foreground = new TgColor(0xf8, 0xf8, 0xf2);   // Monokai text
-            var accent = new TgColor(0xa6, 0xe2, 0x2e);       // Monokai green, for hotkeys
-            var muted = new TgColor(0x75, 0x71, 0x5e);        // Monokai comment grey
+            TgColor background = new(0x27, 0x28, 0x22);   // Monokai ground
+            TgColor foreground = new(0xf8, 0xf8, 0xf2);   // Monokai text
+            TgColor accent = new(0xa6, 0xe2, 0x2e);       // Monokai green, for hotkeys
+            TgColor muted = new(0x75, 0x71, 0x5e);        // Monokai comment grey
 
-            var scheme = new TgScheme
+            TgScheme scheme = new()
             {
                 Normal = new TgAttribute(foreground, background),
                 Focus = new TgAttribute(background, foreground),
@@ -414,7 +414,7 @@ internal static class Dlg
                 Disabled = new TgAttribute(muted, background),
             };
 
-            var schemes = Terminal.Gui.Configuration.SchemeManager.GetSchemesForCurrentTheme();
+            Dictionary<string, TgScheme?> schemes = Terminal.Gui.Configuration.SchemeManager.GetSchemesForCurrentTheme();
             schemes["Dialog"] = scheme;
             schemes["Base"] = scheme;
         }

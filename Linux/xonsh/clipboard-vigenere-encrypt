@@ -10,12 +10,12 @@
 // A Vigenere cipher is trivially breakable by anyone who tries. This is for
 // keeping notes unreadable at a glance, not for protecting secrets.
 
-var a = new Args("clipboard-vigenere-encrypt", "Vigenere-encrypt the clipboard in place")
+ArgVals a = new Args("clipboard-vigenere-encrypt", "Vigenere-encrypt the clipboard in place")
     .Parse(args);
 
 Ui.Begin("Encrypting clipboard using Vigenere Cipher...");
 
-var keyFile = Path.Combine(Paths.SensitiveData, "vigenere_master_password.txt");
+string keyFile = Path.Combine(Paths.SensitiveData, "vigenere_master_password.txt");
 
 if (!File.Exists(keyFile))
 {
@@ -25,7 +25,7 @@ if (!File.Exists(keyFile))
     return 1;
 }
 
-var keyword = File.ReadLines(keyFile).FirstOrDefault()?.Trim();
+string? keyword = File.ReadLines(keyFile).FirstOrDefault()?.Trim();
 
 if (string.IsNullOrEmpty(keyword))
 {
@@ -35,7 +35,7 @@ if (string.IsNullOrEmpty(keyword))
     return 1;
 }
 
-var clipboardContent = Clip.Paste();
+string clipboardContent = Clip.Paste();
 
 if (clipboardContent.Length == 0)
 {
@@ -55,14 +55,14 @@ if (clipboardContent.EndsWith('\n') || clipboardContent.EndsWith('\r'))
     return 1;
 }
 
-var key = Crypto.VigenereKey(clipboardContent, keyword);
-var cipherText = Crypto.Encrypt(clipboardContent, key);
+string key = Crypto.VigenereKey(clipboardContent, keyword);
+string cipherText = Crypto.Encrypt(clipboardContent, key);
 
 Clip.Copy(cipherText);
 
 // Decrypt what actually landed on the clipboard, so a mangled round trip is
 // caught here rather than when the text is needed back.
-var plainText = Crypto.Decrypt(Clip.Paste(), key);
+string plainText = Crypto.Decrypt(Clip.Paste(), key);
 
 if (plainText != clipboardContent)
 {
@@ -76,7 +76,7 @@ Ui.Line($"Copied: Vigenere encryption of [bold cyan]{Ui.Esc(clipboardContent)}[/
         $"is [bold green]{Ui.Esc(cipherText)}[/]");
 
 // Edge spaces are invisible when pasted and silently break decryption.
-var visible = cipherText.Replace(" ", "<SPACE>");
+string visible = cipherText.Replace(" ", "<SPACE>");
 if (cipherText[0] == ' ')
     Ui.Err($"Warning: Ciphertext contains a leading space! {visible}");
 else if (cipherText[^1] == ' ')

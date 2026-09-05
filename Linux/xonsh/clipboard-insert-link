@@ -7,12 +7,12 @@
 // Scrape URLs off the clipboard and append them to the download queue that
 // video-download reads. Bound to a hotkey, this turns "copy link" into "queued".
 
-var a = new Args("clipboard-insert-link", "Append clipboard URLs to the video download list")
+ArgVals a = new Args("clipboard-insert-link", "Append clipboard URLs to the video download list")
     .Parse(args);
 
-var urlFileName = Path.Combine(Paths.Backups, "youtube.txt");
+string urlFileName = Path.Combine(Paths.Backups, "youtube.txt");
 
-var urls = Fs.FindUrls(Clip.Paste());
+IReadOnlyList<string> urls = Fs.FindUrls(Clip.Paste());
 
 if (urls.Count == 0)
 {
@@ -21,7 +21,7 @@ if (urls.Count == 0)
     return 1;
 }
 
-foreach (var url in urls)
+foreach (string url in urls)
 {
     try
     {

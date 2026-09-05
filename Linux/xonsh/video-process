@@ -9,7 +9,7 @@
 // yt-dlp writes uploader-less videos into a "NA" folder and prefixes each name
 // with "NA - "; both are noise, so the prefix goes and the files move on.
 
-var a = new Args("video-process", "Rename downloaded videos and move them to the capture inbox")
+ArgVals a = new Args("video-process", "Rename downloaded videos and move them to the capture inbox")
     .Flag("-n", "--dry-run", help: "Show what would be renamed and moved, without doing it")
     .Flag("-f", "--force", help: "Overwrite files already in the destination")
     .Parse(args);
@@ -18,7 +18,7 @@ bool dryRun = a.Flag("dry-run");
 
 Ui.Begin("Moving videos...");
 
-var moveFromPath = Path.Combine(Paths.Downloads, "NA");
+string moveFromPath = Path.Combine(Paths.Downloads, "NA");
 
 if (!Directory.Exists(moveFromPath))
 {
@@ -27,7 +27,7 @@ if (!Directory.Exists(moveFromPath))
     return 0;
 }
 
-var allFiles = Directory.GetFiles(moveFromPath).OrderBy(f => f, StringComparer.Ordinal).ToList();
+List<string> allFiles = Directory.GetFiles(moveFromPath).OrderBy(f => f, StringComparer.Ordinal).ToList();
 
 if (allFiles.Count == 0)
 {
@@ -39,7 +39,7 @@ if (allFiles.Count == 0)
 Ui.Info("Renaming Files...");
 Ui.Track(allFiles, "[bold cyan]Renaming : [/]", file =>
 {
-    var newFilename = file.Replace("NA - ", string.Empty);
+    string newFilename = file.Replace("NA - ", string.Empty);
     if (newFilename == file) return;
 
     if (dryRun) { Ui.Line($"[dim]{Ui.Esc(file)} -> {Ui.Esc(newFilename)}[/]"); return; }
@@ -60,7 +60,7 @@ if (dryRun)
 // Downloads and the capture inbox are normally the same filesystem, so this is a
 // rename per file rather than a byte copy. Fs.MoveInto falls back to rsync when they
 // are not.
-var waiting = Directory.GetFiles(moveFromPath).OrderBy(f => f, StringComparer.Ordinal).ToList();
+List<string> waiting = Directory.GetFiles(moveFromPath).OrderBy(f => f, StringComparer.Ordinal).ToList();
 int failures = waiting.Count == 0 ? 0 : Fs.MoveInto(waiting, Paths.TaskCaptureBin, a.Flag("force"));
 
 return Ui.Done(failures);

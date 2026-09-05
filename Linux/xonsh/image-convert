@@ -13,20 +13,20 @@
 //     image-convert 1080 *      resize to 1080px tall and convert
 //     image-convert 0 *         convert only
 
-var a = Jobs.Add(new Args("image-convert", "Convert images to WebP, optionally resizing")
+ArgVals a = Jobs.Add(new Args("image-convert", "Convert images to WebP, optionally resizing")
     .Pos("resize_dimension", "Height in pixels to resize to, or 0 for no resize")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Images/")
     .Rest("files", min: 1, help: "Images to convert"))
     .Parse(args);
 
 int resizeDimension = a.Int("resize_dimension");
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin(resizeDimension > 0
     ? $"Changing images dimension to {resizeDimension}p and converting to webp format..."
     : "Converting images to webp format....");
 
-var cleanFileNames = Fs.RenameToValid(allFiles);
+IReadOnlyList<string> cleanFileNames = Fs.RenameToValid(allFiles);
 
 bool deleteOriginals = a.Flag("delete");
 
@@ -41,12 +41,12 @@ Ui.Track2(cleanFileNames,
 
     // No progress to read out of this tool, so the bar is one step: the spinner
     // shows the file is in flight, and a failure leaves the bar visibly unfilled.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{image}:"))}[/]", 1);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{image}:"))}[/]", 1);
 
-    var (fileName, extension) = Fs.SplitExt(image);
+    (string? fileName, string? extension) = Fs.SplitExt(image);
     extension = extension.ToLowerInvariant().Trim();
 
-    var newFilename = fileName;
+    string newFilename = fileName;
     // A resized GIF would lose its animation timing, so it is never tagged.
     if (resizeDimension > 0 && extension != ".gif") newFilename += $"_{resizeDimension}p";
     // WebP to WebP would otherwise collide with its own source name.

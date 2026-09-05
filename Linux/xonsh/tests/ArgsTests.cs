@@ -38,14 +38,14 @@ public class ArgsTests
     [Fact]
     public void CollectsPositionalsInOrder()
     {
-        var a = Parse("one.mkv", "two.mkv", "three.mkv");
+        ArgVals a = Parse("one.mkv", "two.mkv", "three.mkv");
         Assert.Equal(["one.mkv", "two.mkv", "three.mkv"], a.Rest);
     }
 
     [Fact]
     public void AllowsOptionsAndFilesToInterleave()
     {
-        var a = Parse("one.mkv", "-s", "2.0", "two.mkv", "-d");
+        ArgVals a = Parse("one.mkv", "-s", "2.0", "two.mkv", "-d");
         Assert.Equal("2.0", a.Str("speed"));
         Assert.True(a.Flag("delete"));
         Assert.Equal(["one.mkv", "two.mkv"], a.Rest);
@@ -55,7 +55,7 @@ public class ArgsTests
     public void TreatsEverythingAfterADoubleDashAsAFile()
     {
         // The reason the shebang passes -- before the program's own arguments.
-        var a = Parse("--", "-s", "weird-name.mkv");
+        ArgVals a = Parse("--", "-s", "weird-name.mkv");
         Assert.Equal("1.0", a.Str("speed"));
         Assert.Contains("-s", a.Rest);
     }
@@ -63,7 +63,7 @@ public class ArgsTests
     [Fact]
     public void KeepsAFilenameThatLooksLikeAnOption()
     {
-        var a = Parse("--", "--delete");
+        ArgVals a = Parse("--", "--delete");
         Assert.False(a.Flag("delete"));
         Assert.Contains("--delete", a.Rest);
     }

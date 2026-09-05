@@ -13,7 +13,7 @@ public class SplitExtTests
     [InlineData("Animal Rights [2nd Edition].epub", "Animal Rights [2nd Edition]", ".epub")]
     public void SplitsOnTheLastDot(string file, string name, string ext)
     {
-        var (actualName, actualExt) = Fs.SplitExt(file);
+        (string? actualName, string? actualExt) = Fs.SplitExt(file);
         Assert.Equal(name, actualName);
         Assert.Equal(ext, actualExt);
     }
@@ -23,7 +23,7 @@ public class SplitExtTests
     {
         // Regression: an earlier version slugified the whole path, which moved files
         // out of their folder.
-        var (name, ext) = Fs.SplitExt(Path.Combine("sub dir", "Track 01.mp3"));
+        (string? name, string? ext) = Fs.SplitExt(Path.Combine("sub dir", "Track 01.mp3"));
         Assert.Equal(Path.Combine("sub dir", "Track 01"), name);
         Assert.Equal(".mp3", ext);
     }
@@ -74,7 +74,7 @@ public class FindUrlsTests
     [Fact]
     public void PullsEveryUrlOutOfSurroundingText()
     {
-        var urls = Fs.FindUrls("see https://example.com/a and http://b.example.org/x?y=1 too");
+        IReadOnlyList<string> urls = Fs.FindUrls("see https://example.com/a and http://b.example.org/x?y=1 too");
         Assert.Equal(2, urls.Count);
         Assert.Contains("https://example.com/a", urls);
     }

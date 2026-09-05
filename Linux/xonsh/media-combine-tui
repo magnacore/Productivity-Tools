@@ -11,15 +11,15 @@
 // Only one question to ask: what should happen to the pieces once they have been
 // joined. The combining lives in media-combine.
 
-var a = new Args("media-combine-tui", "Ask about the originals, then run media-combine")
+ArgVals a = new Args("media-combine-tui", "Ask about the originals, then run media-combine")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Files to combine")
     .Parse(args);
 
-var deleteChoice = Dlg.DeleteOriginals("Media");
+bool? deleteChoice = Dlg.DeleteOriginals("Media");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var callArgs = new List<string>();
+List<string> callArgs = new();
 if (deleteChoice.Value) callArgs.Add("-d");
 callArgs.AddRange(a.Rest);
 

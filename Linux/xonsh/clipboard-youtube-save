@@ -8,11 +8,11 @@
 // a stub file named after it into the capture inbox — so the backlog reads as
 // titles rather than as opaque video IDs.
 
-var a = new Args("clipboard-youtube-save", "Save clipboard YouTube links as titled stub files")
+ArgVals a = new Args("clipboard-youtube-save", "Save clipboard YouTube links as titled stub files")
     .Parse(args);
 
-var urls = Fs.FindUrls(Clip.Paste());
-var youtubeUrls = urls.Where(u => u.Contains("youtu", StringComparison.OrdinalIgnoreCase)).ToList();
+IReadOnlyList<string> urls = Fs.FindUrls(Clip.Paste());
+List<string> youtubeUrls = urls.Where(u => u.Contains("youtu", StringComparison.OrdinalIgnoreCase)).ToList();
 
 if (youtubeUrls.Count == 0)
 {
@@ -23,9 +23,9 @@ if (youtubeUrls.Count == 0)
 
 int saved = 0;
 
-foreach (var url in youtubeUrls)
+foreach (string url in youtubeUrls)
 {
-    var videoName = Proc.Capture("/opt/anaconda3/envs/util/bin/yt-dlp", "--print", "%(title)s", url);
+    string videoName = Proc.Capture("/opt/anaconda3/envs/util/bin/yt-dlp", "--print", "%(title)s", url);
 
     if (string.IsNullOrWhiteSpace(videoName))
     {
@@ -36,10 +36,10 @@ foreach (var url in youtubeUrls)
     }
 
     // The title becomes a file name, so strip anything a path cannot hold.
-    var safeName = string.Concat(videoName.Split(Path.GetInvalidFileNameChars())).Trim();
+    string safeName = string.Concat(videoName.Split(Path.GetInvalidFileNameChars())).Trim();
     if (safeName.Length == 0) safeName = Fs.Uuid();
 
-    var fileName = Path.Combine(Paths.TaskCaptureBin, $"{safeName}.youtube");
+    string fileName = Path.Combine(Paths.TaskCaptureBin, $"{safeName}.youtube");
 
     try
     {

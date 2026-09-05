@@ -10,12 +10,12 @@
 //
 // Asks for the tag, then hands it over. All the scanning and summing lives there.
 
-var a = new Args("media-length-tag-tui", "Type a tag in a dialog, then run media-length-tag")
+ArgVals a = new Args("media-length-tag-tui", "Type a tag in a dialog, then run media-length-tag")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("directories", min: 1, help: "Directories to search")
     .Parse(args);
 
-var tagText = Dlg.Input("Enter tag", "Please type the tag:");
+string? tagText = Dlg.Input("Enter tag", "Please type the tag:");
 
 if (tagText is null)
 {
@@ -30,7 +30,7 @@ if (tagText.Trim().Length == 0)
     return 1;
 }
 
-var callArgs = new List<string> { "-t", tagText.Trim() };
+List<string> callArgs = new() { "-t", tagText.Trim() };
 callArgs.AddRange(a.Rest);
 
 if (a.Flag("dry-run"))

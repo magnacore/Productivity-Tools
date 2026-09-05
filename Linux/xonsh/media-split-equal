@@ -10,7 +10,7 @@
 // Nothing is split unless something is longer than the threshold, so this is safe
 // to run across a whole folder.
 
-var a = new Args("media-split-equal", "Split media files into parts")
+ArgVals a = new Args("media-split-equal", "Split media files into parts")
     .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
     .Opt("-t", "--threshold_seconds", required: true,
          help: "Threshold in seconds beyond which the media should be split")
@@ -31,18 +31,18 @@ if (splitDuration <= 0)
 
 // Slugify first: mkvmerge's --split writes sibling files, and awkward characters
 // in the stem make the generated part names hard to work with.
-var cleanFileNames = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
+IReadOnlyList<string> cleanFileNames = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
 Ui.Begin("Splitting media...");
 Ui.Info($"Looking for media longer than threshold of {thresholdSeconds / 60} minutes...");
 
 // One pass to decide whether there is anything worth splitting at all.
 bool toSplit = false;
-foreach (var file in cleanFileNames)
+foreach (string file in cleanFileNames)
 {
     if (!Fs.IsMedia(file)) continue;
 
-    var duration = Media.Duration(file);
+    double duration = Media.Duration(file);
     if (duration > thresholdSeconds)
     {
         Ui.Good($"Media of length {Media.Hms(duration)} found. Will split...");
@@ -69,8 +69,8 @@ Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
         return;
     }
 
-    var (filename, _) = Fs.SplitExt(file);
-    var newFilename = filename + "-part" + (Fs.IsVideo(file) ? ".mkv" : ".mka");
+    (string? filename, string _) = Fs.SplitExt(file);
+    string newFilename = filename + "-part" + (Fs.IsVideo(file) ? ".mkv" : ".mka");
 
     SplitFile(file, newFilename, splitDuration, equal);
 
@@ -80,7 +80,7 @@ Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
     // The source itself no longer matches PartsOf, but the guard costs nothing and
     // keeps this correct if that ever loosens again.
     int sequence = 0;
-    foreach (var part in PartsOf(filename))
+    foreach (string part in PartsOf(filename))
         if (part != Path.GetFileName(file)) Fs.CopyTimestamp(file, part, sequence++);
 
     Fs.HandleOriginal(file, deleteOriginals, "Media");
@@ -93,7 +93,7 @@ return Ui.Done();
 /// leaving a stub at the end.
 static void SplitFile(string file, string newFilename, int splitDuration, bool equal)
 {
-    var duration = Media.Duration(file);
+    double duration = Media.Duration(file);
     int parts = (int)(duration / splitDuration);
 
     int effectiveDuration;
@@ -139,7 +139,7 @@ static bool IsPartOf(string candidate, string fileName)
 {
     const string marker = "-part";
 
-    var rest = candidate.AsSpan();
+    ReadOnlySpan<char> rest = candidate.AsSpan();
     if (!rest.StartsWith(fileName, StringComparison.Ordinal)) return false;
     rest = rest[fileName.Length..];
 
@@ -174,7 +174,7 @@ static bool IsPartOf(string candidate, string fileName)
 /// the directory by the time we got here.
 static void RunPercentageTag(string fileName)
 {
-    var matchingFiles = PartsOf(fileName);
+    List<string> matchingFiles = PartsOf(fileName);
     if (matchingFiles.Count == 0) return;
 
     Proc.Call("file-tag-percentage", matchingFiles, quiet: true);

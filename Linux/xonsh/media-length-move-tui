@@ -12,7 +12,7 @@
 // media duration that fills it, and hands the number to media-length-move. All
 // the actual work lives there.
 
-var a = new Args("media-length-move-tui", "Choose a media bundle size in a dialog, then run media-length-move")
+ArgVals a = new Args("media-length-move-tui", "Choose a media bundle size in a dialog, then run media-length-move")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Parse(args);
 
@@ -25,7 +25,7 @@ var a = new Args("media-length-move-tui", "Choose a media bundle size in a dialo
     (240, "4 hours"),
 ];
 
-var chosen = Dlg.Choose(
+int? chosen = Dlg.Choose(
     "Media Length Move",
     "Select the target duration for the media bundle @1.5x:",
     [.. durations.Select(d => d.Label)]);
@@ -36,7 +36,7 @@ if (chosen is null)
     return 0;
 }
 
-var sortByTime = Dlg.YesNo(
+bool? sortByTime = Dlg.YesNo(
     "Sorting Preference",
     "Sort files by modified time?\n(Selecting 'No' will sort alphabetically by name)");
 
@@ -49,7 +49,7 @@ if (sortByTime is null)
 // The choice is how long you want to listen; at 1.5x that consumes 1.5x as much
 // media, so the bundle has to be that much longer.
 int durationMinutes = (int)(durations[chosen.Value].Minutes * 1.5);
-var sortArg = sortByTime.Value ? "true" : "false";
+string sortArg = sortByTime.Value ? "true" : "false";
 
 Ui.Info($"\nRunning media-length-move (Duration: {durationMinutes}m, " +
         $"Sort by modified time: {sortByTime.Value})...\n");

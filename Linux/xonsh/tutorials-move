@@ -8,13 +8,13 @@
 // already-converted ones apart from those still waiting, and preserving the
 // urgency split within the latter.
 
-var a = Sys.WithDryRun(new Args("tutorials-move", "Move staged tutorials onto the learning drive")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("tutorials-move", "Move staged tutorials onto the learning drive")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Moving tutorials...");
 
-var staging = Path.Combine(Paths.Home, "Copy_To_HDD");
-var tutorials = Path.Combine(Paths.Media, "LEARNING", "VIDEO TUTORIALS");
+string staging = Path.Combine(Paths.Home, "Copy_To_HDD");
+string tutorials = Path.Combine(Paths.Media, "LEARNING", "VIDEO TUTORIALS");
 
 (string From, string To)[] moves =
 [
@@ -23,7 +23,7 @@ var tutorials = Path.Combine(Paths.Media, "LEARNING", "VIDEO TUTORIALS");
     ("02 TO CONVERT/02", "NOT CONVERTED/02 IMP NOT URGENT"),
 ];
 
-foreach (var (from, to) in moves)
+foreach ((string? from, string? to) in moves)
     Sys.MoveContents(Path.Combine(staging, from), Path.Combine(tutorials, to) + "/");
 
 return Ui.Done();

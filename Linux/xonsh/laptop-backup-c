@@ -10,15 +10,15 @@
 // Unlike backups A, B and D this one applies no exclude list — it is the
 // full-fidelity copy, taken deliberately without filtering.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-c", "Mirror $HOME onto LAPTOP_BACKUP_C with 3-deep history")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-c", "Mirror $HOME onto LAPTOP_BACKUP_C with 3-deep history")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Laptop Backup C...");
 
-var root = Path.Combine(Paths.Media, "LAPTOP_BACKUP_C");
-var s0 = Path.Combine(root, "@s_0");
-var s1 = Path.Combine(root, "@s_minus_1");
-var s2 = Path.Combine(root, "@s_minus_2");
+string root = Path.Combine(Paths.Media, "LAPTOP_BACKUP_C");
+string s0 = Path.Combine(root, "@s_0");
+string s1 = Path.Combine(root, "@s_minus_1");
+string s2 = Path.Combine(root, "@s_minus_2");
 
 Sys.Remove(Sys.CopyLog);
 

@@ -9,7 +9,7 @@
 // Select the video and the subtitle in either order — whichever one looks like a
 // video names the output.
 
-var a = new Args("embed-subtitle", "Embed a subtitle file into a video as .mkv")
+ArgVals a = new Args("embed-subtitle", "Embed a subtitle file into a video as .mkv")
     .Rest("files", min: 2, help: "The video file and the subtitle file, in either order")
     .Parse(args);
 
@@ -20,15 +20,15 @@ if (a.Rest.Count != 2)
     return 1;
 }
 
-var input1 = a.Rest[0];
-var input2 = a.Rest[1];
+string input1 = a.Rest[0];
+string input2 = a.Rest[1];
 
 Ui.Begin("Embedding subtitle in video...");
 
 // Name the output after the video. Subtitle formats are unreliable to detect by
 // mime type, so identify the video instead and treat the other file as the sub.
-var videoInput = Fs.IsVideo(input1) ? input1 : input2;
-var newFilename = $"{Fs.SplitExt(videoInput).Name}_{Fs.Timestamp()}.mkv";
+string videoInput = Fs.IsVideo(input1) ? input1 : input2;
+string newFilename = $"{Fs.SplitExt(videoInput).Name}_{Fs.Timestamp()}.mkv";
 
 // The order of the video and subtitle arguments does not matter to mkvmerge.
 if (Proc.Ok("mkvmerge", "-o", newFilename, input1, input2, "--chapter-language", "en"))

@@ -10,12 +10,12 @@
 // The pattern is picked with fzf, and which model answers is Fabric's business,
 // configured once in ~/.config/fabric rather than here.
 
-var a = new Args("generative-ai", "Run a text file through a Fabric prompt pattern")
+ArgVals a = new Args("generative-ai", "Run a text file through a Fabric prompt pattern")
     .Opt("-p", "--pattern", help: "Pattern name, skipping the fzf picker")
     .Rest("files", min: 1, help: "Text file to process")
     .Parse(args);
 
-var selection = a.Rest[0];
+string selection = a.Rest[0];
 
 Ui.Begin("Generative AI...");
 
@@ -27,7 +27,7 @@ if (!Fs.IsText(selection))
     return 1;
 }
 
-var patternsDir = Path.Combine(Paths.Home, ".config", "fabric", "patterns");
+string patternsDir = Path.Combine(Paths.Home, ".config", "fabric", "patterns");
 if (!Directory.Exists(patternsDir))
 {
     Ui.Err($"No Fabric patterns found at {patternsDir}");
@@ -37,7 +37,7 @@ if (!Directory.Exists(patternsDir))
 }
 
 // fzf owns the terminal while it runs, so this is a shell pipeline, not a capture.
-var pattern = a.StrOrNull("pattern")
+string pattern = a.StrOrNull("pattern")
     ?? Proc.ShellCapture($"ls {ShellQuote(patternsDir)} | fzf").Trim();
 
 if (string.IsNullOrWhiteSpace(pattern))
@@ -47,7 +47,7 @@ if (string.IsNullOrWhiteSpace(pattern))
     return 0;
 }
 
-var outputFilename = $"{Fs.SplitExt(selection).Name}_output.md";
+string outputFilename = $"{Fs.SplitExt(selection).Name}_output.md";
 
 Ui.Info($"Running pattern '{pattern}'...");
 

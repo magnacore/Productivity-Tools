@@ -7,12 +7,12 @@
 // Give files strictly increasing modification times, so sorting by date matches
 // sorting by name. Useful after a copy has flattened every timestamp to "now".
 
-var a = new Args("file-timestamp-sync", "Incrementally increase files' modified timestamp")
+ArgVals a = new Args("file-timestamp-sync", "Incrementally increase files' modified timestamp")
     .Opt("-g", "--gap", required: true, help: "Gap in seconds between files")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 int gap = Math.Max(a.Int("gap"), 0);
 
 Ui.Begin("Modifying files modify timestamp...");
@@ -20,7 +20,7 @@ Ui.Begin("Modifying files modify timestamp...");
 // The xonsh original ran `touch` then `sleep` once per file, so a hundred files
 // with a 60 second gap took an hour and a half of real time. Stamping the times
 // directly is instant and gives exactly the same spacing.
-var stamp = DateTime.Now.AddSeconds(-(double)gap * files.Count);
+DateTime stamp = DateTime.Now.AddSeconds(-(double)gap * files.Count);
 
 Ui.Track(files, "[bold cyan]Touching : [/]", file =>
 {

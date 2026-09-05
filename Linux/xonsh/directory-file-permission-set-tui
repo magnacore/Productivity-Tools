@@ -11,12 +11,12 @@
 // Two presets, because these are the only two that ever get used: shareable
 // (others may read) and private (nobody but you).
 
-var a = new Args("directory-file-permission-set-tui", "Choose a permission preset in a dialog, then apply it")
+ArgVals a = new Args("directory-file-permission-set-tui", "Choose a permission preset in a dialog, then apply it")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("folder", min: 1, help: "Input directory to process")
     .Parse(args);
 
-var choice = Dlg.Choose(
+int? choice = Dlg.Choose(
     "Set Directories and Files Permission Recursively",
     "What should be the octal permission of directories and files?",
     "744 644",   // readable by others
@@ -28,9 +28,9 @@ if (choice is null)
     return 0;
 }
 
-var (dirPermission, filePermission) = choice.Value == 0 ? ("744", "644") : ("700", "600");
+(string? dirPermission, string? filePermission) = choice.Value == 0 ? ("744", "644") : ("700", "600");
 
-var callArgs = new List<string> { "-d", dirPermission, "-f", filePermission };
+List<string> callArgs = new() { "-d", dirPermission, "-f", filePermission };
 if (a.Flag("dry-run")) callArgs.Add("--dry-run");
 callArgs.AddRange(a.Rest);
 

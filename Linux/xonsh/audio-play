@@ -23,12 +23,12 @@
 // Every one of those callers backgrounds it ("audio-play ... &"), so the default
 // here is to detach and return at once. Pass -w to wait for playback instead.
 
-var a = new Args("audio-play", "Play a sound file quietly, with no window")
+ArgVals a = new Args("audio-play", "Play a sound file quietly, with no window")
     .Flag("-w", "--wait", help: "Wait for playback to finish instead of detaching")
     .Rest("file", min: 1, help: "Audio file to play")
     .Parse(args);
 
-var file = a.Rest[0];
+string file = a.Rest[0];
 
 if (!File.Exists(file))
 {

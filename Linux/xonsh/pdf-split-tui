@@ -11,7 +11,7 @@
 // Asks how many pages each part should hold, the choice the xonsh original offered.
 // All the splitting lives in pdf-split.
 
-var a = new Args("pdf-split-tui", "Choose a part size in a dialog, then run pdf-split")
+ArgVals a = new Args("pdf-split-tui", "Choose a part size in a dialog, then run pdf-split")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "PDFs to split")
     .Parse(args);
@@ -25,18 +25,18 @@ var a = new Args("pdf-split-tui", "Choose a part size in a dialog, then run pdf-
     ("Custom...",        ""),
 ];
 
-var chosen = Dlg.Choose("Split PDFs", "How many pages should each part hold?",
+int? chosen = Dlg.Choose("Split PDFs", "How many pages should each part hold?",
                         [.. sizes.Select(s => s.Label)]);
 if (chosen is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var pages = sizes[chosen.Value].Pages;
+string pages = sizes[chosen.Value].Pages;
 
 if (pages.Length == 0)
 {
-    var typed = Dlg.Input("Pages per part", "How many pages should each part hold?", "10");
+    string? typed = Dlg.Input("Pages per part", "How many pages should each part hold?", "10");
     if (typed is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-    if (!int.TryParse(typed.Trim(), out var n) || n < 1)
+    if (!int.TryParse(typed.Trim(), out int n) || n < 1)
     {
         Ui.Err($"'{typed}' is not a page count.");
         Snd.Error();
@@ -45,7 +45,7 @@ if (pages.Length == 0)
     pages = n.ToString(CultureInfo.InvariantCulture);
 }
 
-var callArgs = new List<string> { pages };
+List<string> callArgs = new() { pages };
 callArgs.AddRange(a.Rest);
 
 if (a.Flag("dry-run"))

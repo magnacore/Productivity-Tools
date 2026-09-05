@@ -20,16 +20,16 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Google.Apis.Auth.OAuth2;
 
-var a = new Args("ocr-genai", "Extract text from PDFs and images using Gemini on Vertex AI")
+ArgVals a = new Args("ocr-genai", "Extract text from PDFs and images using Gemini on Vertex AI")
     .Opt("-m", "--model", @default: "gemini-2.5-flash", help: "Model to use")
     .Opt("-p", "--project", @default: "gen-lang-client-0634600367", help: "Google Cloud project id")
     .Opt("-L", "--location", @default: "us-central1", help: "Vertex AI location")
     .Rest("files", min: 1, help: "PDFs or images to read")
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
-var privateKey = Path.Combine(Paths.SensitiveData, "gemini-service-account-ocr.json");
+string privateKey = Path.Combine(Paths.SensitiveData, "gemini-service-account-ocr.json");
 if (!File.Exists(privateKey))
 {
     Ui.Err($"Missing service account key: {privateKey}");
@@ -43,7 +43,7 @@ string accessToken;
 try
 {
     // The service account JSON is exchanged for a short-lived bearer token.
-    var credential = GoogleCredential.FromFile(privateKey)
+    GoogleCredential credential = GoogleCredential.FromFile(privateKey)
         .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
     accessToken = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
 }
@@ -55,23 +55,23 @@ catch (Exception ex)
     return 1;
 }
 
-var model = a.Str("model");
-var project = a.Str("project");
-var location = a.Str("location");
-var endpoint = $"https://{location}-aiplatform.googleapis.com/v1/projects/{project}" +
+string model = a.Str("model");
+string project = a.Str("project");
+string location = a.Str("location");
+string endpoint = $"https://{location}-aiplatform.googleapis.com/v1/projects/{project}" +
                $"/locations/{location}/publishers/google/models/{model}:generateContent";
 
 const string Prompt =
     "Extract all the text from this document or image. Provide only the extracted text " +
     "with proper markdown formatting. Do not add conversational filler or explanations.";
 
-using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+using HttpClient http = new() { Timeout = TimeSpan.FromMinutes(10) };
 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-foreach (var file in allFiles)
+foreach (string file in allFiles)
 {
-    var kind = Fs.Mime(file, 1);
-    var isSupported = Fs.IsPdf(file) || Fs.IsImage(file);
+    string? kind = Fs.Mime(file, 1);
+    bool isSupported = Fs.IsPdf(file) || Fs.IsImage(file);
 
     if (!isSupported)
     {
@@ -79,15 +79,15 @@ foreach (var file in allFiles)
         continue;
     }
 
-    var textFilename = Fs.SplitExt(file).Name + ".txt";
+    string textFilename = Fs.SplitExt(file).Name + ".txt";
 
     try
     {
-        var mimeType = Fs.Mime(file, 0) is { } top && Fs.Mime(file, 1) is { } sub
+        string mimeType = Fs.Mime(file, 0) is { } top && Fs.Mime(file, 1) is { } sub
             ? $"{top}/{sub}"
             : Fs.IsPdf(file) ? "application/pdf" : "image/jpeg";
 
-        var fileData = Convert.ToBase64String(File.ReadAllBytes(file));
+        string fileData = Convert.ToBase64String(File.ReadAllBytes(file));
 
         // Built as a JSON DOM rather than from anonymous types. File-based apps
         // compile with trim/AOT-friendly defaults, under which reflection-based
@@ -96,7 +96,7 @@ foreach (var file in allFiles)
         // be pointed at either. The array *constructors* matter: the collection
         // initializer form binds to the generic JsonArray.Add<T>, which carries the
         // same trimming warnings.
-        var body = new JsonObject
+        JsonObject body = new()
         {
             ["contents"] = new JsonArray(
                 new JsonObject
@@ -117,11 +117,11 @@ foreach (var file in allFiles)
 
         Ui.Info($"Reading {file}...");
 
-        using var content = new StringContent(
+        using StringContent content = new(
             body.ToJsonString(), Encoding.UTF8, "application/json");
-        using var response = await http.PostAsync(endpoint, content);
+        using HttpResponseMessage response = await http.PostAsync(endpoint, content);
 
-        var responseText = await response.Content.ReadAsStringAsync();
+        string responseText = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
@@ -129,7 +129,7 @@ foreach (var file in allFiles)
             continue;
         }
 
-        var extracted = ExtractText(responseText);
+        string? extracted = ExtractText(responseText);
         if (extracted is null)
         {
             Ui.Err($"Failed to process {file}: the model returned no text.");
@@ -155,21 +155,21 @@ return Ui.Done();
 /// parts the model split its answer into.
 static string? ExtractText(string json)
 {
-    using var doc = JsonDocument.Parse(json);
+    using JsonDocument doc = JsonDocument.Parse(json);
 
-    if (!doc.RootElement.TryGetProperty("candidates", out var candidates) ||
+    if (!doc.RootElement.TryGetProperty("candidates", out JsonElement candidates) ||
         candidates.GetArrayLength() == 0)
         return null;
 
-    var sb = new StringBuilder();
-    foreach (var candidate in candidates.EnumerateArray())
+    StringBuilder sb = new();
+    foreach (JsonElement candidate in candidates.EnumerateArray())
     {
-        if (!candidate.TryGetProperty("content", out var content) ||
-            !content.TryGetProperty("parts", out var parts))
+        if (!candidate.TryGetProperty("content", out JsonElement content) ||
+            !content.TryGetProperty("parts", out JsonElement parts))
             continue;
 
-        foreach (var part in parts.EnumerateArray())
-            if (part.TryGetProperty("text", out var text))
+        foreach (JsonElement part in parts.EnumerateArray())
+            if (part.TryGetProperty("text", out JsonElement text))
                 sb.Append(text.GetString());
     }
 

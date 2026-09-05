@@ -8,14 +8,14 @@
 // alternately into odd and even piles, then bind each pile into one file.
 // Print Odd.pdf, flip the stack, print Even.pdf.
 
-var a = new Args("pdf-seperate", "Split PDFs into odd/even sets for duplex printing")
+ArgVals a = new Args("pdf-seperate", "Split PDFs into odd/even sets for duplex printing")
     .Flag("-n", "--dry-run", help: "Show the split without moving anything")
     .Parse(args);
 
 Ui.Begin("Seperating even and odd PDF files for duplex printing...");
 
 // Operates on the current directory: the input is "the stack of pages here".
-var pdfFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.pdf")
+List<string> pdfFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.pdf")
     .Select(Path.GetFileName)
     .Where(f => f is not null)
     .Select(f => f!)
@@ -44,14 +44,14 @@ Directory.CreateDirectory("odd");
 // The first page is page 1, which is odd.
 for (int i = 0; i < pdfFiles.Count; i++)
 {
-    var destination = i % 2 == 0 ? "odd" : "even";
+    string destination = i % 2 == 0 ? "odd" : "even";
     try { Fs.Move(pdfFiles[i], Path.Combine(destination, pdfFiles[i])); }
     catch (Exception ex) { Ui.Err($"Could not move {pdfFiles[i]}: {ex.Message}"); }
 }
 
 // Ghostscript concatenates; -dAutoRotatePages=/None stops it from "helpfully"
 // turning pages, which would break the duplex alignment.
-foreach (var (pile, output) in new[] { ("even", "Even.pdf"), ("odd", "Odd.pdf") })
+foreach ((string? pile, string? output) in new[] { ("even", "Even.pdf"), ("odd", "Odd.pdf") })
 {
     Ui.Info($"Combining {pile} PDFs...");
     // A glob is the point here, so this genuinely needs a shell.

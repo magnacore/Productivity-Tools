@@ -7,7 +7,7 @@
 // Set permissions recursively, with separate modes for directories and files —
 // directories need the execute bit to be traversable, files almost never do.
 
-var a = new Args("directory-file-permission-set", "Set directory and file permissions recursively")
+ArgVals a = new Args("directory-file-permission-set", "Set directory and file permissions recursively")
     .Opt("-d", "--directory_octal_permission", @default: "700",
          help: "Octal permission of the directories (e.g., 755)")
     .Opt("-f", "--file_octal_permission", @default: "600",
@@ -16,11 +16,11 @@ var a = new Args("directory-file-permission-set", "Set directory and file permis
     .Rest("folder", min: 1, help: "Input directory to process")
     .Parse(args);
 
-var dirPermission = a.Str("directory_octal_permission");
-var filePermission = a.Str("file_octal_permission");
+string dirPermission = a.Str("directory_octal_permission");
+string filePermission = a.Str("file_octal_permission");
 bool dryRun = a.Flag("dry-run");
 
-foreach (var (permission, what) in new[] { (dirPermission, "directory"), (filePermission, "file") })
+foreach ((string? permission, string? what) in new[] { (dirPermission, "directory"), (filePermission, "file") })
 {
     if (!IsValidPermission(permission))
     {
@@ -31,7 +31,7 @@ foreach (var (permission, what) in new[] { (dirPermission, "directory"), (filePe
     }
 }
 
-foreach (var folder in a.Rest)
+foreach (string folder in a.Rest)
 {
     if (!Directory.Exists(folder))
     {
@@ -43,9 +43,9 @@ foreach (var folder in a.Rest)
 
     // The path is used as given. The xonsh original prefixed "./", which quietly
     // limited it to folders directly below the working directory.
-    foreach (var (type, permission) in new[] { ("d", dirPermission), ("f", filePermission) })
+    foreach ((string? type, string? permission) in new[] { ("d", dirPermission), ("f", filePermission) })
     {
-        var label = type == "d" ? "directory" : "file";
+        string label = type == "d" ? "directory" : "file";
         Ui.Line($"Setting {label} permissions in {Ui.Esc(folder)}...");
 
         if (dryRun)

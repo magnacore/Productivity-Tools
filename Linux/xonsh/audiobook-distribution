@@ -12,13 +12,15 @@
 // distribution is obvious at a glance.
 
 using System.Text.RegularExpressions;
+using ScottPlot;
+using ScottPlot.Plottables;
 
-var a = new Args("audiobook-distribution", "Plot the distribution of numeric filename prefixes")
+ArgVals a = new Args("audiobook-distribution", "Plot the distribution of numeric filename prefixes")
     .Opt("-d", "--directory", help: "Directory to examine (defaults to the audiobook bin)")
     .Opt("-o", "--output", help: "Where to write the PNG (defaults to the capture inbox)")
     .Parse(args);
 
-var directory = a.StrOrNull("directory")
+string directory = a.StrOrNull("directory")
     ?? Path.Combine(Paths.ProductivitySystem, "04 BIN", "04 RA RP SP", "TRAVEL", "BIN", "2 NON-FICTION");
 
 if (!Directory.Exists(directory))
@@ -31,10 +33,10 @@ Ui.Begin("Audiobook distribution");
 
 // A prefix of exactly 3 or 4 digits, not followed by another digit.
 
-var numbers = new List<int>();
-foreach (var path in Directory.GetFileSystemEntries(directory))
+List<int> numbers = new();
+foreach (string path in Directory.GetFileSystemEntries(directory))
 {
-    var match = Pattern.NumericPrefix().Match(Path.GetFileName(path));
+    Match match = Pattern.NumericPrefix().Match(Path.GetFileName(path));
     if (match.Success) numbers.Add(int.Parse(match.Groups[1].Value));
 }
 
@@ -49,14 +51,14 @@ int minNum = numbers.Min();
 int maxNum = numbers.Max();
 
 // One bin per integer in the range, so nothing is smoothed away.
-var counts = new Dictionary<int, int>();
-foreach (var n in numbers) counts[n] = counts.GetValueOrDefault(n) + 1;
+Dictionary<int, int> counts = new();
+foreach (int n in numbers) counts[n] = counts.GetValueOrDefault(n) + 1;
 
 double meanFreq = counts.Values.Average();
 
-var plot = new ScottPlot.Plot();
+Plot plot = new();
 
-var bars = Enumerable.Range(minNum, maxNum - minNum + 1)
+List<Bar> bars = Enumerable.Range(minNum, maxNum - minNum + 1)
     .Select(value => new ScottPlot.Bar
     {
         Position = value,
@@ -70,7 +72,7 @@ var bars = Enumerable.Range(minNum, maxNum - minNum + 1)
 plot.Add.Bars(bars);
 
 // The mean line is what turns a bar chart into a judgement about balance.
-var meanLine = plot.Add.HorizontalLine(meanFreq);
+HorizontalLine meanLine = plot.Add.HorizontalLine(meanFreq);
 meanLine.Color = ScottPlot.Colors.Red;
 meanLine.LineWidth = 2;
 meanLine.LinePattern = ScottPlot.LinePattern.Dashed;
@@ -80,10 +82,10 @@ plot.YLabel("Frequency");
 plot.Title("Histogram of Filename Prefixes");
 plot.Axes.Margins(bottom: 0);
 
-var savePath = a.StrOrNull("output")
+string savePath = a.StrOrNull("output")
     ?? Path.Combine(Paths.TaskCaptureBin, $"audiobook-{Fs.Timestamp()}.png");
 
-var parent = Path.GetDirectoryName(savePath);
+string? parent = Path.GetDirectoryName(savePath);
 if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
 
 // 1280x720, matching the original's 12.8x7.2 inches at 100 dpi.

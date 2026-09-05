@@ -10,13 +10,13 @@
 // moves each one to its matching folder on the drive. The letters exist so the
 // inbox sorts into a fixed, familiar order.
 
-var a = Sys.WithDryRun(new Args("queue-move", "Move categorised inbox folders onto the queue drive")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("queue-move", "Move categorised inbox folders onto the queue drive")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Moving queue...");
 
-var inbox = Paths.TaskCaptureBin;
-var queue = Path.Combine(Paths.Media, "QUEUE_01_A", "QUEUE");
+string inbox = Paths.TaskCaptureBin;
+string queue = Path.Combine(Paths.Media, "QUEUE_01_A", "QUEUE");
 
 // (inbox folder, destination under QUEUE/)
 (string From, string To)[] moves =
@@ -37,7 +37,7 @@ var queue = Path.Combine(Paths.Media, "QUEUE_01_A", "QUEUE");
     ("V-RELAX PASSIVE LEARNING 02 HEALTH VEGAN LE", "RELAX PASSIVE LEARNING/02 HEALTH VEGAN LE"),
 ];
 
-foreach (var (from, to) in moves)
+foreach ((string? from, string? to) in moves)
 {
     // Every destination is built from Paths.Media. The xonsh original hardcoded
     // /media/manuj/ on the STUDY ACTIVE LINUX line, which would have broken for

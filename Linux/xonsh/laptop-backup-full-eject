@@ -11,12 +11,12 @@
 // close the LUKS container, then cut power. Skipping ahead risks the disk being
 // pulled with writes still in flight.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-full-eject", "Safely unmount and power off the full-backup disk")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-full-eject", "Safely unmount and power off the full-backup disk")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Eject Laptop Backup Full...");
 
-var mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
+string mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
 
 Ui.Info("Syncing...");
 Sys.Run("sync");

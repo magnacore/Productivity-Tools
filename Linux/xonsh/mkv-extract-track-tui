@@ -16,26 +16,26 @@
 
 using System.Text.Json;
 
-var a = new Args("mkv-extract-track-tui", "Pick tracks from a list, then run mkv-extract-track")
+ArgVals a = new Args("mkv-extract-track-tui", "Pick tracks from a list, then run mkv-extract-track")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Files to extract from")
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 // Asked once for the whole run rather than per file, since it is a policy rather
 // than a per-file decision.
-var deleteChoice = a.Flag("delete") ? true : Dlg.DeleteOriginals("Media");
+bool? deleteChoice = a.Flag("delete") ? true : Dlg.DeleteOriginals("Media");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
 int failures = 0;
 
-foreach (var file in allFiles)
+foreach (string file in allFiles)
 {
     if (!Fs.IsMedia(file)) continue;
 
-    var tracks = ReadTracks(file);
+    List<TrackInfo> tracks = ReadTracks(file);
 
     if (tracks.Count == 0)
     {
@@ -43,9 +43,9 @@ foreach (var file in allFiles)
         continue;
     }
 
-    var labels = tracks.Select(Describe).ToArray();
+    string[] labels = tracks.Select(Describe).ToArray();
 
-    var picked = Dlg.ChooseMany(
+    int[]? picked = Dlg.ChooseMany(
         "Extract Tracks",
         $"{Path.GetFileName(file)}\n\nSpace marks a track, Enter extracts the marked ones.",
         labels);
@@ -62,9 +62,9 @@ foreach (var file in allFiles)
         continue;
     }
 
-    var ids = string.Join(',', picked.Select(i => tracks[i].Id));
+    string ids = string.Join(',', picked.Select(i => tracks[i].Id));
 
-    var callArgs = new List<string> { "-t", ids };
+    List<string> callArgs = new() { "-t", ids };
     if (deleteChoice.Value) callArgs.Add("-d");
     callArgs.Add(file);
 
@@ -82,7 +82,7 @@ return failures == 0 ? 0 : 1;
 /// One row of the list: what the track is, in the terms someone choosing would use.
 static string Describe(TrackInfo track)
 {
-    var detail = new List<string> { track.Codec };
+    List<string> detail = new() { track.Codec };
 
     if (!string.IsNullOrWhiteSpace(track.Language) && track.Language != "und")
         detail.Add(track.Language);
@@ -98,31 +98,31 @@ static string Describe(TrackInfo track)
 /// the IDs it will accept.
 static List<TrackInfo> ReadTracks(string file)
 {
-    var tracks = new List<TrackInfo>();
-    var json = Proc.Capture("mkvmerge", "-J", file);
+    List<TrackInfo> tracks = new();
+    string json = Proc.Capture("mkvmerge", "-J", file);
 
     if (string.IsNullOrWhiteSpace(json)) return tracks;
 
     try
     {
-        using var document = JsonDocument.Parse(json);
+        using JsonDocument document = JsonDocument.Parse(json);
 
-        if (!document.RootElement.TryGetProperty("tracks", out var array)) return tracks;
+        if (!document.RootElement.TryGetProperty("tracks", out JsonElement array)) return tracks;
 
-        foreach (var element in array.EnumerateArray())
+        foreach (JsonElement element in array.EnumerateArray())
         {
-            if (!element.TryGetProperty("id", out var idValue) || !idValue.TryGetInt32(out var id))
+            if (!element.TryGetProperty("id", out JsonElement idValue) || !idValue.TryGetInt32(out int id))
                 continue;
 
-            var kind = element.TryGetProperty("type", out var t) ? t.GetString() ?? "track" : "track";
-            var codec = element.TryGetProperty("codec", out var c) ? c.GetString() ?? "" : "";
+            string kind = element.TryGetProperty("type", out JsonElement t) ? t.GetString() ?? "track" : "track";
+            string codec = element.TryGetProperty("codec", out JsonElement c) ? c.GetString() ?? "" : "";
 
             string language = "", name = "";
 
-            if (element.TryGetProperty("properties", out var properties))
+            if (element.TryGetProperty("properties", out JsonElement properties))
             {
-                if (properties.TryGetProperty("language", out var l)) language = l.GetString() ?? "";
-                if (properties.TryGetProperty("track_name", out var n)) name = n.GetString() ?? "";
+                if (properties.TryGetProperty("language", out JsonElement l)) language = l.GetString() ?? "";
+                if (properties.TryGetProperty("track_name", out JsonElement n)) name = n.GetString() ?? "";
             }
 
             tracks.Add(new TrackInfo(id, kind, codec, language, name));

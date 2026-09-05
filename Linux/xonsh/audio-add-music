@@ -11,7 +11,7 @@
 
 using System.Text.Json;
 
-var a = new Args("audio-add-music", "Mix looped background music under a spoken audio file")
+ArgVals a = new Args("audio-add-music", "Mix looped background music under a spoken audio file")
     .Opt("-v", "--volume", @default: "0.4",
          help: "Background music level, 0.1 to 1.0")
     .Opt("-s", "--speed", @default: "1.5",
@@ -28,8 +28,8 @@ if (a.Rest.Count != 2)
     return 1;
 }
 
-var input1 = a.Rest[0];
-var input2 = a.Rest[1];
+string input1 = a.Rest[0];
+string input2 = a.Rest[1];
 
 Ui.Begin("Adding background music to audio...");
 
@@ -47,7 +47,7 @@ double volume = Math.Clamp(a.Dbl("volume", 0.4), 0.01, 1.0);
 double playbackSpeed = Math.Clamp(a.Dbl("speed", 1.5), 0.5, 4.0);
 
 // --music names one of the two inputs; whichever it is, the other is the speech.
-var backgroundMusic = a.Str("music");
+string backgroundMusic = a.Str("music");
 
 if (backgroundMusic != input1 && backgroundMusic != input2)
 {
@@ -60,21 +60,21 @@ if (backgroundMusic != input1 && backgroundMusic != input2)
 // From here on input1 is the speech and input2 is the music.
 if (backgroundMusic == input1) (input1, input2) = (input2, input1);
 
-var newFilename = $"{Fs.SplitExt(input1).Name}-{Fs.Timestamp()}.opus";
+string newFilename = $"{Fs.SplitExt(input1).Name}-{Fs.Timestamp()}.opus";
 
 // Match the music's own bitrate so the mix does not become the weakest link.
 int bitrate = 0;
-var bitrateJson = Proc.Capture("ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", input2);
+string bitrateJson = Proc.Capture("ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", input2);
 
 try
 {
-    using var doc = JsonDocument.Parse(bitrateJson);
-    foreach (var stream in doc.RootElement.GetProperty("streams").EnumerateArray())
+    using JsonDocument doc = JsonDocument.Parse(bitrateJson);
+    foreach (JsonElement stream in doc.RootElement.GetProperty("streams").EnumerateArray())
     {
-        if (stream.TryGetProperty("codec_type", out var type) && type.GetString() == "audio")
+        if (stream.TryGetProperty("codec_type", out JsonElement type) && type.GetString() == "audio")
         {
-            if (stream.TryGetProperty("bit_rate", out var br) &&
-                int.TryParse(br.GetString(), out var bps))
+            if (stream.TryGetProperty("bit_rate", out JsonElement br) &&
+                int.TryParse(br.GetString(), out int bps))
                 bitrate = bps / 1000;
             break;
         }
@@ -92,7 +92,7 @@ Ui.Ok($"Target Bitrate {bitrate}kbps");
 // [0:a] speech at full volume; [1:a] music looped, slowed to 1/playback speed and
 // attenuated; amix ends with the speech (duration=first), and the pan folds the
 // mix back down to plain stereo.
-var filter =
+string filter =
     "[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=1.0[a0]; " +
     $"[1:a]atempo={(1 / playbackSpeed).ToString(CultureInfo.InvariantCulture)}," +
     "aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo," +

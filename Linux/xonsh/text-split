@@ -10,13 +10,13 @@
 
 using System.Text.RegularExpressions;
 
-var a = new Args("text-split", "Split text files into parts of N kilobytes")
+ArgVals a = new Args("text-split", "Split text files into parts of N kilobytes")
     .Pos("split_after_kb", "Kilobytes per part (4 for Google TTS, which caps a request at 5000 bytes)")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Texts/")
     .Rest("files", min: 1, help: "Text files to split")
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 // The Google TTS API caps a single request at 5000 bytes, so 4 is the size to pass
 // when the parts are headed for text-to-speech; 4 KB leaves headroom.
 double splitAfterKb = Math.Max(a.Dbl("split_after_kb", 10), 1);
@@ -43,11 +43,11 @@ static void SplitTextFile(string fname, double splitAfterKb)
     // through a speech synthesiser.
     contents = ToAscii(contents);
 
-    var (fileName, extension) = Fs.SplitExt(fname);
-    var sentences = Pattern.SentenceBoundary().Split(contents);
+    (string? fileName, string? extension) = Fs.SplitExt(fname);
+    string[] sentences = Pattern.SentenceBoundary().Split(contents);
 
     int part = 1;
-    var buffer = new StringBuilder();
+    StringBuilder buffer = new();
 
     for (int i = 0; i < sentences.Length; i++)
     {
@@ -58,7 +58,7 @@ static void SplitTextFile(string fname, double splitAfterKb)
 
         if (!full && !last) continue;
 
-        var newFilename = $"{fileName}-{part:D4}{extension}";
+        string newFilename = $"{fileName}-{part:D4}{extension}";
         try
         {
             File.WriteAllText(newFilename, buffer.ToString());
@@ -79,10 +79,10 @@ static void SplitTextFile(string fname, double splitAfterKb)
 /// accented letters and keep the base, then drop anything still non-ASCII.
 static string ToAscii(string text)
 {
-    var decomposed = text.Normalize(NormalizationForm.FormKD);
-    var sb = new StringBuilder(decomposed.Length);
+    string decomposed = text.Normalize(NormalizationForm.FormKD);
+    StringBuilder sb = new(decomposed.Length);
 
-    foreach (var ch in decomposed)
+    foreach (char ch in decomposed)
     {
         if (ch < 128) { sb.Append(ch); continue; }
 

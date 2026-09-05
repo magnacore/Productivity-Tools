@@ -6,13 +6,13 @@
 
 // Mirror $HOME onto LAPTOP_BACKUP_D, which lives on the Sawy drive.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-d", "Mirror $HOME onto LAPTOP_BACKUP_D")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-d", "Mirror $HOME onto LAPTOP_BACKUP_D")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Laptop Backup D...");
 
-var root = Path.Combine(Paths.Media, "SAWY_01_B", "LAPTOP_BACKUP_D");
-var current = Path.Combine(root, "@current");
+string root = Path.Combine(Paths.Media, "SAWY_01_B", "LAPTOP_BACKUP_D");
+string current = Path.Combine(root, "@current");
 
 Sys.Remove(Sys.CopyLog);
 Sys.RotatePreviousSnapshot(current + "/", Path.Combine(root, "@previous"));

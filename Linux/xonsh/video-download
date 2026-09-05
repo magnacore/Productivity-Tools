@@ -9,14 +9,14 @@
 // The list can hold plain video URLs, a full channel name
 // (https://www.youtube.com/@thedocandchef), or a playlist URL.
 
-var a = new Args("video-download", "Download the videos listed in ~/Backups/youtube.txt")
+ArgVals a = new Args("video-download", "Download the videos listed in ~/Backups/youtube.txt")
     .Flag("-u", "--no-update", help: "Skip the yt-dlp self-update")
     .Opt("-s", "--source", @default: "youtube", choices: ["youtube", "other"],
          help: "Which download profile to use")
     .Parse(args);
 
-var source = Path.Combine(Paths.Backups, "youtube.txt");
-var destination = Paths.Downloads;
+string source = Path.Combine(Paths.Backups, "youtube.txt");
+string destination = Paths.Downloads;
 
 if (!File.Exists(source))
 {
@@ -39,7 +39,7 @@ const string YtDlp = "/opt/anaconda3/envs/util/bin/yt-dlp";
 const string Python = "/opt/anaconda3/envs/util/bin/python";
 const string OutputTemplate = "%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s";
 
-var ytArgs = new List<string> { YtDlp };
+List<string> ytArgs = new() { YtDlp };
 
 if (a.Str("source") == "youtube")
 {
@@ -73,10 +73,10 @@ else
 Proc.Run(Python, ytArgs);
 
 // A leftover .part file means that download never finished.
-var naDir = Path.Combine(destination, "NA");
+string naDir = Path.Combine(destination, "NA");
 if (Directory.Exists(naDir))
 {
-    foreach (var filename in Directory.GetFiles(naDir, "*.part"))
+    foreach (string filename in Directory.GetFiles(naDir, "*.part"))
         Ui.Err($"{Path.GetFileName(filename)} not downloaded.");
 }
 

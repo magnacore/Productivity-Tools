@@ -11,11 +11,11 @@
 // here any more — callers use Fs.RenameToValid() directly — but the contract is
 // kept so the xonsh scripts and anything else parsing it still work.)
 
-var a = new Args("file-rename-valid", "Rename files to valid, slugified names")
+ArgVals a = new Args("file-rename-valid", "Rename files to valid, slugified names")
     .Rest("files", min: 1, help: "Files to rename")
     .Parse(args);
 
-var renamed = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
+IReadOnlyList<string> renamed = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
 // A Python list repr, which is what the existing consumers ast.literal_eval.
 Console.WriteLine("[" + string.Join(", ", renamed.Select(n => $"'{n.Replace("'", @"\'")}'")) + "]");

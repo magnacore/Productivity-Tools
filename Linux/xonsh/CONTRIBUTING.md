@@ -109,6 +109,36 @@ out or draws to the terminal is not.
 | no `pymv`/`pycp` dependency | removed for being ~700x slower than a rename, and for losing timestamps |
 | every wrapper's base program exists | a wrapper pointing at a renamed program fails only when you press the key |
 | `--help` works everywhere | proves each program compiles and parses its own arguments |
+| explicit types, no `var` | AGENT.md always required it, nothing enforced it, and the suite drifted to 798 uses |
+
+### Fixing the `var` check
+
+Do not do it by hand. `.editorconfig` turns Roslyn's own IDE0008 into a warning, so the
+compiler works out each type rather than a regex guessing at it:
+
+```sh
+dotnet format style tests/Utilities.Tests.csproj --diagnostics IDE0008 --severity warn
+```
+
+That covers `utilities.cs` and the tests, which are in a real project. The 102 programs
+are file-based apps with no project at all, and their `#!`/`#:` header lines are not
+legal C#, so each has to be rehosted in a temporary `.csproj` first: strip the header,
+copy the body in as `Program.cs`, translate `#:package` into `PackageReference` and
+`#:include` into `Compile`, format, then put the header back. Three things that are not
+obvious and cost an hour between them:
+
+- The `.editorconfig` must be **copied into the temporary project directory**. It lives
+  outside `CS/`, so otherwise the rules never load and the run reports success having
+  changed nothing.
+- Do **not** pass `IDE0007` alongside `IDE0008`. IDE0007 is the opposite rule ("use
+  var"), and with both enabled the fixer cancels itself out — again reporting success.
+- Do **not** pass `--include`. It resolves against the current directory rather than the
+  project, and a path it cannot match silently formats nothing.
+
+Run the fixer repeatedly until the count stops falling: it resolves one layer of nested
+declaration per pass, so a single run leaves plenty behind. Then a few passes of
+`--diagnostics IDE0090` collapses `Foo x = new Foo(...)` to `Foo x = new(...)`, so the
+type is named once rather than twice.
 
 Adding a check is usually cheaper than the bug it prevents. The `--dry-run` one found a
 real gap the first time it ran.

@@ -14,14 +14,14 @@
 using System.Text.RegularExpressions;
 using Google.Cloud.TextToSpeech.V1;
 
-var a = new Args("text-to-speech", "Convert text files to speech with Google Cloud TTS")
+ArgVals a = new Args("text-to-speech", "Convert text files to speech with Google Cloud TTS")
     .Opt("-v", "--voice", @default: "Female", choices: ["Female", "Male"], help: "Which voice to use")
     .Rest("files", min: 1, help: "Text files to convert")
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
-var privateKey = Path.Combine(Paths.SensitiveData, "gemini-service-account-tts.json");
+string privateKey = Path.Combine(Paths.SensitiveData, "gemini-service-account-tts.json");
 if (!File.Exists(privateKey))
 {
     Ui.Err($"Missing service account key: {privateKey}");
@@ -33,7 +33,7 @@ Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", privateKey)
 Ui.Begin("Converting text to speech...");
 
 // https://cloud.google.com/text-to-speech/docs/voices
-var voiceName = a.Str("voice") == "Male" ? "en-US-Wavenet-D" : "en-US-Wavenet-C";
+string voiceName = a.Str("voice") == "Male" ? "en-US-Wavenet-D" : "en-US-Wavenet-C";
 
 TextToSpeechClient client;
 try
@@ -52,11 +52,11 @@ Ui.Track(allFiles, "[bold cyan]TTS : [/]", file =>
 {
     if (!Fs.IsText(file)) return;
 
-    var outputFilename = Fs.SplitExt(file).Name + ".mkv";
+    string outputFilename = Fs.SplitExt(file).Name + ".mkv";
 
     try
     {
-        var audio = Synthesize(client, voiceName, File.ReadAllText(file));
+        byte[] audio = Synthesize(client, voiceName, File.ReadAllText(file));
         File.WriteAllBytes(outputFilename, audio);
 
         // Keep the source's date so the audiobook sorts with its text.
@@ -76,11 +76,11 @@ return Ui.Done();
 static byte[] Synthesize(TextToSpeechClient client, string voiceName, string text)
 {
     // "en-US-Wavenet-C" -> "en-US"
-    var languageCode = string.Join("-", voiceName.Split('-').Take(2));
+    string languageCode = string.Join("-", voiceName.Split('-').Take(2));
 
     text = Clean(text);
 
-    var response = client.SynthesizeSpeech(new SynthesizeSpeechRequest
+    SynthesizeSpeechResponse response = client.SynthesizeSpeech(new SynthesizeSpeechRequest
     {
         Input = new SynthesisInput { Text = text },
         Voice = new VoiceSelectionParams { LanguageCode = languageCode, Name = voiceName },

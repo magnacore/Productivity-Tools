@@ -130,7 +130,7 @@ internal static class Ui
     /// Same, with the zero-based index of the item.
     public static void Track<T>(IEnumerable<T> items, string description, Action<T, int> body)
     {
-        var list = items as IList<T> ?? items.ToList();
+        IList<T> list = items as IList<T> ?? items.ToList();
         if (list.Count == 0) return;
 
         AnsiConsole.Progress()
@@ -138,7 +138,7 @@ internal static class Ui
             .Columns(ProgressColumns())
             .Start(ctx =>
             {
-                var task = ctx.AddTask(description, maxValue: list.Count);
+                ProgressTask task = ctx.AddTask(description, maxValue: list.Count);
                 for (int i = 0; i < list.Count; i++)
                 {
                     body(list[i], i);
@@ -163,7 +163,7 @@ internal static class Ui
         IReadOnlyList<T> items, string description, Func<T, TResult> body,
         int? maxParallel = null)
     {
-        var results = new TResult[items.Count];
+        TResult[] results = new TResult[items.Count];
         if (items.Count == 0) return results;
 
         AnsiConsole.Progress()
@@ -171,8 +171,8 @@ internal static class Ui
             .Columns(ProgressColumns())
             .Start(ctx =>
             {
-                var task = ctx.AddTask(description, maxValue: items.Count);
-                var gate = new Lock();
+                ProgressTask task = ctx.AddTask(description, maxValue: items.Count);
+                Lock gate = new();
 
                 Parallel.For(0, items.Count,
                     new ParallelOptions
@@ -221,13 +221,13 @@ internal static class Ui
             .Columns(ProgressColumns())
             .Start(ctx =>
             {
-                var overall = ctx.AddTask(overallDescription, maxValue: items.Count);
+                ProgressTask overall = ctx.AddTask(overallDescription, maxValue: items.Count);
 
                 // One lock over every mutation of the progress state. AddTaskBefore
                 // rewrites the shared task list while the render thread is reading
                 // it, and ProgressTask is not thread safe. It is held for a few
                 // microseconds at a time, so the contention is not worth avoiding.
-                var gate = new Lock();
+                Lock gate = new();
 
                 Parallel.For(0, items.Count,
                     new ParallelOptions
@@ -236,7 +236,7 @@ internal static class Ui
                     },
                     i =>
                     {
-                        var mine = new List<ProgressTask>();
+                        List<ProgressTask> mine = new();
 
                         body(items[i], (description, max) =>
                         {
@@ -252,7 +252,7 @@ internal static class Ui
 
                         lock (gate)
                         {
-                            foreach (var task in mine) task.StopTask();
+                            foreach (ProgressTask task in mine) task.StopTask();
                             overall.Increment(1);
                         }
                     });
@@ -269,7 +269,7 @@ internal static class Ui
             .Columns(ProgressColumns())
             .Start(ctx =>
             {
-                var task = ctx.AddTask(description, maxValue: total <= 0 ? 1 : total);
+                ProgressTask task = ctx.AddTask(description, maxValue: total <= 0 ? 1 : total);
                 body(amount => task.Increment(amount));
                 task.Value = task.MaxValue;
             });
@@ -366,7 +366,7 @@ internal static class Ui
         // pressed and the value it returns is never used.
         bool cancelled = false;
 
-        var prompt = new SelectionPrompt<T>()
+        SelectionPrompt<T> prompt = new SelectionPrompt<T>()
             .Title($"[bold cyan]{Esc(title)}[/] [grey](Esc to cancel)[/]")
             .PageSize(Math.Min(Math.Max(options.Count + 2, 4), 20))
             .MoreChoicesText("[grey](move up and down to see more)[/]")
@@ -390,7 +390,7 @@ internal static class Ui
 
         prompt.CancelResult = () => { cancelled = true; return options[0]; };
 
-        var result = AnsiConsole.Prompt(prompt);
+        T result = AnsiConsole.Prompt(prompt);
 
         if (cancelled) Abort();
         return result;
@@ -437,7 +437,7 @@ internal static class Ui
 
         // fzf draws on the terminal and writes only the choice to stdout, so its
         // interface and its answer never mix.
-        var (code, output) = Proc.PipeCapture(
+        (int code, string? output) = Proc.PipeCapture(
             string.Join('\n', options) + '\n',
             "fzf",
             [
@@ -466,7 +466,7 @@ internal static class Ui
     public static string Ask(string question, string? defaultValue = null)
     {
         Term.KeyboardTaken();
-        var prompt = new TextPrompt<string>($"[bold cyan]{Esc(question)}[/]").AllowEmpty();
+        TextPrompt<string> prompt = new TextPrompt<string>($"[bold cyan]{Esc(question)}[/]").AllowEmpty();
         if (defaultValue is not null) prompt.DefaultValue(defaultValue);
         return AnsiConsole.Prompt(prompt);
     }
@@ -492,9 +492,9 @@ internal static class Ui
     /// alternate row styling themselves via `Dim(index, text)`.
     public static Table NewTable(string title, params string[] columns)
     {
-        var table = new Table().Border(TableBorder.Double);
+        Table table = new Table().Border(TableBorder.Double);
         if (!string.IsNullOrEmpty(title)) table.Title(title);
-        foreach (var c in columns) table.AddColumn(c);
+        foreach (string c in columns) table.AddColumn(c);
         return table;
     }
 
@@ -640,22 +640,22 @@ internal static class Proc
     public static int Run(string exe, IEnumerable<string> args, bool quiet = false,
                           string? cwd = null, IDictionary<string, string>? env = null)
     {
-        var psi = NewPsi(exe, args, cwd, env);
+        ProcessStartInfo psi = NewPsi(exe, args, cwd, env);
         if (quiet)
         {
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
         }
 
-        using var p = Process.Start(psi);
+        using Process? p = Process.Start(psi);
         if (p is null) return 127;
 
         if (quiet)
         {
             // Drain both pipes concurrently, otherwise a chatty child fills one
             // buffer and blocks forever while we wait on the other.
-            var outTask = p.StandardOutput.ReadToEndAsync();
-            var errTask = p.StandardError.ReadToEndAsync();
+            Task<string> outTask = p.StandardOutput.ReadToEndAsync();
+            Task<string> errTask = p.StandardError.ReadToEndAsync();
             p.WaitForExit();
             Task.WaitAll(outTask, errTask);
         }
@@ -676,23 +676,23 @@ internal static class Proc
     public static bool OkStreaming(string exe, IEnumerable<string> args,
                                    Action<string> onLine)
     {
-        var psi = NewPsi(exe, args, cwd: null, env: null);
+        ProcessStartInfo psi = NewPsi(exe, args, cwd: null, env: null);
         psi.RedirectStandardOutput = true;
         psi.RedirectStandardError = true;
 
-        using var p = Process.Start(psi);
+        using Process? p = Process.Start(psi);
         if (p is null) return false;
 
         // stderr is drained on its own task for the usual reason: left unread, a
         // chatty child fills that pipe's buffer and blocks forever while we are
         // still reading stdout.
-        var drainErr = p.StandardError.ReadToEndAsync();
+        Task<string> drainErr = p.StandardError.ReadToEndAsync();
 
         // Split on carriage returns as well as newlines. A tool that redraws a
         // progress meter in place ends each update with \r and only emits \n when it
         // moves on to the next file, so ReadLine would report a single line per file
         // and miss every update in between — which is precisely rsync's behaviour.
-        var pending = new StringBuilder();
+        StringBuilder pending = new();
 
         for (int c = p.StandardOutput.Read(); c >= 0; c = p.StandardOutput.Read())
         {
@@ -737,8 +737,8 @@ internal static class Proc
     /// you something went wrong, this tells you what.
     public static (bool Ok, string Error) TryRun(string exe, IEnumerable<string> args)
     {
-        var (code, stdout, stderr) = CaptureAll(exe, args);
-        var text = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
+        (int code, string? stdout, string? stderr) = CaptureAll(exe, args);
+        string text = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
         return (code == 0, text.Trim());
     }
 
@@ -753,14 +753,14 @@ internal static class Proc
     private static (int Code, string Out, string Err) CaptureAll(
         string exe, IEnumerable<string> args, string? stdin = null, string? cwd = null)
     {
-        var psi = NewPsi(exe, args, cwd, null);
+        ProcessStartInfo psi = NewPsi(exe, args, cwd, null);
         psi.RedirectStandardOutput = true;
         psi.RedirectStandardError = true;
         psi.RedirectStandardInput = stdin is not null;
 
         try
         {
-            using var p = Process.Start(psi);
+            using Process? p = Process.Start(psi);
             if (p is null) return (127, string.Empty, $"could not start {exe}");
 
             if (stdin is not null)
@@ -773,8 +773,8 @@ internal static class Proc
             // deadlock if the child fills the other pipe. Waiting on the reads
             // rather than on the process also guarantees both pipes are drained
             // before the exit code is taken.
-            var outTask = p.StandardOutput.ReadToEndAsync();
-            var errTask = p.StandardError.ReadToEndAsync();
+            Task<string> outTask = p.StandardOutput.ReadToEndAsync();
+            Task<string> errTask = p.StandardError.ReadToEndAsync();
             Task.WaitAll(outTask, errTask);
             p.WaitForExit();
 
@@ -794,10 +794,10 @@ internal static class Proc
     /// Feed text into a command's stdin:  echo @(text) | fabric -sp @(pattern)
     public static int Pipe(string stdinText, string exe, params string[] args)
     {
-        var psi = NewPsi(exe, args, null, null);
+        ProcessStartInfo psi = NewPsi(exe, args, null, null);
         psi.RedirectStandardInput = true;
 
-        using var p = Process.Start(psi);
+        using Process? p = Process.Start(psi);
         if (p is null) return 127;
         p.StandardInput.Write(stdinText);
         p.StandardInput.Close();
@@ -813,16 +813,16 @@ internal static class Proc
     public static (int Code, string Output) PipeCapture(string stdinText, string exe,
                                                         IEnumerable<string> args)
     {
-        var psi = NewPsi(exe, args, cwd: null, env: null);
+        ProcessStartInfo psi = NewPsi(exe, args, cwd: null, env: null);
         psi.RedirectStandardInput = true;
         psi.RedirectStandardOutput = true;
 
-        using var p = Process.Start(psi);
+        using Process? p = Process.Start(psi);
         if (p is null) return (127, string.Empty);
 
         // Read stdout on its own task: a filter that outgrows the pipe buffer would
         // otherwise block writing while we are still feeding it.
-        var output = p.StandardOutput.ReadToEndAsync();
+        Task<string> output = p.StandardOutput.ReadToEndAsync();
 
         p.StandardInput.Write(stdinText);
         p.StandardInput.Close();
@@ -840,11 +840,11 @@ internal static class Proc
     {
         try
         {
-            var psi = new ProcessStartInfo("/bin/sh") { UseShellExecute = false };
+            ProcessStartInfo psi = new("/bin/sh") { UseShellExecute = false };
             psi.ArgumentList.Add("-c");
             psi.ArgumentList.Add("exec \"$0\" \"$@\" >/dev/null 2>&1");
             psi.ArgumentList.Add(exe);
-            foreach (var a in args) psi.ArgumentList.Add(a);
+            foreach (string a in args) psi.ArgumentList.Add(a);
             Process.Start(psi);
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException)
@@ -858,10 +858,10 @@ internal static class Proc
     /// or redirection is the point (e.g. `gs ... even/*.pdf`, `ps aux | fzf`).
     public static int Shell(string commandLine)
     {
-        var psi = new ProcessStartInfo("/bin/sh") { UseShellExecute = false };
+        ProcessStartInfo psi = new("/bin/sh") { UseShellExecute = false };
         psi.ArgumentList.Add("-c");
         psi.ArgumentList.Add(commandLine);
-        using var p = Process.Start(psi);
+        using Process? p = Process.Start(psi);
         if (p is null) return 127;
         p.WaitForExit();
         return p.ExitCode;
@@ -869,12 +869,12 @@ internal static class Proc
 
     public static string ShellCapture(string commandLine)
     {
-        var psi = new ProcessStartInfo("/bin/sh") { UseShellExecute = false, RedirectStandardOutput = true };
+        ProcessStartInfo psi = new("/bin/sh") { UseShellExecute = false, RedirectStandardOutput = true };
         psi.ArgumentList.Add("-c");
         psi.ArgumentList.Add(commandLine);
-        using var p = Process.Start(psi);
+        using Process? p = Process.Start(psi);
         if (p is null) return string.Empty;
-        var text = p.StandardOutput.ReadToEnd();
+        string text = p.StandardOutput.ReadToEnd();
         p.WaitForExit();
         return text;
     }
@@ -887,7 +887,7 @@ internal static class Proc
     /// copy elsewhere on PATH still wins if there is no sibling.
     private static string Sibling(string program)
     {
-        var candidate = Path.Combine(Paths.ScriptDir, program);
+        string candidate = Path.Combine(Paths.ScriptDir, program);
         return File.Exists(candidate) ? candidate : program;
     }
 
@@ -902,10 +902,10 @@ internal static class Proc
     public static bool Exists(string exe)
     {
         if (exe.Contains('/', StringComparison.Ordinal)) return File.Exists(exe);
-        var path = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-        foreach (var dir in path.Split(':', StringSplitOptions.RemoveEmptyEntries))
+        string path = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+        foreach (string dir in path.Split(':', StringSplitOptions.RemoveEmptyEntries))
         {
-            var candidate = Path.Combine(dir, exe);
+            string candidate = Path.Combine(dir, exe);
             if (File.Exists(candidate)) return true;
         }
         return false;
@@ -914,11 +914,11 @@ internal static class Proc
     private static ProcessStartInfo NewPsi(string exe, IEnumerable<string> args,
                                            string? cwd, IDictionary<string, string>? env)
     {
-        var psi = new ProcessStartInfo(exe) { UseShellExecute = false };
-        foreach (var a in args) psi.ArgumentList.Add(a);
+        ProcessStartInfo psi = new(exe) { UseShellExecute = false };
+        foreach (string a in args) psi.ArgumentList.Add(a);
         if (cwd is not null) psi.WorkingDirectory = cwd;
         if (env is not null)
-            foreach (var kv in env) psi.Environment[kv.Key] = kv.Value;
+            foreach (KeyValuePair<string, string> kv in env) psi.Environment[kv.Key] = kv.Value;
         return psi;
     }
 }
@@ -978,12 +978,12 @@ internal static partial class Fs
     /// Returns null when the extension is unknown, exactly as guess_type does.
     public static string? Mime(string file, int part = 0)
     {
-        var ext = SplitExt(file).Ext;
+        string ext = SplitExt(file).Ext;
         if (ext.Length == 0) return null;
 
-        if (!MimeMap.Value.TryGetValue(ext.ToLowerInvariant(), out var mime)) return null;
+        if (!MimeMap.Value.TryGetValue(ext.ToLowerInvariant(), out string? mime)) return null;
 
-        var pieces = mime.Split('/');
+        string[] pieces = mime.Split('/');
         if (part >= pieces.Length) return null;
         return pieces[part].Trim().ToLowerInvariant();
     }
@@ -1003,7 +1003,7 @@ internal static partial class Fs
     {
         // Start from the extensions the suite actually cares about, so it keeps
         // working even where /etc/mime.types is absent or minimal.
-        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        Dictionary<string, string> map = new(StringComparer.OrdinalIgnoreCase)
         {
             [".mka"] = "audio/matroska",  [".mp3"]  = "audio/mpeg",   [".opus"] = "audio/ogg",
             [".ogg"] = "audio/ogg",       [".oga"]  = "audio/ogg",    [".flac"] = "audio/flac",
@@ -1026,20 +1026,20 @@ internal static partial class Fs
 
         // /etc/mime.types wins where it has an opinion, matching Python's init(),
         // which lets the system database override the built-in table.
-        foreach (var file in new[] { "/etc/mime.types", Path.Combine(Paths.Home, ".mime.types") })
+        foreach (string? file in new[] { "/etc/mime.types", Path.Combine(Paths.Home, ".mime.types") })
         {
             if (!File.Exists(file)) continue;
             try
             {
-                foreach (var raw in File.ReadLines(file))
+                foreach (string raw in File.ReadLines(file))
                 {
-                    var line = raw.Trim();
+                    string line = raw.Trim();
                     if (line.Length == 0 || line[0] == '#') continue;
 
-                    var parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                    string[] parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length < 2) continue;
 
-                    foreach (var extension in parts.Skip(1))
+                    foreach (string? extension in parts.Skip(1))
                         map["." + extension] = parts[0];
                 }
             }
@@ -1065,8 +1065,8 @@ internal static partial class Fs
     /// name from an input one.
     public static (string Name, string Ext) SplitExt(string file)
     {
-        var directory = Path.GetDirectoryName(file);
-        var baseName = Path.GetFileName(file);
+        string? directory = Path.GetDirectoryName(file);
+        string baseName = Path.GetFileName(file);
 
         int leadingDots = 0;
         while (leadingDots < baseName.Length && baseName[leadingDots] == '.') leadingDots++;
@@ -1074,7 +1074,7 @@ internal static partial class Fs
         // A dot within the leading run separates nothing; so does no dot at all,
         // since LastIndexOf then returns -1.
         int dot = baseName.LastIndexOf('.');
-        var (name, ext) = dot < leadingDots
+        (string? name, string? ext) = dot < leadingDots
             ? (baseName, string.Empty)
             : (baseName[..dot], baseName[dot..]);
 
@@ -1109,7 +1109,7 @@ internal static partial class Fs
             // Decomposing first turns "é" into "e" plus a combining accent, so
             // dropping the non-ASCII characters keeps the base letter rather than
             // losing the whole thing.
-            var ascii = string.Concat(value.Normalize(NormalizationForm.FormD).Where(char.IsAscii));
+            string ascii = string.Concat(value.Normalize(NormalizationForm.FormD).Where(char.IsAscii));
             value = NonWordAscii().Replace(ascii.ToLowerInvariant(), string.Empty);
         }
 
@@ -1121,9 +1121,9 @@ internal static partial class Fs
     {
         input = (input ?? string.Empty).Replace('-', ' ').Replace('_', ' ');
         // Python's str.title() uppercases after every non-alphabetic character.
-        var sb = new StringBuilder(input.Length);
+        StringBuilder sb = new(input.Length);
         bool startOfWord = true;
-        foreach (var ch in input)
+        foreach (char ch in input)
         {
             if (char.IsLetter(ch))
             {
@@ -1147,19 +1147,19 @@ internal static partial class Fs
     /// Done in-process there is no subprocess and no parsing.
     public static IReadOnlyList<string> RenameToValid(IEnumerable<string> files)
     {
-        var result = new List<string>();
+        List<string> result = new();
 
-        foreach (var file in files)
+        foreach (string file in files)
         {
             // Slugify the file's own name only. Slug() strips '/' along with every
             // other non-word character, so handing it a path would flatten
             // "sub dir/Track 01.mp3" into "sub-dirtrack-01.mp3" and quietly move
             // the file into the working directory. Keep the directory aside.
-            var directory = Path.GetDirectoryName(file) ?? string.Empty;
-            var (stem, ext) = SplitExt(Path.GetFileName(file));
+            string directory = Path.GetDirectoryName(file) ?? string.Empty;
+            (string? stem, string? ext) = SplitExt(Path.GetFileName(file));
 
-            var validName = Slug(stem);
-            var validExt = Slug(ext);
+            string validName = Slug(stem);
+            string validExt = Slug(ext);
 
             string clean;
             if (ext.Length == 0)
@@ -1180,7 +1180,7 @@ internal static partial class Fs
 
             // Put the directory back, so the file is renamed where it lives and
             // callers get a path they can still open.
-            var target = directory.Length == 0 ? clean : Path.Join(directory, clean);
+            string target = directory.Length == 0 ? clean : Path.Join(directory, clean);
 
             result.Add(target);
             try
@@ -1201,7 +1201,7 @@ internal static partial class Fs
     /// Move a file or directory, creating the destination's parent if needed.
     public static void Move(string source, string destination)
     {
-        var parent = Path.GetDirectoryName(Path.GetFullPath(destination));
+        string? parent = Path.GetDirectoryName(Path.GetFullPath(destination));
         if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
 
         if (Directory.Exists(source)) Directory.Move(source, destination);
@@ -1228,8 +1228,8 @@ internal static partial class Fs
     /// existing ancestor is measured instead.
     public static bool SameFilesystem(string first, string second)
     {
-        var a = DeviceId(first);
-        var b = DeviceId(second);
+        string a = DeviceId(first);
+        string b = DeviceId(second);
 
         // Unknown on either side: assume they differ, which picks the slower but
         // always-correct path.
@@ -1238,11 +1238,11 @@ internal static partial class Fs
 
     private static string DeviceId(string path)
     {
-        var probe = Path.GetFullPath(path);
+        string probe = Path.GetFullPath(path);
 
         while (probe.Length > 0 && !Directory.Exists(probe) && !File.Exists(probe))
         {
-            var parent = Path.GetDirectoryName(probe);
+            string? parent = Path.GetDirectoryName(probe);
             if (parent is null || parent == probe) break;
             probe = parent;
         }
@@ -1284,7 +1284,7 @@ internal static partial class Fs
 
         Ui.Track(files, "[bold cyan]Moving : [/]", file =>
         {
-            var target = Path.Combine(destinationDir, Path.GetFileName(file));
+            string target = Path.Combine(destinationDir, Path.GetFileName(file));
 
             if (!force && (File.Exists(target) || Directory.Exists(target)))
             {
@@ -1312,7 +1312,7 @@ internal static partial class Fs
     /// read in modified-time order.
     private static int ReflinkInto(IReadOnlyList<string> files, string destinationDir, bool force)
     {
-        var callArgs = new List<string> { "--reflink=auto", "--preserve=timestamps", "-r" };
+        List<string> callArgs = new() { "--reflink=auto", "--preserve=timestamps", "-r" };
         if (!force) callArgs.Add("-n");
 
         callArgs.AddRange(files);
@@ -1349,20 +1349,20 @@ internal static partial class Fs
                              bool force, bool move)
     {
         int failures = 0;
-        var verb = move ? "Moving" : "Copying";
+        string verb = move ? "Moving" : "Copying";
 
         Ui.Track2(entries,
             $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{verb} {entries.Count} item(s):"))}[/]",
             (entry, addBar) =>
             {
-                var advance = addBar(
+                Action<double> advance = addBar(
                     $"[bold cyan]{Ui.Esc(Ui.FitDescription(Path.GetFileName(entry) + ":"))}[/]", 100);
 
                 int reported = 0;
 
                 // -a carries timestamps and permissions across, which matters here:
                 // these folders are read in modified-time order.
-                var callArgs = new List<string> { "-a", "--info=progress2" };
+                List<string> callArgs = new() { "-a", "--info=progress2" };
 
                 if (!force) callArgs.Add("--ignore-existing");
                 if (move) callArgs.Add("--remove-source-files");
@@ -1372,7 +1372,7 @@ internal static partial class Fs
 
                 bool ok = Proc.OkStreaming("rsync", callArgs, line =>
                 {
-                    var percent = ProgressPercent(line);
+                    int percent = ProgressPercent(line);
                     if (percent > reported)
                     {
                         advance(percent - reported);
@@ -1410,7 +1410,7 @@ internal static partial class Fs
             int start = i;
             while (start > 0 && char.IsAsciiDigit(line[start - 1])) start--;
 
-            if (start < end && int.TryParse(line.AsSpan(start, end - start), out var percent))
+            if (start < end && int.TryParse(line.AsSpan(start, end - start), out int percent))
                 return Math.Clamp(percent, 0, 100);
         }
 
@@ -1449,7 +1449,7 @@ internal static partial class Fs
             return;
         }
 
-        var dir = $"./Original_{folder}";
+        string dir = $"./Original_{folder}";
         Directory.CreateDirectory(dir);
         try
         {
@@ -1549,19 +1549,19 @@ internal static class Media
         // prints "File 'x' already exists. Exiting." and then exits 0, so the exit
         // code alone would call it a success — and the caller would go on to stamp
         // the untouched file and file the source away as converted.
-        var existing = new FileInfo(destination);
+        FileInfo existing = new(destination);
         bool destinationExisted = existing.Exists;
         long existingLength = destinationExisted ? existing.Length : 0;
         DateTime existingWritten = destinationExisted ? existing.LastWriteTimeUtc : default;
 
-        var (ok, reported) = RunWithProgress(source, args, advance);
+        (bool ok, double reported) = RunWithProgress(source, args, advance);
 
         // A zero exit is necessary but not sufficient: require that the output was
         // actually written. Otherwise a refusal or a silent failure passes for a
         // conversion and the source gets treated as done.
         if (ok)
         {
-            var written = new FileInfo(destination);
+            FileInfo written = new(destination);
 
             ok = destinationExisted
                 ? written.Exists && (written.Length != existingLength ||
@@ -1612,14 +1612,14 @@ internal static class Media
         double reported = 0;
 
         // A global option, so it is safe at the front, before the caller's -i.
-        var full = new List<string> { "-progress", "pipe:1" };
+        List<string> full = new() { "-progress", "pipe:1" };
         full.AddRange(args);
 
         bool ok = Proc.OkStreaming("ffmpeg", full, line =>
         {
             // Early lines carry "N/A" rather than a number; TryParse rejects those.
             if (duration <= 0 || !line.StartsWith(Marker, StringComparison.Ordinal)) return;
-            if (!long.TryParse(line.AsSpan(Marker.Length), out var micros)) return;
+            if (!long.TryParse(line.AsSpan(Marker.Length), out long micros)) return;
 
             double percent = Math.Clamp(micros / 1_000_000.0 / duration * 100.0, 0, 100);
             if (percent > reported)
@@ -1634,11 +1634,11 @@ internal static class Media
 
     public static double Duration(string file)
     {
-        var text = Proc.Capture("ffprobe", "-v", "quiet", "-of", "csv=p=0",
+        string text = Proc.Capture("ffprobe", "-v", "quiet", "-of", "csv=p=0",
                                 "-show_entries", "format=duration", file);
 
         if (string.IsNullOrWhiteSpace(text) ||
-            !double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds))
+            !double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
         {
             Ui.Err($"{file} is not returning a valid duration.");
             return 0.0;
@@ -1651,7 +1651,7 @@ internal static class Media
     /// ~15 ms, so a few hundred files serially is several seconds of dead time.
     public static IReadOnlyList<double> Durations(IReadOnlyList<string> files)
     {
-        var results = new double[files.Count];
+        double[] results = new double[files.Count];
         Parallel.For(0, files.Count,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
             i => results[i] = Duration(files[i]));
@@ -1662,7 +1662,7 @@ internal static class Media
     /// and allowed to exceed 24.
     public static string Hms(double seconds)
     {
-        var total = (long)Math.Round(seconds, MidpointRounding.ToEven);
+        long total = (long)Math.Round(seconds, MidpointRounding.ToEven);
         bool negative = total < 0;
         if (negative) total = -total;
 
@@ -1683,7 +1683,7 @@ internal static class Crypto
         if (string.IsNullOrEmpty(keyword)) return string.Empty;
         if (text.Length == keyword.Length) return keyword;
 
-        var sb = new StringBuilder(keyword);
+        StringBuilder sb = new(keyword);
         for (int i = 0; i < text.Length - keyword.Length; i++)
             sb.Append(keyword[i % keyword.Length]);
         return sb.ToString();
@@ -1693,7 +1693,7 @@ internal static class Crypto
     public static string Encrypt(string plain, string key, int asciiMin = 32, int asciiMax = 126)
     {
         int span = asciiMax + 1 - asciiMin;
-        var sb = new StringBuilder(plain.Length);
+        StringBuilder sb = new(plain.Length);
         for (int i = 0; i < plain.Length; i++)
         {
             int x = ((plain[i] - asciiMin) + (key[i] - asciiMin)) % span;
@@ -1706,7 +1706,7 @@ internal static class Crypto
     public static string Decrypt(string cipher, string key, int asciiMin = 32, int asciiMax = 126)
     {
         int span = asciiMax + 1 - asciiMin;
-        var sb = new StringBuilder(cipher.Length);
+        StringBuilder sb = new(cipher.Length);
         for (int i = 0; i < cipher.Length; i++)
         {
             int x = ((cipher[i] - asciiMin) - (key[i] - asciiMin) + span) % span;
@@ -1718,8 +1718,8 @@ internal static class Crypto
     /// Letters only.
     public static string Rot13(string input)
     {
-        var sb = new StringBuilder(input.Length);
-        foreach (var c in input)
+        StringBuilder sb = new(input.Length);
+        foreach (char c in input)
         {
             if (c is >= 'a' and <= 'z')      sb.Append((char)((c - 'a' + 13) % 26 + 'a'));
             else if (c is >= 'A' and <= 'Z') sb.Append((char)((c - 'A' + 13) % 26 + 'A'));
@@ -1731,8 +1731,8 @@ internal static class Crypto
     /// Letters by 13 and digits by 5, so the transform is its own inverse.
     public static string Rot13And5(string input)
     {
-        var sb = new StringBuilder(input.Length);
-        foreach (var c in input)
+        StringBuilder sb = new(input.Length);
+        foreach (char c in input)
         {
             if (c is >= 'a' and <= 'z')      sb.Append((char)((c - 'a' + 13) % 26 + 'a'));
             else if (c is >= 'A' and <= 'Z') sb.Append((char)((c - 'A' + 13) % 26 + 'A'));
@@ -1749,7 +1749,7 @@ internal static class Crypto
         int passwordLength, int poolSize = 92)
     {
         double entropy = passwordLength * Math.Log2(poolSize);
-        var attempts = Pow2(entropy - 1);
+        BigInteger attempts = Pow2(entropy - 1);
         return (entropy, attempts);
     }
 
@@ -1765,11 +1765,11 @@ internal static class Crypto
         int whole = (int)Math.Floor(exponent);
         double fraction = exponent - whole;
 
-        var value = BigInteger.Pow(2, whole);
+        BigInteger value = BigInteger.Pow(2, whole);
         if (fraction == 0) return value;
 
         const int Precision = 20;   // bits kept from the fractional factor
-        var scaled = new BigInteger(Math.ScaleB(Math.Pow(2, fraction), Precision));
+        BigInteger scaled = new(Math.ScaleB(Math.Pow(2, fraction), Precision));
         return value * scaled >> Precision;
     }
 }
@@ -1851,9 +1851,9 @@ internal static class Jobs
     private static int Compute()
     {
         // An explicit policy wins over anything inferred.
-        var configured = Environment.GetEnvironmentVariable("JOBS");
+        string? configured = Environment.GetEnvironmentVariable("JOBS");
         if (int.TryParse(configured, NumberStyles.Integer, CultureInfo.InvariantCulture,
-                         out var requested) && requested >= 1)
+                         out int requested) && requested >= 1)
         {
             Derivation = $"JOBS={requested}";
             return requested;
@@ -1889,14 +1889,14 @@ internal static class Jobs
 
         try
         {
-            foreach (var line in File.ReadLines(MemInfo))
+            foreach (string line in File.ReadLines(MemInfo))
             {
                 if (!line.StartsWith("MemAvailable:", StringComparison.Ordinal)) continue;
 
-                var fields = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                string[] fields = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
                 if (fields.Length >= 2 &&
                     long.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture,
-                                  out var kilobytes))
+                                  out long kilobytes))
                     return (int)(kilobytes / 1024);
             }
         }
@@ -1961,7 +1961,7 @@ internal static class Sys
     /// These stamps are what tell you a drive is stale.
     public static void Stamp(string stateName)
     {
-        var path = Path.Combine(Paths.ShortcutState, $"{stateName}.txt");
+        string path = Path.Combine(Paths.ShortcutState, $"{stateName}.txt");
         StampFile(path);
     }
 
@@ -1975,7 +1975,7 @@ internal static class Sys
 
         try
         {
-            var parent = Path.GetDirectoryName(path);
+            string? parent = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
 
             // `date` with no format, matching what the shell scripts wrote.
@@ -2036,7 +2036,7 @@ internal static class Sys
             return;
         }
 
-        var entries = Directory.GetFileSystemEntries(sourceDir)
+        List<string> entries = Directory.GetFileSystemEntries(sourceDir)
             .OrderBy(e => e, StringComparer.Ordinal)
             .ToList();
 
@@ -2105,10 +2105,10 @@ internal static class PassStore
     /// without the .gpg suffix — i.e. exactly the names `pass` itself expects.
     public static IReadOnlyList<string> Entries(string subdirectory)
     {
-        var root = Path.Combine(Root, subdirectory);
+        string root = Path.Combine(Root, subdirectory);
         if (!Directory.Exists(root)) return [];
 
-        var entries = Directory.EnumerateFiles(root, "*.gpg", SearchOption.AllDirectories)
+        List<string> entries = Directory.EnumerateFiles(root, "*.gpg", SearchOption.AllDirectories)
             .Select(path => Path.GetRelativePath(root, path))
             .Select(name => name[..^".gpg".Length])
             .ToList();
@@ -2155,12 +2155,12 @@ internal static class Num
     {
         if (n.IsZero) return "zero";
 
-        var prefix = string.Empty;
+        string prefix = string.Empty;
         if (n.Sign < 0) { prefix = "minus "; n = -n; }
 
         // Break into groups of three digits, least significant first.
-        var groups = new List<int>();
-        var thousand = new BigInteger(1000);
+        List<int> groups = new();
+        BigInteger thousand = new(1000);
         while (!n.IsZero)
         {
             groups.Add((int)(n % thousand));
@@ -2170,11 +2170,11 @@ internal static class Num
         if (groups.Count > Scales.Length)
             return prefix + "a number too large to name";
 
-        var parts = new List<string>();
+        List<string> parts = new();
         for (int i = groups.Count - 1; i >= 0; i--)
         {
             if (groups[i] == 0) continue;   // num2words omits empty groups entirely
-            var words = ThreeDigits(groups[i]);
+            string words = ThreeDigits(groups[i]);
             parts.Add(i == 0 ? words : $"{words} {Scales[i]}");
         }
 
@@ -2185,7 +2185,7 @@ internal static class Num
         //     1,002,069 -> "one million, two thousand and sixty-nine"
         //     1,000,100 -> "one million, one hundred"
         bool trailingAnd = groups[0] is > 0 and < 100;
-        var head = string.Join(", ", parts.Take(parts.Count - 1));
+        string head = string.Join(", ", parts.Take(parts.Count - 1));
         return prefix + head + (trailingAnd ? " and " : ", ") + parts[^1];
     }
 
@@ -2213,10 +2213,10 @@ internal static class Num
     /// a double has already thrown away everything below the sixteenth.
     public static string HumanizeSeconds(BigInteger secs)
     {
-        var minutes = secs / 60;
-        var hours = minutes / 60;
-        var days = hours / 24;
-        var years = days / 365;
+        BigInteger minutes = secs / 60;
+        BigInteger hours = minutes / 60;
+        BigInteger days = hours / 24;
+        BigInteger years = days / 365;
 
         if (years.IsZero && days.IsZero && hours.IsZero && minutes.IsZero)
             return $"{ToWords(secs)} seconds";
@@ -2314,18 +2314,18 @@ internal sealed class Args
 
     public ArgVals Parse(string[] argv)
     {
-        var values = new Dictionary<string, string>(StringComparer.Ordinal);
-        var present = new HashSet<string>(StringComparer.Ordinal);
-        var loose = new List<string>();
+        Dictionary<string, string> values = new(StringComparer.Ordinal);
+        HashSet<string> present = new(StringComparer.Ordinal);
+        List<string> loose = new();
 
-        foreach (var spec in _specs)
+        foreach (Spec spec in _specs)
             if (spec.Default is not null) values[spec.Key] = spec.Default;
 
         bool optionsDone = false;
 
         for (int i = 0; i < argv.Length; i++)
         {
-            var token = argv[i];
+            string token = argv[i];
 
             if (optionsDone || !LooksLikeOption(token))
             {
@@ -2350,7 +2350,7 @@ internal sealed class Args
                     hasInline = true;
                 }
 
-                var spec = _specs.FirstOrDefault(s => s.Long == name)
+                Spec spec = _specs.FirstOrDefault(s => s.Long == name)
                            ?? Fail($"unrecognized arguments: {token}");
 
                 Consume(spec, hasInline ? inline : null, argv, ref i, values, present);
@@ -2361,8 +2361,8 @@ internal sealed class Args
             // value attached (-s1.5), or an option whose value is the next token.
             for (int c = 1; c < token.Length; c++)
             {
-                var shortName = "-" + token[c];
-                var spec = _specs.FirstOrDefault(s => s.Short == shortName)
+                string shortName = "-" + token[c];
+                Spec spec = _specs.FirstOrDefault(s => s.Short == shortName)
                            ?? Fail($"unrecognized arguments: {shortName}");
 
                 if (spec.IsFlag)
@@ -2372,26 +2372,26 @@ internal sealed class Args
                 }
 
                 // Everything after this character is the value, if anything is.
-                var attached = c + 1 < token.Length ? token[(c + 1)..] : null;
+                string? attached = c + 1 < token.Length ? token[(c + 1)..] : null;
                 Consume(spec, attached, argv, ref i, values, present);
                 break;
             }
         }
 
-        foreach (var spec in _specs)
+        foreach (Spec spec in _specs)
             if (spec.Required && !present.Contains(spec.Key))
                 Fail($"the following arguments are required: {spec.Short}/{spec.Long}");
 
         // Positionals first, then whatever remains is the rest-list.
-        var positional = new Dictionary<string, string>(StringComparer.Ordinal);
+        Dictionary<string, string> positional = new(StringComparer.Ordinal);
         int taken = 0;
-        foreach (var (name, _) in _positionals)
+        foreach ((string? name, string _) in _positionals)
         {
             if (taken >= loose.Count) Fail($"the following arguments are required: {name}");
             positional[name] = loose[taken++];
         }
 
-        var rest = loose.Skip(taken).ToList();
+        List<string> rest = loose.Skip(taken).ToList();
         if (_rest is { } r && rest.Count < r.Min)
             Fail($"the following arguments are required: {r.Name}");
         if (_rest is null && rest.Count > 0)
@@ -2452,15 +2452,15 @@ internal sealed class Args
     {
         get
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
-            var head = new StringBuilder($"usage: {_prog} [-h]");
-            foreach (var s in _specs)
+            StringBuilder head = new($"usage: {_prog} [-h]");
+            foreach (Spec s in _specs)
             {
-                var body = s.IsFlag ? s.Short : $"{s.Short} {s.Key.ToUpperInvariant()}";
+                string body = s.IsFlag ? s.Short : $"{s.Short} {s.Key.ToUpperInvariant()}";
                 head.Append(s.Required ? $" {body}" : $" [{body}]");
             }
-            foreach (var (name, _) in _positionals) head.Append(CultureInfo.InvariantCulture, $" {name}");
+            foreach ((string? name, string _) in _positionals) head.Append(CultureInfo.InvariantCulture, $" {name}");
             if (_rest is { } r) head.Append(CultureInfo.InvariantCulture, $" {r.Name} [{r.Name} ...]");
             sb.AppendLine(head.ToString());
 
@@ -2474,7 +2474,7 @@ internal sealed class Args
             {
                 sb.AppendLine();
                 sb.AppendLine("positional arguments:");
-                foreach (var (name, help) in _positionals)
+                foreach ((string? name, string? help) in _positionals)
                     sb.AppendLine(CultureInfo.InvariantCulture, $"  {name,-22}{help}");
                 if (_rest is { } rr) sb.AppendLine(CultureInfo.InvariantCulture, $"  {rr.Name,-22}{rr.Help}");
             }
@@ -2482,12 +2482,12 @@ internal sealed class Args
             sb.AppendLine();
             sb.AppendLine("options:");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {"-h, --help",-22}show this help message and exit");
-            foreach (var s in _specs)
+            foreach (Spec s in _specs)
             {
-                var left = s.IsFlag
+                string left = s.IsFlag
                     ? $"{s.Short}, {s.Long}"
                     : $"{s.Short} {s.Key.ToUpperInvariant()}, {s.Long} {s.Key.ToUpperInvariant()}";
-                var help = s.Help;
+                string help = s.Help;
                 if (s.Choices is not null) help += $" (choices: {string.Join(", ", s.Choices)})";
                 if (s.Default is not null && !s.IsFlag) help += $" (default: {s.Default})";
 
@@ -2527,29 +2527,29 @@ internal sealed class ArgVals
     public string Str(string name, string fallback = "")
     {
         name = name.TrimStart('-');
-        if (_positional.TryGetValue(name, out var p)) return p;
-        return _values.TryGetValue(name, out var v) ? v : fallback;
+        if (_positional.TryGetValue(name, out string? p)) return p;
+        return _values.TryGetValue(name, out string? v) ? v : fallback;
     }
 
     public string? StrOrNull(string name)
     {
         name = name.TrimStart('-');
-        if (_positional.TryGetValue(name, out var p)) return p;
-        return _values.TryGetValue(name, out var v) ? v : null;
+        if (_positional.TryGetValue(name, out string? p)) return p;
+        return _values.TryGetValue(name, out string? v) ? v : null;
     }
 
     public int Int(string name, int fallback = 0)
-        => int.TryParse(Str(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v)
+        => int.TryParse(Str(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out int v)
             ? v : fallback;
 
     public double Dbl(string name, double fallback = 0)
-        => double.TryParse(Str(name), NumberStyles.Float, CultureInfo.InvariantCulture, out var v)
+        => double.TryParse(Str(name), NumberStyles.Float, CultureInfo.InvariantCulture, out double v)
             ? v : fallback;
 
     /// argparse's str2bool: "yes/true/t/y/1/on" are true, everything else false.
     public bool Bool(string name, bool fallback = false)
     {
-        var value = StrOrNull(name);
+        string? value = StrOrNull(name);
         if (value is null) return fallback;
         return value.ToLowerInvariant() is "yes" or "true" or "t" or "y" or "1" or "on";
     }

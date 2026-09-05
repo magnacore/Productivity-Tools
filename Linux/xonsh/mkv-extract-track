@@ -16,14 +16,14 @@
 
 using System.Text.Json;
 
-var a = new Args("mkv-extract-track", "Extract chosen tracks from Matroska files")
+ArgVals a = new Args("mkv-extract-track", "Extract chosen tracks from Matroska files")
     .Opt("-t", "--tracks", required: true,
          help: "Track IDs to extract, comma separated (e.g. 0,3,4); mkvmerge -J lists them")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
     .Rest("files", min: 1, help: "Files to extract from")
     .Parse(args);
 
-var wanted = ParseTrackIds(a.Str("tracks"));
+List<int> wanted = ParseTrackIds(a.Str("tracks"));
 
 if (wanted.Count == 0)
 {
@@ -32,27 +32,27 @@ if (wanted.Count == 0)
     return 2;
 }
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Extracting tracks from .mkv...");
 
 bool deleteOriginals = a.Flag("delete");
 int failures = 0;
 
-foreach (var file in allFiles)
+foreach (string file in allFiles)
 {
     if (!Fs.IsMedia(file)) continue;
 
-    var (filename, _) = Fs.SplitExt(file);
+    (string? filename, string _) = Fs.SplitExt(file);
 
     // Read the layout so each output can be named for what it actually is. A file
     // that has no track with a requested ID is reported rather than silently skipped.
-    var tracks = ReadTracks(file);
-    var targets = new List<string>();
+    List<TrackInfo> tracks = ReadTracks(file);
+    List<string> targets = new();
 
-    foreach (var id in wanted)
+    foreach (int id in wanted)
     {
-        var track = tracks.FirstOrDefault(t => t.Id == id);
+        TrackInfo? track = tracks.FirstOrDefault(t => t.Id == id);
 
         if (track is null)
         {
@@ -70,14 +70,14 @@ foreach (var file in allFiles)
         continue;
     }
 
-    var callArgs = new List<string> { file, "tracks" };
+    List<string> callArgs = new() { file, "tracks" };
     callArgs.AddRange(targets);
 
     if (Proc.Ok("mkvextract", callArgs))
     {
         // Before the original is moved away, so a modified-time sort keeps the
         // extracted tracks beside the file they came from.
-        foreach (var target in targets)
+        foreach (string target in targets)
             Fs.CopyTimestamp(file, target[(target.IndexOf(':') + 1)..]);
 
         Ui.Good($" Extracted {targets.Count} track(s) from {file}");
@@ -95,11 +95,11 @@ return Ui.Done(failures);
 /// "0,3, 4" -> [0, 3, 4], keeping the order given and dropping duplicates.
 static List<int> ParseTrackIds(string text)
 {
-    var ids = new List<int>();
+    List<int> ids = new();
 
-    foreach (var piece in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    foreach (string piece in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
     {
-        if (int.TryParse(piece, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id)
+        if (int.TryParse(piece, NumberStyles.Integer, CultureInfo.InvariantCulture, out int id)
             && id >= 0 && !ids.Contains(id))
         {
             ids.Add(id);
@@ -116,28 +116,28 @@ static List<int> ParseTrackIds(string text)
 /// type and the codec ID all in one place.
 static List<TrackInfo> ReadTracks(string file)
 {
-    var tracks = new List<TrackInfo>();
-    var json = Proc.Capture("mkvmerge", "-J", file);
+    List<TrackInfo> tracks = new();
+    string json = Proc.Capture("mkvmerge", "-J", file);
 
     if (string.IsNullOrWhiteSpace(json)) return tracks;
 
     try
     {
-        using var document = JsonDocument.Parse(json);
+        using JsonDocument document = JsonDocument.Parse(json);
 
-        if (!document.RootElement.TryGetProperty("tracks", out var array)) return tracks;
+        if (!document.RootElement.TryGetProperty("tracks", out JsonElement array)) return tracks;
 
-        foreach (var element in array.EnumerateArray())
+        foreach (JsonElement element in array.EnumerateArray())
         {
-            if (!element.TryGetProperty("id", out var idValue) || !idValue.TryGetInt32(out var id))
+            if (!element.TryGetProperty("id", out JsonElement idValue) || !idValue.TryGetInt32(out int id))
                 continue;
 
-            var kind = element.TryGetProperty("type", out var typeValue)
+            string kind = element.TryGetProperty("type", out JsonElement typeValue)
                 ? typeValue.GetString() ?? "track"
                 : "track";
 
-            var codecId = element.TryGetProperty("properties", out var properties)
-                          && properties.TryGetProperty("codec_id", out var codecValue)
+            string codecId = element.TryGetProperty("properties", out JsonElement properties)
+                          && properties.TryGetProperty("codec_id", out JsonElement codecValue)
                 ? codecValue.GetString() ?? string.Empty
                 : string.Empty;
 
@@ -180,8 +180,8 @@ internal sealed record TrackInfo(int Id, string Kind, string CodecId)
         "S_TEXT/WEBVTT"     => ".vtt",
         "S_HDMV/PGS"        => ".sup",
         "S_VOBSUB"          => ".sub",
-        var c when c.StartsWith("A_AAC", StringComparison.Ordinal)  => ".aac",
-        var c when c.StartsWith("A_PCM", StringComparison.Ordinal)  => ".wav",
+        string c when c.StartsWith("A_AAC", StringComparison.Ordinal)  => ".aac",
+        string c when c.StartsWith("A_PCM", StringComparison.Ordinal)  => ".wav",
         _ => ".rename",
     };
 }

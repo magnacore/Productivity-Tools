@@ -6,13 +6,13 @@
 
 // Mirror $HOME onto LAPTOP_BACKUP_B, keeping one previous generation.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-b", "Mirror $HOME onto LAPTOP_BACKUP_B")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-b", "Mirror $HOME onto LAPTOP_BACKUP_B")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Laptop Backup B...");
 
-var root = Path.Combine(Paths.Media, "LAPTOP_BACKUP_B");
-var current = Path.Combine(root, "@current");
+string root = Path.Combine(Paths.Media, "LAPTOP_BACKUP_B");
+string current = Path.Combine(root, "@current");
 
 Sys.Remove(Sys.CopyLog);
 Sys.RotatePreviousSnapshot(current + "/", Path.Combine(root, "@previous"));

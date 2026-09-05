@@ -10,16 +10,16 @@
 // it gets column order, ligatures and hyphenation right, which is what makes the
 // output worth feeding to text-to-speech.
 
-var a = Jobs.Add(new Args("pdf-convert-text", "Extract text from PDFs into .txt files")
+ArgVals a = Jobs.Add(new Args("pdf-convert-text", "Extract text from PDFs into .txt files")
     .Flag("-l", "--layout", help: "Preserve the original physical layout")
     .Rest("files", min: 1, help: "PDFs to convert"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Converting PDFs to text...");
 
-var pdfs = allFiles.Where(Fs.IsPdf).ToList();
+List<string> pdfs = allFiles.Where(Fs.IsPdf).ToList();
 if (pdfs.Count == 0) return Ui.NoFiles("No PDFs selected!");
 
 if (!Proc.Exists("pdftotext"))
@@ -37,11 +37,11 @@ Ui.Track2(pdfs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {pdfs.Count}
 {
     // No progress to read out of this tool, so the bar is one step: the spinner
     // shows the file is in flight, and a failure leaves the bar visibly unfilled.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{fname}:"))}[/]", 1);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{fname}:"))}[/]", 1);
 
-    var outputFilename = Fs.SplitExt(fname).Name + ".txt";
+    string outputFilename = Fs.SplitExt(fname).Name + ".txt";
 
-    var pdftotextArgs = new List<string>();
+    List<string> pdftotextArgs = new();
     if (a.Flag("layout")) pdftotextArgs.Add("-layout");
     pdftotextArgs.Add(fname);
     pdftotextArgs.Add(outputFilename);

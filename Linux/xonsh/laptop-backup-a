@@ -9,12 +9,12 @@
 // This one has no snapshot rotation: the encrypted container is the protection,
 // and it is unlocked only while the backup runs.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-a", "Mirror $HOME into the VeraCrypt system backup")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-a", "Mirror $HOME into the VeraCrypt system backup")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Laptop Backup A...");
 
-var destination = "/media/veracrypt1/SYSTEM_BACKUP";
+string destination = "/media/veracrypt1/SYSTEM_BACKUP";
 
 // Start the log fresh so it describes this run and no other.
 Sys.Remove(Sys.CopyLog);

@@ -7,23 +7,23 @@
 // Join several media files into one, without re-encoding, using ffmpeg's concat
 // demuxer. Audio lands in a .mka, video in a .mkv.
 
-var a = new Args("media-combine", "Concatenate media files into a single file")
+ArgVals a = new Args("media-combine", "Concatenate media files into a single file")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
     .Rest("files", min: 1, help: "Files to combine")
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Combining Media...");
 
 bool deleteOriginals = a.Flag("delete");
 
-var first = allFiles[0];
+string first = allFiles[0];
 if (!Fs.IsMedia(first)) return Ui.NoFiles("The first selected file is not audio or video.");
 
 // Matroska holds anything, so the only question is audio-only or not.
-var extension = Fs.IsVideo(first) ? "mkv" : "mka";
-var outputFileName = $"combined_{Fs.Timestamp()}.{extension}";
+string extension = Fs.IsVideo(first) ? "mkv" : "mka";
+string outputFileName = $"combined_{Fs.Timestamp()}.{extension}";
 
 // The concat demuxer reads its input list from a file. In that format a path is
 // wrapped in single quotes, and an embedded quote is written as '\''.
@@ -49,7 +49,7 @@ finally
 
 Ui.Ok($"Combined {allFiles.Count} files into {outputFileName}");
 
-foreach (var file in allFiles)
+foreach (string file in allFiles)
     if (Fs.IsMedia(file)) Fs.HandleOriginal(file, deleteOriginals, "Media");
 
 return Ui.Done();

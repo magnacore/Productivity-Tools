@@ -7,7 +7,7 @@
 // Run the maintenance pass, then power the machine off — for starting at the end
 // of the day and walking away.
 
-var a = Sys.WithDryRun(new Args("update-shutdown", "Run shortcut-update, then shut down")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("update-shutdown", "Run shortcut-update, then shut down")).Parse(args);
 Sys.Apply(a);
 
 int code = Proc.Call("shortcut-update", Sys.DryRun ? ["--dry-run"] : []);

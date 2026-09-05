@@ -7,13 +7,13 @@
 // Drop the clipboard into a timestamped Markdown note in the capture inbox.
 // The first few words become the file name, so the note is findable later.
 
-var a = new Args("clipboard-convert-text", "Save the clipboard as a timestamped note")
+ArgVals a = new Args("clipboard-convert-text", "Save the clipboard as a timestamped note")
     .Parse(args);
 
-var clipboardContent = Clip.Paste();
+string clipboardContent = Clip.Paste();
 
 // Only the opening words name the file; the whole clipboard goes inside.
-var stem = Fs.Slug(clipboardContent.Length > 35 ? clipboardContent[..35] : clipboardContent);
+string stem = Fs.Slug(clipboardContent.Length > 35 ? clipboardContent[..35] : clipboardContent);
 
 if (string.IsNullOrEmpty(stem))
 {
@@ -22,7 +22,7 @@ if (string.IsNullOrEmpty(stem))
     return 1;
 }
 
-var fileName = Path.Combine(Paths.TaskCaptureBin, $"{stem}_{Fs.Timestamp()}.md");
+string fileName = Path.Combine(Paths.TaskCaptureBin, $"{stem}_{Fs.Timestamp()}.md");
 
 try
 {

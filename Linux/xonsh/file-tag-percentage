@@ -11,11 +11,11 @@
 // Deliberately prints no rule: this command is invoked by other commands
 // (epub-split, media-split-equal) and the extra output would break their display.
 
-var a = new Args("file-tag-percentage", "Tag files with remaining count and percent complete")
+ArgVals a = new Args("file-tag-percentage", "Tag files with remaining count and percent complete")
     .Rest("files", min: 1, help: "Files to tag")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 int failures = 0;
 int total = files.Count;
@@ -24,8 +24,8 @@ int countdown = total;
 
 Ui.Track(files, "[bold cyan]Tagging : [/]", file =>
 {
-    var (name, ext) = Fs.SplitExt(file);
-    var newFilename = $"{name}-{countdown:D3}r-{position * 100 / total:D3}p{ext}";
+    (string? name, string? ext) = Fs.SplitExt(file);
+    string newFilename = $"{name}-{countdown:D3}r-{position * 100 / total:D3}p{ext}";
 
     try { Fs.Move(file, newFilename); }
     catch (Exception ex)

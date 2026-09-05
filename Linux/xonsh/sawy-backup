@@ -6,13 +6,13 @@
 
 // Mirror the Sawy drive onto its backup partner, keeping one generation.
 
-var a = Sys.WithDryRun(new Args("sawy-backup", "Mirror SAWY_01_A onto SAWY_01_B")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("sawy-backup", "Mirror SAWY_01_A onto SAWY_01_B")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Backup Sawy Drive...");
 
-var backupRoot = Path.Combine(Paths.Media, "SAWY_01_B", "SAWY_BACKUP");
-var current = Path.Combine(backupRoot, "@current");
+string backupRoot = Path.Combine(Paths.Media, "SAWY_01_B", "SAWY_BACKUP");
+string current = Path.Combine(backupRoot, "@current");
 
 Sys.RotatePreviousSnapshot(current + "/", Path.Combine(backupRoot, "@previous"));
 

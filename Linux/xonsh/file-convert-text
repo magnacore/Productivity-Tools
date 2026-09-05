@@ -8,18 +8,18 @@
 // Markdown file whose contents are that file's name — a way to capture "deal
 // with this later" without moving the file itself.
 
-var a = new Args("file-convert-text", "Write each file's name into a timestamped .md note")
+ArgVals a = new Args("file-convert-text", "Write each file's name into a timestamped .md note")
     .Rest("files", min: 1, help: "Files to convert")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Converting filenames to text...");
 
 Ui.Track(files, "[bold cyan]Converting : [/]", file =>
 {
-    var (name, _) = Fs.SplitExt(file);
-    var newFilename = $"{name}_{Fs.Timestamp()}.md";
+    (string? name, string _) = Fs.SplitExt(file);
+    string newFilename = $"{name}_{Fs.Timestamp()}.md";
 
     try
     {

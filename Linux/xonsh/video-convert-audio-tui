@@ -11,15 +11,15 @@
 // Only one question to ask: what should happen to the source videos once their
 // audio has been pulled out. The extraction lives in video-convert-audio.
 
-var a = new Args("video-convert-audio-tui", "Ask about the originals, then run video-convert-audio")
+ArgVals a = new Args("video-convert-audio-tui", "Ask about the originals, then run video-convert-audio")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
-var deleteChoice = Dlg.DeleteOriginals("Video");
+bool? deleteChoice = Dlg.DeleteOriginals("Video");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var callArgs = new List<string>();
+List<string> callArgs = new();
 if (deleteChoice.Value) callArgs.Add("-d");
 callArgs.AddRange(a.Rest);
 

@@ -7,7 +7,7 @@
 // Mirror the queue drive. No snapshots here: the queue is a staging area whose
 // contents are meant to be consumed and moved on, not preserved.
 
-var a = Sys.WithDryRun(new Args("queue-backup", "Mirror QUEUE_01_A onto QUEUE_01_B")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("queue-backup", "Mirror QUEUE_01_A onto QUEUE_01_B")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Backing up queue...");

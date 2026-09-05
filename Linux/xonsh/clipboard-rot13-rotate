@@ -9,12 +9,12 @@
 //
 // This is casual obfuscation for shoulder-surfing, not encryption.
 
-var a = new Args("clipboard-rot13-rotate", "ROT13/5 the clipboard in place")
+ArgVals a = new Args("clipboard-rot13-rotate", "ROT13/5 the clipboard in place")
     .Parse(args);
 
 Ui.Begin("Encrypting clipboard using Rot13/5 Cipher...");
 
-var clipboardContent = Clip.Paste();
+string clipboardContent = Clip.Paste();
 
 if (clipboardContent.Length == 0)
 {
@@ -24,12 +24,12 @@ if (clipboardContent.Length == 0)
     return 1;
 }
 
-var cipherText = Crypto.Rot13And5(clipboardContent);
+string cipherText = Crypto.Rot13And5(clipboardContent);
 Clip.Copy(cipherText);
 
 // Read the clipboard back and undo the rotation: this proves the text really
 // made it onto the clipboard intact, not just that the maths was right.
-var plainText = Crypto.Rot13And5(Clip.Paste());
+string plainText = Crypto.Rot13And5(Clip.Paste());
 
 if (plainText != clipboardContent)
 {
@@ -52,7 +52,7 @@ static void WarnAboutEdgeSpaces(string cipherText)
 {
     if (cipherText.Length == 0) return;
 
-    var visible = cipherText.Replace(" ", "<SPACE>");
+    string visible = cipherText.Replace(" ", "<SPACE>");
 
     if (cipherText[0] == ' ')
         Ui.Err($"Warning: Ciphertext contains a leading space! {visible}");

@@ -8,7 +8,7 @@
 // target duration, then move that batch into a folder named for it ("3H", "90M").
 // Turns a large backlog into a session-sized bundle.
 
-var a = new Args("media-length-move", "Bundle media files into a folder based on a duration threshold")
+ArgVals a = new Args("media-length-move", "Bundle media files into a folder based on a duration threshold")
     .Opt("-d", "--duration", @default: "180", help: "Target duration in minutes")
     .Opt("-s", "--sort", @default: "true", valueOptional: true, constValue: "true",
          help: "Sort by modified time (on by default). Use '-s false' to sort by name.")
@@ -28,28 +28,28 @@ string folderName = durationMinutes % 60 == 0
 
 Ui.Begin($"Selecting ~{durationMinutes} minutes of media");
 
-var allFiles = Fs.CurrentDirFiles();
+IReadOnlyList<string> allFiles = Fs.CurrentDirFiles();
 
 if (sortByTime) allFiles = [.. allFiles.OrderBy(File.GetLastWriteTime)];
 else allFiles = [.. allFiles.OrderBy(f => f.ToLowerInvariant(), StringComparer.Ordinal)];
 
-var table = Ui.NewTable($"Media Selected for '{folderName}' Directory", "Duration", "File name");
+Table table = Ui.NewTable($"Media Selected for '{folderName}' Directory", "Duration", "File name");
 table.Columns[0].RightAligned();
 table.Columns[1].LeftAligned();
 
-var filesToMove = new List<string>();
+List<string> filesToMove = new();
 double totalDuration = 0.0;
 
 // The bar fills with seconds of media rather than with files, so it shows how
 // close the selection is to the target.
 Ui.Meter("[bold cyan]Scanning media: [/]", targetDurationSeconds, advance =>
 {
-    foreach (var file in allFiles)
+    foreach (string file in allFiles)
     {
         // Non-media is skipped silently, to keep the table readable.
         if (!Fs.IsMedia(file)) continue;
 
-        var duration = Media.Duration(file);
+        double duration = Media.Duration(file);
 
         filesToMove.Add(file);
         totalDuration += duration;

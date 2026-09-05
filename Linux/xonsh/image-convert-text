@@ -7,11 +7,11 @@
 // Read the text out of images with tesseract. For handwriting, layout-heavy
 // scans or anything tesseract struggles with, use ocr-genai instead.
 
-var a = Jobs.Add(new Args("image-convert-text", "OCR images into .txt files")
+ArgVals a = Jobs.Add(new Args("image-convert-text", "OCR images into .txt files")
     .Rest("files", min: 1, help: "Images to read"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Optical Character Recognition...");
 
@@ -24,10 +24,10 @@ Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"OCR {allFiles.Count
 
     // No progress to read out of this tool, so the bar is one step: the spinner
     // shows the file is in flight, and a failure leaves the bar visibly unfilled.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 1);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 1);
 
     // tesseract appends ".txt" to the output name itself.
-    var outputFilename = Fs.SplitExt(file).Name;
+    string outputFilename = Fs.SplitExt(file).Name;
 
     if (Proc.Ok("tesseract", file, outputFilename))
     {

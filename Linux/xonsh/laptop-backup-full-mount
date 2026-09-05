@@ -7,12 +7,12 @@
 // Unlock and mount the encrypted backup disk without syncing anything — for
 // browsing or restoring from it by hand.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-full-mount", "Unlock and mount the encrypted full-backup disk")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-full-mount", "Unlock and mount the encrypted full-backup disk")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Mount Laptop Backup Full...");
 
-var mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
+string mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
 
 Ui.Info("Open the container...");
 Sys.Sudo("cryptsetup", "luksOpen", "/dev/sda", "luks-laptop-backup-full");

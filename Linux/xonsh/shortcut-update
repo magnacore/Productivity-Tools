@@ -12,7 +12,7 @@
 // the daily path and lands roughly once a fortnight, on a day when a long run
 // does not get in the way.
 
-var a = Sys.WithDryRun(new Args("shortcut-update", "Periodic system maintenance"))
+ArgVals a = Sys.WithDryRun(new Args("shortcut-update", "Periodic system maintenance"))
     .Flag("-c", "--clean", help: "Force the deep clean, whatever day it is")
     .Flag("-s", "--skip-clean", help: "Skip the deep clean, whatever day it is")
     .Parse(args);
@@ -26,7 +26,7 @@ Sys.Run("trash-empty", "-f", "3");
 // --- Sweep everything that accumulates into the capture inbox ---------------
 Ui.Info("Moving Files...");
 
-var inbox = Paths.TaskCaptureBin;
+string inbox = Paths.TaskCaptureBin;
 
 MoveWithBackup(Path.Combine(Paths.ProductivitySystem,
     "02 POOL", "01 CREATION ACTIVE", "02 RELAX ACTIVE MATERIAL", "ANDROID CAMERA", "Camera"), "*");
@@ -46,7 +46,7 @@ Sys.Run("flatpak", "update", "-y");
 
 // --- Deep clean, on a fortnightly rhythm ------------------------------------
 // Saturday, in an even month.
-var today = DateTime.Today;
+DateTime today = DateTime.Today;
 bool scheduled = today.DayOfWeek == DayOfWeek.Saturday && today.Month % 2 == 0;
 bool deepClean = a.Flag("clean") || (scheduled && !a.Flag("skip-clean"));
 
@@ -156,7 +156,7 @@ return 0;
 /// run, once nothing is using them.
 static void ClearBuildCache()
 {
-    var root = Path.Combine(Paths.Home, ".local", "share", "dotnet", "runfile");
+    string root = Path.Combine(Paths.Home, ".local", "share", "dotnet", "runfile");
 
     if (!Directory.Exists(root))
     {
@@ -164,10 +164,10 @@ static void ClearBuildCache()
         return;
     }
 
-    var inUse = DirectoriesInUse(root);
+    HashSet<string> inUse = DirectoriesInUse(root);
     int cleared = 0, kept = 0;
 
-    foreach (var directory in Directory.GetDirectories(root))
+    foreach (string directory in Directory.GetDirectories(root))
     {
         if (inUse.Contains(Path.GetFileName(directory))) { kept++; continue; }
 
@@ -196,21 +196,21 @@ static void ClearBuildCache()
 /// The names of the cache directories some live process has a file mapped from.
 static HashSet<string> DirectoriesInUse(string root)
 {
-    var names = new HashSet<string>(StringComparer.Ordinal);
-    var prefix = root + Path.DirectorySeparatorChar;
+    HashSet<string> names = new(StringComparer.Ordinal);
+    string prefix = root + Path.DirectorySeparatorChar;
 
-    foreach (var process in Directory.GetDirectories("/proc"))
+    foreach (string process in Directory.GetDirectories("/proc"))
     {
         if (!int.TryParse(Path.GetFileName(process), out _)) continue;
 
         try
         {
-            foreach (var line in File.ReadLines(Path.Combine(process, "maps")))
+            foreach (string line in File.ReadLines(Path.Combine(process, "maps")))
             {
                 int at = line.IndexOf(prefix, StringComparison.Ordinal);
                 if (at < 0) continue;
 
-                var rest = line[(at + prefix.Length)..];
+                string rest = line[(at + prefix.Length)..];
                 int slash = rest.IndexOf(Path.DirectorySeparatorChar);
                 if (slash > 0) names.Add(rest[..slash]);
             }
@@ -234,13 +234,13 @@ static void MoveWithBackup(string sourceDir, string pattern)
         return;
     }
 
-    var entries = pattern == "*"
+    string[] entries = pattern == "*"
         ? Directory.GetFileSystemEntries(sourceDir)
         : Directory.GetFiles(sourceDir, pattern);
 
     if (entries.Length == 0) return;
 
-    var mvArgs = new List<string> { "--backup=numbered" };
+    List<string> mvArgs = new() { "--backup=numbered" };
     mvArgs.AddRange(entries.OrderBy(e => e, StringComparer.Ordinal));
     mvArgs.Add(Paths.TaskCaptureBin + "/");
 

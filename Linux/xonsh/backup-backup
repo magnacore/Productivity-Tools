@@ -8,15 +8,15 @@
 // history on the far side. Snapshot first, then sync — so if the sync goes wrong
 // (a source drive half-mounted, say), @previous still holds a good copy.
 
-var a = Sys.WithDryRun(new Args("backup-backup", "Mirror BACKUP_01_A onto BACKUP_01_B")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("backup-backup", "Mirror BACKUP_01_A onto BACKUP_01_B")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Backing up backup drive....");
 
-var backupRoot = Path.Combine(Paths.Media, "BACKUP_01_B", "BACKUP");
-var current = Path.Combine(backupRoot, "@current");
-var previous = Path.Combine(backupRoot, "@previous");
-var source = Path.Combine(Paths.Media, "BACKUP_01_A");
+string backupRoot = Path.Combine(Paths.Media, "BACKUP_01_B", "BACKUP");
+string current = Path.Combine(backupRoot, "@current");
+string previous = Path.Combine(backupRoot, "@previous");
+string source = Path.Combine(Paths.Media, "BACKUP_01_A");
 
 Sys.RotatePreviousSnapshot(current + "/", previous);
 

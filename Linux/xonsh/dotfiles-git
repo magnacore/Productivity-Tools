@@ -10,14 +10,14 @@
 // Despite the name this runs no git commands — it only stages the files. Commit
 // and push yourself, after reading the diff.
 
-var a = Sys.WithDryRun(new Args("dotfiles-git", "Copy live dotfiles and configs into the tools repository")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("dotfiles-git", "Copy live dotfiles and configs into the tools repository")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Copying dotfiles...");
 
-var repo = Path.Combine(Paths.Home, "Projects", "Productivity-Tools", "Linux");
-var dotfilesPath = Path.Combine(repo, "dotFiles") + "/";
-var configPath = Path.Combine(repo, "config") + "/";
+string repo = Path.Combine(Paths.Home, "Projects", "Productivity-Tools", "Linux");
+string dotfilesPath = Path.Combine(repo, "dotFiles") + "/";
+string configPath = Path.Combine(repo, "config") + "/";
 
 // Single files, copied to whichever of the two collection directories they belong in.
 (string Source, string Destination)[] files =
@@ -37,7 +37,7 @@ var configPath = Path.Combine(repo, "config") + "/";
     (".config/cmus/autosave",        configPath),
 ];
 
-foreach (var (source, destination) in files)
+foreach ((string? source, string? destination) in files)
     Sys.Rsync("--delete", "--progress", "-vahi", Path.Combine(Paths.Home, source), destination);
 
 // Whole directories. The trailing slashes matter to rsync: they mean "the
@@ -50,7 +50,7 @@ foreach (var (source, destination) in files)
     (".config/qtile",  Path.Combine(repo, "config", "qtile")),
 ];
 
-foreach (var (source, destination) in directories)
+foreach ((string? source, string? destination) in directories)
     Sys.Rsync("--delete", "--progress", "-vahi",
               Path.Combine(Paths.Home, source) + "/", destination + "/");
 

@@ -7,22 +7,22 @@
 // Bind a set of images into a single multi-page PDF, one image per page —
 // for turning a folder of scans back into a document.
 
-var a = new Args("image-combine-pdf", "Combine images into a single multi-page PDF")
+ArgVals a = new Args("image-combine-pdf", "Combine images into a single multi-page PDF")
     .Rest("files", min: 1, help: "Images to combine, in page order")
     .Parse(args);
 
 Ui.Begin("Combining images to pdf....");
 
 // Sorted, because the file order is the page order.
-var images = Fs.SortedFiles(a.Rest).Where(Fs.IsImage).ToList();
+List<string> images = Fs.SortedFiles(a.Rest).Where(Fs.IsImage).ToList();
 
 if (images.Count == 0) return Ui.NoFiles("No images selected!");
 
-foreach (var image in images) Ui.Line($"[green]Adding {Ui.Esc(image)}[/]");
+foreach (string image in images) Ui.Line($"[green]Adding {Ui.Esc(image)}[/]");
 
-var outputFilename = $"combined_{Fs.Timestamp()}.pdf";
+string outputFilename = $"combined_{Fs.Timestamp()}.pdf";
 
-var magickArgs = new List<string>();
+List<string> magickArgs = new();
 magickArgs.AddRange(images);
 magickArgs.Add(outputFilename);
 

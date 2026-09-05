@@ -9,11 +9,11 @@
 
 using System.Text.RegularExpressions;
 
-var a = new Args("file-number-remove", "Remove leading digits from file names")
+ArgVals a = new Args("file-number-remove", "Remove leading digits from file names")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 // Three or more digits followed by a separator, so "2001 A Space Odyssey.mkv"
 // keeps its title but "001 intro.mkv" loses its prefix.
@@ -22,9 +22,9 @@ Ui.Begin("Removing leading numbers...");
 
 Ui.Track(files, "[bold cyan]Renumbering : [/]", file =>
 {
-    var directory = Path.GetDirectoryName(file) ?? string.Empty;
-    var oldName = Path.GetFileName(file);
-    var newName = Pattern.LeadingNumber().Replace(oldName, string.Empty, 1);
+    string directory = Path.GetDirectoryName(file) ?? string.Empty;
+    string oldName = Path.GetFileName(file);
+    string newName = Pattern.LeadingNumber().Replace(oldName, string.Empty, 1);
 
     if (oldName == newName) return;
 

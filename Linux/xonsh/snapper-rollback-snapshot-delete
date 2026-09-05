@@ -15,7 +15,7 @@
 
 using System.Text.RegularExpressions;
 
-var a = Sys.WithDryRun(new Args("snapper-rollback-snapshot-delete",
+ArgVals a = Sys.WithDryRun(new Args("snapper-rollback-snapshot-delete",
                                 "Delete leftover snapper-rollback backup subvolumes")).Parse(args);
 Sys.Apply(a);
 
@@ -25,8 +25,8 @@ const string MountPoint = "/mnt/btrfs-root";
 Ui.Begin("Deleting snapper-rollback leftovers...");
 
 // findmnt reports the source as "/dev/sda2[/@]"; the subvolume part must go.
-var rawDev = Proc.Capture("findmnt", "-n", "-o", "SOURCE", "/").Trim();
-var rootDev = rawDev.Split('[')[0];
+string rawDev = Proc.Capture("findmnt", "-n", "-o", "SOURCE", "/").Trim();
+string rootDev = rawDev.Split('[')[0];
 
 if (string.IsNullOrEmpty(rootDev))
 {
@@ -51,7 +51,7 @@ try
 {
     // Exactly what snapper-rollback names them: @2026-08-15T14:32
 
-    var subvols = Directory.Exists(MountPoint)
+    List<string> subvols = Directory.Exists(MountPoint)
         ? Directory.GetDirectories(MountPoint)
             .Select(Path.GetFileName)
             .Where(name => name is not null && Pattern.RollbackSubvolume().IsMatch(name))
@@ -66,7 +66,7 @@ try
     }
     else
     {
-        foreach (var sv in subvols)
+        foreach (string sv in subvols)
         {
             // The xonsh original said "Would delete" but deleted regardless —
             // leftover dry-run wording on a destructive operation. Now the

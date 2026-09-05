@@ -7,18 +7,18 @@
 // Slugify file names, then put them back into Title Case — turning
 // "pocket_some ARTICLE.html" into "Some Article.html".
 
-var a = new Args("file-rename-title", "Rename files to Title Case")
+ArgVals a = new Args("file-rename-title", "Rename files to Title Case")
     .Rest("files", min: 1, help: "Files to rename")
     .Parse(args);
 
 // Slugify first so accents, punctuation and odd spacing are gone, then title-case
 // the clean result.
-var files = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
+IReadOnlyList<string> files = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
-foreach (var file in files)
+foreach (string file in files)
 {
-    var (name, ext) = Fs.SplitExt(file);
-    var titled = Fs.TitleCase(name);
+    (string? name, string? ext) = Fs.SplitExt(file);
+    string titled = Fs.TitleCase(name);
 
     string clean;
     if (ext.Length == 0)

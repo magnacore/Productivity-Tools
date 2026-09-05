@@ -9,13 +9,13 @@
 // Sends SIGTERM by default, which lets a program shut down properly. Use -9 when
 // something is genuinely wedged and will not respond.
 
-var a = new Args("process-kill", "Pick a process with fzf and signal it")
+ArgVals a = new Args("process-kill", "Pick a process with fzf and signal it")
     .Flag("-9", "--force", help: "Send SIGKILL instead of SIGTERM")
     .Parse(args);
 
 Ui.Begin("Kill Process...");
 
-var signal = a.Flag("force") ? "9" : "15";
+string signal = a.Flag("force") ? "9" : "15";
 
 // fzf needs the real terminal, and this is a pipeline end to end, so it runs in
 // a shell rather than through ArgumentList.

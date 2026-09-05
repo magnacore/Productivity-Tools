@@ -11,7 +11,7 @@
 // Asks which of the two files is the music, how loud it should sit, and the speed
 // you will listen at. The mixing lives in audio-add-music.
 
-var a = new Args("audio-add-music-tui", "Choose mix settings in a dialog, then run audio-add-music")
+ArgVals a = new Args("audio-add-music-tui", "Choose mix settings in a dialog, then run audio-add-music")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 2, help: "The spoken audio file and the background music, in either order")
     .Parse(args);
@@ -23,21 +23,21 @@ if (a.Rest.Count != 2)
     return 1;
 }
 
-var which = Dlg.Choose("Background Music", "Which file is the background music?",
+int? which = Dlg.Choose("Background Music", "Which file is the background music?",
                        [Path.GetFileName(a.Rest[0]), Path.GetFileName(a.Rest[1])]);
 if (which is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
 // Most-used first, so the resting selection is usually the right one.
 string[] volumes = ["0.4", "0.3", "0.2", "0.1", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"];
-var volume = Dlg.Choose("Music Level", "Choose the background music level:", volumes);
+int? volume = Dlg.Choose("Music Level", "Choose the background music level:", volumes);
 if (volume is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
 // The mpv playback speeds this collection is listened at.
 string[] speeds = ["1.5", "1.65", "1.82", "2.0", "1.0"];
-var speed = Dlg.Choose("Playback Speed", "Choose the speed you will listen at:", speeds);
+int? speed = Dlg.Choose("Playback Speed", "Choose the speed you will listen at:", speeds);
 if (speed is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var callArgs = new List<string>
+List<string> callArgs = new()
 {
     "-m", a.Rest[which.Value],
     "-v", volumes[volume.Value],

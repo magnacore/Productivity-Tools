@@ -12,7 +12,7 @@
 //
 // https://manual.calibre-ebook.com/generated/en/ebook-convert.html#pdf-output-options
 
-var a = Jobs.Add(new Args("epub-convert-multiple", "Convert EPUBs to PDF or text")
+ArgVals a = Jobs.Add(new Args("epub-convert-multiple", "Convert EPUBs to PDF or text")
     .Opt("-w", "--width", @default: "946", help: "Width of the PDF, in points")
     .Opt("-l", "--length", @default: "968", help: "Height of the PDF, in points")
     .Opt("-f", "--font_size", @default: "32", help: "Font size of the PDF")
@@ -22,19 +22,19 @@ var a = Jobs.Add(new Args("epub-convert-multiple", "Convert EPUBs to PDF or text
     .Rest("files", min: 1, help: "Epubs to process"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
-var outputFormat = a.Str("output_format");
-var dimension = $"{a.Int("width", 946)}x{a.Int("length", 968)}";
-var fontSize = a.Str("font_size");
-var margin = a.Str("margin");
+string outputFormat = a.Str("output_format");
+string dimension = $"{a.Int("width", 946)}x{a.Int("length", 968)}";
+string fontSize = a.Str("font_size");
+string margin = a.Str("margin");
 
 Ui.Begin($"Converting epub to {outputFormat}...");
 
 int failures = 0;
 
-var epubs = allFiles.Where(Fs.IsEpub).ToList();
-foreach (var skipped in allFiles.Where(f => !Fs.IsEpub(f)))
+List<string> epubs = allFiles.Where(Fs.IsEpub).ToList();
+foreach (string? skipped in allFiles.Where(f => !Fs.IsEpub(f)))
     Ui.Line($"[yellow]Skipping {Ui.Esc(skipped)}[/]");
 
 if (epubs.Count == 0) return Ui.NoFiles("No EPUBs selected!");
@@ -49,9 +49,9 @@ if (epubs.Count == 0) return Ui.NoFiles("No EPUBs selected!");
 Ui.Track2(epubs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Convert {epubs.Count} epub(s):"))}[/]",
           (file, addBar) =>
 {
-    var outputFilename = $"{Fs.SplitExt(file).Name}.{outputFormat}";
+    string outputFilename = $"{Fs.SplitExt(file).Name}.{outputFormat}";
 
-    var convertArgs = new List<string> { file, outputFilename };
+    List<string> convertArgs = new() { file, outputFilename };
 
     if (outputFormat == "pdf")
     {
@@ -74,12 +74,12 @@ Ui.Track2(epubs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Convert {epubs.Count} 
     // ebook-convert reports its own progress on stdout — "34% Running transforms
     // on e-book..." — so the bar tracks the real conversion rather than guessing.
     // The scale is a percentage; advance by the difference since the last report.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
     int reported = 0;
 
     bool ok = Proc.OkStreaming("ebook-convert", convertArgs, line =>
     {
-        var percent = ProgressPercent(line);
+        int percent = ProgressPercent(line);
         if (percent > reported)
         {
             advance(percent - reported);
@@ -114,7 +114,7 @@ static int ProgressPercent(string line)
     while (end < line.Length && char.IsAsciiDigit(line[end])) end++;
 
     return end > 0 && end < line.Length && line[end] == '%'
-           && int.TryParse(line.AsSpan(0, end), out var percent)
+           && int.TryParse(line.AsSpan(0, end), out int percent)
         ? Math.Clamp(percent, 0, 100)
         : 0;
 }

@@ -11,17 +11,17 @@
 //
 // All the work happens in those two programs; this only decides what to call.
 
-var a = new Args("audio-process-tui", "Change audio speed or volume, interactively")
+ArgVals a = new Args("audio-process-tui", "Change audio speed or volume, interactively")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Audio/")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
-var allFiles = a.Rest;
+IReadOnlyList<string> allFiles = a.Rest;
 
 Ui.Begin("Audio change...");
 
-var what = Dlg.Choose("Audio Process", "What do you want to change?", "Speed", "Volume");
+int? what = Dlg.Choose("Audio Process", "What do you want to change?", "Speed", "Volume");
 if (what is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
 string[] speeds  = ["0.5", "0.667", "0.7", "0.8", "0.9", "1.5", "1.65", "1.82", "2.0"];
@@ -31,23 +31,23 @@ string program, flag, value;
 
 if (what.Value == 0)
 {
-    var pick = Dlg.Choose("Speed", "Select the playback speed:", speeds);
+    int? pick = Dlg.Choose("Speed", "Select the playback speed:", speeds);
     if (pick is null) { Ui.Warn("Operation cancelled by user."); return 0; }
     (program, flag, value) = ("audio-speed-change", "-s", speeds[pick.Value]);
 }
 else
 {
-    var pick = Dlg.Choose("Volume", "Select the volume multiplier:", volumes);
+    int? pick = Dlg.Choose("Volume", "Select the volume multiplier:", volumes);
     if (pick is null) { Ui.Warn("Operation cancelled by user."); return 0; }
     (program, flag, value) = ("audio-volume-change", "-v", volumes[pick.Value]);
 }
 
 // Asked here rather than in the base programs, which take -d and never prompt.
-var deleteChoice = a.Flag("delete") ? true : Dlg.DeleteOriginals("Audio");
+bool? deleteChoice = a.Flag("delete") ? true : Dlg.DeleteOriginals("Audio");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 bool deleteOriginals = deleteChoice.Value;
 
-var callArgs = new List<string> { flag, value };
+List<string> callArgs = new() { flag, value };
 if (deleteOriginals) callArgs.Add("-d");
 callArgs.AddRange(allFiles);
 

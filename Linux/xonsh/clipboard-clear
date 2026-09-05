@@ -8,7 +8,7 @@
 // greenclip manager's live history, and its on-disk cache. Run after handling
 // anything sensitive.
 
-var a = new Args("clipboard-clear", "Clear the clipboard, terminal and greenclip history")
+ArgVals a = new Args("clipboard-clear", "Clear the clipboard, terminal and greenclip history")
     .Parse(args);
 
 // Scrollback first, since the rest prints nothing worth keeping.
@@ -19,7 +19,7 @@ Clip.Clear();
 if (Proc.Exists("greenclip")) Proc.Run("greenclip", "clear");
 
 // greenclip keeps a history file that survives `greenclip clear`.
-var history = Path.Combine(Paths.Home, ".cache", "greenclip.history");
+string history = Path.Combine(Paths.Home, ".cache", "greenclip.history");
 if (File.Exists(history))
 {
     try { File.Delete(history); }

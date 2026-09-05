@@ -13,16 +13,16 @@
 // Takes the tag as an argument and never prompts. media-length-tag-tui asks for it
 // in a dialog and calls this.
 
-var a = new Args("media-length-tag", "Sum the duration of tagged videos in directory trees")
+ArgVals a = new Args("media-length-tag", "Sum the duration of tagged videos in directory trees")
     .Opt("-t", "--tag", required: true, help: "The tag to look for")
     .Rest("directories", min: 1, help: "Directories to search")
     .Parse(args);
 
 Ui.Begin("Summing media duration in directory");
 
-var tagText = a.Str("tag");
+string tagText = a.Str("tag");
 
-foreach (var directory in a.Rest)
+foreach (string directory in a.Rest)
 {
     if (!Directory.Exists(directory))
     {
@@ -34,10 +34,10 @@ foreach (var directory in a.Rest)
 
     // Match on the file name only, so a tag in a parent folder does not sweep in
     // everything beneath it.
-    var matches = new List<string>();
-    foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+    List<string> matches = new();
+    foreach (string path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
     {
-        var name = Fs.SplitExt(Path.GetFileName(path)).Name;
+        string name = Fs.SplitExt(Path.GetFileName(path)).Name;
 
         if (Fs.IsVideo(path) && name.Contains(tagText, StringComparison.OrdinalIgnoreCase))
             matches.Add(path);
@@ -47,9 +47,9 @@ foreach (var directory in a.Rest)
 
     matches.Sort(StringComparer.Ordinal);
 
-    var durations = Ui.TrackParallel(matches, "[bold cyan]Adding : [/]", Media.Duration);
+    IReadOnlyList<double> durations = Ui.TrackParallel(matches, "[bold cyan]Adding : [/]", Media.Duration);
 
-    var table = Ui.NewTable("Media Duration", "Duration", "File name");
+    Table table = Ui.NewTable("Media Duration", "Duration", "File name");
     table.Columns[0].RightAligned();
     table.Columns[1].LeftAligned();
 
@@ -64,14 +64,14 @@ foreach (var directory in a.Rest)
 
     Ui.AddSeparator(table);
 
-    var speeds = new (double Divisor, string Label)[]
-    {
+    (double Divisor, string Label)[] speeds =
+    [
         (1.0,  "Total media duration"),
         (1.5,  "Total media duration @1.5x"),
         (1.65, "Total media duration @1.65x"),
         (1.82, "Total media duration @1.82x"),
         (2.0,  "Total media duration @2x"),
-    };
+    ];
 
     for (int i = 0; i < speeds.Length; i++)
     {

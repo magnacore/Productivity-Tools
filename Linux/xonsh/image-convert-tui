@@ -11,16 +11,16 @@
 // The resize height comes from the caller (the ranger bindings pass 1080 or 0), so
 // the only thing asked here is what should happen to the originals.
 
-var a = new Args("image-convert-tui", "Ask about the originals, then run image-convert")
+ArgVals a = new Args("image-convert-tui", "Ask about the originals, then run image-convert")
     .Pos("resize_dimension", "Height in pixels to resize to, or 0 for no resize")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Images to convert")
     .Parse(args);
 
-var deleteChoice = Dlg.DeleteOriginals("Images");
+bool? deleteChoice = Dlg.DeleteOriginals("Images");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var callArgs = new List<string> { a.Str("resize_dimension") };
+List<string> callArgs = new() { a.Str("resize_dimension") };
 if (deleteChoice.Value) callArgs.Add("-d");
 callArgs.AddRange(a.Rest);
 

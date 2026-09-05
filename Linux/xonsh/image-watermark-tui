@@ -9,23 +9,23 @@
 // Ask for watermark text once, then apply it across a whole selection of images
 // by calling image-watermark for each.
 
-var a = Jobs.Add(new Args("image-watermark-tui", "Watermark many images with text entered in a dialog")
+ArgVals a = Jobs.Add(new Args("image-watermark-tui", "Watermark many images with text entered in a dialog")
     .Opt("-t", "--text", help: "Watermark text, skipping the dialog")
     .Flag("-n", "--dry-run", help: "Show the composed commands without running them")
     .Rest("files", min: 1, help: "Images to watermark"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Watermarking images....");
 
 // Slugify first so the generated _watermark.png names are predictable.
-var cleanFileNames = Fs.RenameToValid(allFiles);
+IReadOnlyList<string> cleanFileNames = Fs.RenameToValid(allFiles);
 
 // A Terminal.Gui dialog, not a Spectre confirm: a Spectre prompt immediately
 // before the Dlg.Input below is the mixed-mode case this file warns about further
 // down, and it left the two owning the terminal in turn.
-var deleteChoice = Dlg.DeleteOriginals("Images");
+bool? deleteChoice = Dlg.DeleteOriginals("Images");
 if (deleteChoice is null)
 {
     Ui.Warn("Operation cancelled by user.");
@@ -34,7 +34,7 @@ if (deleteChoice is null)
 }
 bool deleteOriginals = deleteChoice.Value;
 
-var watermarkText = a.StrOrNull("text")
+string? watermarkText = a.StrOrNull("text")
     ?? Dlg.Input("Enter watermark text", "Please type the watermark text:");
 
 if (watermarkText is null)
@@ -66,9 +66,9 @@ Ui.Track2(cleanFileNames,
 
     // No progress to read out of this tool, so the bar is one step: the spinner
     // shows the file is in flight, and a failure leaves the bar visibly unfilled.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{image}:"))}[/]", 1);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{image}:"))}[/]", 1);
 
-    var newFilename = $"{Fs.SplitExt(image).Name}_watermark.png";
+    string newFilename = $"{Fs.SplitExt(image).Name}_watermark.png";
 
     // Font size 72, spacing 50, opacity 150 out of 255 — legible over the image
     // without hiding it.

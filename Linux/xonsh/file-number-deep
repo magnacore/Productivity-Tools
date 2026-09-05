@@ -10,13 +10,13 @@
 //     Usage from ranger:  :shell -w file-number-deep Folder_1 Folder_2
 //     Select the root folder and run. Do not descend into it first.
 
-var a = new Args("file-number-deep", "Number all videos under a directory tree")
+ArgVals a = new Args("file-number-deep", "Number all videos under a directory tree")
     .Rest("directories", min: 1, help: "Directories to process")
     .Parse(args);
 
 Ui.Begin("Numbering media in directory");
 
-foreach (var directory in a.Rest)
+foreach (string directory in a.Rest)
 {
     if (!Directory.Exists(directory))
     {
@@ -29,8 +29,8 @@ foreach (var directory in a.Rest)
     // Walk once and keep only videos. The xonsh original called listdir() inside
     // the walk, so every file was visited once per directory level; enumerating
     // the tree directly gives each file exactly one number.
-    var fileList = new List<string>();
-    foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+    List<string> fileList = new();
+    foreach (string path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
     {
         if (Fs.IsVideo(path)) fileList.Add(path);
         else Ui.Line($"[yellow]Skipping {Ui.Esc(Path.GetFileName(path))}[/]");
@@ -42,9 +42,9 @@ foreach (var directory in a.Rest)
     int i = 1;
     Ui.Track(fileList, "[bold cyan]Numbering : [/]", filePath =>
     {
-        var dirName = Path.GetDirectoryName(filePath) ?? string.Empty;
-        var baseName = Path.GetFileName(filePath);
-        var newPath = Path.Combine(dirName, $"{i:D4}-{baseName}");
+        string dirName = Path.GetDirectoryName(filePath) ?? string.Empty;
+        string baseName = Path.GetFileName(filePath);
+        string newPath = Path.Combine(dirName, $"{i:D4}-{baseName}");
 
         try { Fs.Move(filePath, newPath); }
         catch (Exception ex) { Ui.Line($"[bold red]Could not number {Ui.Esc(baseName)}: {ex.Message}[/]"); }

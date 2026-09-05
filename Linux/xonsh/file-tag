@@ -7,20 +7,20 @@
 // Append a "#tag" to file names, so a plain filesystem search doubles as a
 // tagging system:  lecture.mkv  ->  "lecture #physics.mkv"
 
-var a = new Args("file-tag", "Add a #tag to file names")
+ArgVals a = new Args("file-tag", "Add a #tag to file names")
     .Pos("tag", "The tag to add, without the '#'")
     .Rest("files", min: 1, help: "Files to tag")
     .Parse(args);
 
-var tag = a.Str("tag");
-var files = Fs.SortedFiles(a.Rest);
+string tag = a.Str("tag");
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 Ui.Begin($"Adding tag #{tag}...");
 
 Ui.Track(files, "[bold cyan]Tagging : [/]", file =>
 {
-    var (name, ext) = Fs.SplitExt(file);
-    var newFilename = $"{name} #{tag}{ext}";
+    (string? name, string? ext) = Fs.SplitExt(file);
+    string newFilename = $"{name} #{tag}{ext}";
 
     try { Fs.Move(file, newFilename); }
     catch (Exception ex) { Ui.Line($"[bold red]Could not tag {Ui.Esc(file)}: {ex.Message}[/]"); }

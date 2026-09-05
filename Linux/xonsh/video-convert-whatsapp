@@ -10,20 +10,20 @@
 // Two-pass H.264: the first pass only measures the video, the second uses those
 // measurements to spend the bitrate where it matters.
 
-var a = new Args("video-convert-whatsapp", "Convert videos for sharing on WhatsApp")
+ArgVals a = new Args("video-convert-whatsapp", "Convert videos for sharing on WhatsApp")
     .Opt("-b", "--bitrate", @default: "500", help: "Bitrate for video conversion in kb/s")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
 int bitrate = a.Int("bitrate", 500);
-var timestamp = Fs.Timestamp();
+string timestamp = Fs.Timestamp();
 
 Ui.Begin("Convert videos for sharing on WhatsApp");
 
-var allFiles = Fs.SortedFiles(a.Rest);
-var videos = allFiles.Where(Fs.IsVideo).ToList();
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+List<string> videos = allFiles.Where(Fs.IsVideo).ToList();
 
-foreach (var skipped in allFiles.Where(f => !Fs.IsVideo(f)))
+foreach (string? skipped in allFiles.Where(f => !Fs.IsVideo(f)))
     Ui.Warn($"Skipping {skipped}");
 
 if (videos.Count == 0) return Ui.NoFiles("No videos selected!");
@@ -41,16 +41,16 @@ int failures = 0;
 Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Count} video(s):"))}[/]",
           (file, addBar) =>
 {
-    var (filename, _) = Fs.SplitExt(file);
-    var convertedDir = $"{filename}-{timestamp}";
-    var splitDir = $"{filename}-split-{timestamp}";
+    (string? filename, string _) = Fs.SplitExt(file);
+    string convertedDir = $"{filename}-{timestamp}";
+    string splitDir = $"{filename}-split-{timestamp}";
 
     Directory.CreateDirectory(convertedDir);
     Directory.CreateDirectory(splitDir);
 
     // The tag rides along in the file name so the converted copy is obvious.
-    var fullFilename = $"{filename} #whatsapp.mp4";
-    var converted = Path.Combine(convertedDir, fullFilename);
+    string fullFilename = $"{filename} #whatsapp.mp4";
+    string converted = Path.Combine(convertedDir, fullFilename);
 
     // Shared between the two passes so the encoder settings pass 1 measures are the
     // ones pass 2 encodes with.
@@ -64,7 +64,7 @@ Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Coun
     // is no file for ConvertWithProgress to check and RunWithProgress is the right
     // half of it to call. Its bar still measures the real thing: this pass reads the
     // whole video, and takes a comparable share of the total time.
-    var pass1Bar = addBar(
+    Action<double> pass1Bar = addBar(
         $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file} (pass 1 of 2):"))}[/]", 100);
 
     List<string> pass1Args =
@@ -74,7 +74,7 @@ Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Coun
         "-f", "null", "/dev/null",
     ];
 
-    var (pass1, reported1) = Media.RunWithProgress(file, pass1Args, pass1Bar);
+    (bool pass1, double reported1) = Media.RunWithProgress(file, pass1Args, pass1Bar);
 
     if (!pass1)
     {
@@ -88,7 +88,7 @@ Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Coun
     // the pass has succeeded, so a failure above stays visibly incomplete.
     if (reported1 < 100) pass1Bar(100 - reported1);
 
-    var pass2Bar = addBar(
+    Action<double> pass2Bar = addBar(
         $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file} (pass 2 of 2):"))}[/]", 100);
 
     // This pass writes the real file, so the written-output check matters here: -n
@@ -117,7 +117,7 @@ Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Coun
 
     // Segment the converted copy. -c copy, so this is a cut, not another encode, and
     // it finishes fast enough not to be worth a bar of its own.
-    foreach (var video in Directory.EnumerateFiles(convertedDir, "*", SearchOption.AllDirectories))
+    foreach (string video in Directory.EnumerateFiles(convertedDir, "*", SearchOption.AllDirectories))
     {
         Proc.Ok("ffmpeg", "-i", video, "-c", "copy", "-f", "segment",
                 "-segment_time", "80", "-reset_timestamps", "1", "-map", "0",
@@ -128,14 +128,14 @@ Ui.Track2(videos, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"WhatsApp {videos.Coun
     // an identical one across all of them leaves a date-sorted listing with nothing
     // to order them by, and a file manager's tie-break can show 003 before 001.
     int segment = 0;
-    foreach (var part in Directory.GetFiles(splitDir).OrderBy(f => f, StringComparer.Ordinal))
+    foreach (string? part in Directory.GetFiles(splitDir).OrderBy(f => f, StringComparer.Ordinal))
         Fs.CopyTimestamp(file, part, segment++);
 
     Ui.Line($"[green]Converted and split {Ui.Esc(file)}[/]");
 }, maxParallel: 1);
 
 // The two-pass log files are scratch data and are of no use once pass 2 is done.
-foreach (var log in Directory.GetFiles(".", "temp_log*"))
+foreach (string log in Directory.GetFiles(".", "temp_log*"))
 {
     try { File.Delete(log); } catch { /* a leftover log is harmless */ }
 }

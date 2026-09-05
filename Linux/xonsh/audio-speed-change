@@ -8,16 +8,16 @@
 //
 // For Neospeech Julie at 0, a setting of 0.8 makes the audio play well at 1.5x.
 
-var a = Jobs.Add(new Args("audio-speed-change", "Change audio speed")
+ArgVals a = Jobs.Add(new Args("audio-speed-change", "Change audio speed")
     .Opt("-s", "--speed", required: true, help: "Speed value")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Audio/")
     .Rest("files", min: 1, help: "Files to process"))
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 // ffmpeg's atempo filter is only defined over [0.5, 2.0].
-var speed = Math.Clamp(a.Dbl("speed"), 0.5, 2.0);
+double speed = Math.Clamp(a.Dbl("speed"), 0.5, 2.0);
 
 Ui.Begin("Speed change...");
 
@@ -31,10 +31,10 @@ Ui.Track2(files, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Changing speed of {fil
 {
     if (!Fs.IsAudio(file)) return;
 
-    var (name, ext) = Fs.SplitExt(file);
-    var newFilename = $"{name}-{speed}x{ext}";
+    (string? name, string? ext) = Fs.SplitExt(file);
+    string newFilename = $"{name}-{speed}x{ext}";
 
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
 
     if (Media.ConvertWithProgress(
             file, newFilename,

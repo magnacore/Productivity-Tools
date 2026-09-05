@@ -6,16 +6,16 @@
 
 // Change the volume of audio files with ffmpeg's volume filter.
 
-var a = Jobs.Add(new Args("audio-volume-change", "Change audio volume")
+ArgVals a = Jobs.Add(new Args("audio-volume-change", "Change audio volume")
     .Opt("-v", "--volume", required: true, help: "Volume value")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Audio/")
     .Rest("files", min: 1, help: "Files to process"))
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 // Keep the gain inside a range that cannot destroy the signal.
-var volume = Math.Clamp(a.Dbl("volume"), 0.1, 5.0);
+double volume = Math.Clamp(a.Dbl("volume"), 0.1, 5.0);
 
 Ui.Begin("Volume change...");
 
@@ -28,10 +28,10 @@ Ui.Track2(files, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Changing volume of {fi
 {
     if (!Fs.IsAudio(file)) return;
 
-    var (name, ext) = Fs.SplitExt(file);
-    var newFilename = $"{name}-{volume}v{ext}";
+    (string? name, string? ext) = Fs.SplitExt(file);
+    string newFilename = $"{name}-{volume}v{ext}";
 
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
 
     if (Media.ConvertWithProgress(
             file, newFilename,

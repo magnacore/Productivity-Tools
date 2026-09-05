@@ -11,7 +11,7 @@
 // Asks the part size and what to do with the originals. All the splitting lives in
 // text-split.
 
-var a = new Args("text-split-tui", "Choose a part size in a dialog, then run text-split")
+ArgVals a = new Args("text-split-tui", "Choose a part size in a dialog, then run text-split")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Text files to split")
     .Parse(args);
@@ -26,18 +26,18 @@ var a = new Args("text-split-tui", "Choose a part size in a dialog, then run tex
     ("Custom...",            ""),
 ];
 
-var chosen = Dlg.Choose("Split Text", "How large should each part be?",
+int? chosen = Dlg.Choose("Split Text", "How large should each part be?",
                         [.. sizes.Select(s => s.Label)]);
 if (chosen is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var kb = sizes[chosen.Value].Kb;
+string kb = sizes[chosen.Value].Kb;
 
 if (kb.Length == 0)
 {
-    var typed = Dlg.Input("Part size", "How many kilobytes per part?", "10");
+    string? typed = Dlg.Input("Part size", "How many kilobytes per part?", "10");
     if (typed is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-    if (!double.TryParse(typed.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) || n < 1)
+    if (!double.TryParse(typed.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double n) || n < 1)
     {
         Ui.Err($"'{typed}' is not a size in kilobytes.");
         Snd.Error();
@@ -46,10 +46,10 @@ if (kb.Length == 0)
     kb = n.ToString(CultureInfo.InvariantCulture);
 }
 
-var deleteChoice = Dlg.DeleteOriginals("Texts");
+bool? deleteChoice = Dlg.DeleteOriginals("Texts");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var callArgs = new List<string> { kb };
+List<string> callArgs = new() { kb };
 if (deleteChoice.Value) callArgs.Add("-d");
 callArgs.AddRange(a.Rest);
 

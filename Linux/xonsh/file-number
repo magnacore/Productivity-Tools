@@ -9,13 +9,13 @@
 //
 //     file-number 1 3 intro.mkv setup.mkv   ->   "001 intro.mkv", "002 setup.mkv"
 
-var a = new Args("file-number", "Prefix files with an incrementing number")
+ArgVals a = new Args("file-number", "Prefix files with an incrementing number")
     .Pos("start_number", "Number to start from")
     .Pos("padding", "How many digits to pad the number to")
     .Rest("files", min: 1, help: "Files to number")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 int startNumber = a.Int("start_number");
 int padding = a.Int("padding");
 
@@ -23,7 +23,7 @@ Ui.Begin($"Start numbering from {startNumber} with a padding of {padding}...");
 
 Ui.Track(files, "[bold cyan]Numbering : [/]", file =>
 {
-    var newFilename = $"{startNumber.ToString().PadLeft(padding, '0')} {file}";
+    string newFilename = $"{startNumber.ToString().PadLeft(padding, '0')} {file}";
 
     try { Fs.Move(file, newFilename); }
     catch (Exception ex) { Ui.Line($"[bold red]Could not number {Ui.Esc(file)}: {ex.Message}[/]"); }

@@ -10,14 +10,14 @@
 // This is the unfiltered backup: no exclude list, so caches and build output come
 // along too. Pair with laptop-backup-full-eject to close it down safely.
 
-var a = Sys.WithDryRun(new Args("laptop-backup-full", "Mirror $HOME onto the encrypted full-backup disk")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("laptop-backup-full", "Mirror $HOME onto the encrypted full-backup disk")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Laptop Backup Full...");
 
-var mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
-var current = Path.Combine(mountPoint, "@current");
-var previous = Path.Combine(mountPoint, "@previous");
+string mountPoint = Path.Combine(Paths.Media, "laptop_backup_full");
+string current = Path.Combine(mountPoint, "@current");
+string previous = Path.Combine(mountPoint, "@previous");
 
 Sys.Remove(Sys.CopyLog);
 

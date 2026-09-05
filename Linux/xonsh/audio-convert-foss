@@ -12,7 +12,7 @@
 //
 //     Usage: audio-convert-foss 128 *
 
-var a = Jobs.Add(new Args("audio-convert-foss", "Convert audio files to Opus or FLAC")
+ArgVals a = Jobs.Add(new Args("audio-convert-foss", "Convert audio files to Opus or FLAC")
     .Pos("bitrate", "Bitrate in kb/s (Opus accepts 6-510; ignored for FLAC)")
     .Opt("-c", "--codec", @default: "opus", choices: ["opus", "flac"],
          help: "Target codec; flac is lossless and ignores the bitrate")
@@ -20,20 +20,20 @@ var a = Jobs.Add(new Args("audio-convert-foss", "Convert audio files to Opus or 
     .Rest("files", min: 1, help: "Files to convert"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 // Opus refuses anything outside this range.
 int bitrate = Math.Clamp(a.Int("bitrate", 128), 6, 510);
 
 bool lossless = a.Str("codec") == "flac";
-var codec = lossless ? "flac" : "libopus";
-var newExtension = lossless ? ".flac" : ".opus";
+string codec = lossless ? "flac" : "libopus";
+string newExtension = lossless ? ".flac" : ".opus";
 
 Ui.Begin(lossless
     ? "Converting audio to FLAC (lossless)..."
     : $"Converting audio to variable {bitrate}kbps Opus...");
 
 // Slugify first so the generated output names are predictable.
-var cleanFileNames = Fs.RenameToValid(allFiles);
+IReadOnlyList<string> cleanFileNames = Fs.RenameToValid(allFiles);
 
 bool deleteOriginals = a.Flag("delete");
 
@@ -47,11 +47,11 @@ Ui.Track2(cleanFileNames,
 {
     if (!Fs.IsAudio(file)) return;
 
-    var (name, extension) = Fs.SplitExt(file);
+    (string? name, string? extension) = Fs.SplitExt(file);
     extension = extension.ToLowerInvariant().Trim();
 
     // Opus to Opus would collide with its own source name.
-    var filename = extension == ".opus" ? name + "-converted" + newExtension : name + newExtension;
+    string filename = extension == ".opus" ? name + "-converted" + newExtension : name + newExtension;
 
     if (lossless && extension == ".flac")
     {
@@ -59,7 +59,7 @@ Ui.Track2(cleanFileNames,
         return;
     }
 
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
 
     if (Media.ConvertWithProgress(
             file, filename,

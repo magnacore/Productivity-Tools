@@ -6,19 +6,19 @@
 
 // Remove a "#tag" from file names — the inverse of file-tag.
 
-var a = new Args("file-tag-remove", "Remove a #tag from file names")
+ArgVals a = new Args("file-tag-remove", "Remove a #tag from file names")
     .Pos("tag", "The tag to remove, without the '#'")
     .Rest("files", min: 1, help: "Files to untag")
     .Parse(args);
 
-var tag = a.Str("tag");
-var files = Fs.SortedFiles(a.Rest);
+string tag = a.Str("tag");
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 Ui.Begin($"Removing tag #{tag}...");
 
 Ui.Track(files, "[bold cyan]Untagging : [/]", file =>
 {
-    var newFilename = file.Replace($" #{tag}", string.Empty).Trim();
+    string newFilename = file.Replace($" #{tag}", string.Empty).Trim();
 
     if (newFilename == file || newFilename.Length == 0) return;
 

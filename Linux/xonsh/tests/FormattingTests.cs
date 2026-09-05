@@ -44,8 +44,8 @@ public class ToWordsTests
     public void HandlesNumbersFarPastLong()
     {
         // 2^130 is 1.361e39, so the leading group is 10^39 — duodecillion.
-        var huge = BigInteger.Pow(2, 130);
-        var words = Num.ToWords(huge);
+        BigInteger huge = BigInteger.Pow(2, 130);
+        string words = Num.ToWords(huge);
         Assert.StartsWith("one duodecillion", words);
         Assert.DoesNotContain("  ", words);
     }
@@ -58,8 +58,8 @@ public class FitDescriptionTests
     [Fact]
     public void PadsEveryDescriptionToTheSameWidth()
     {
-        var shortOne = Ui.FitDescription("a.mkv:");
-        var longOne = Ui.FitDescription("Animal Rights [2nd Edition] and then some more.mkv:");
+        string shortOne = Ui.FitDescription("a.mkv:");
+        string longOne = Ui.FitDescription("Animal Rights [2nd Edition] and then some more.mkv:");
         Assert.Equal(shortOne.Length, longOne.Length);
     }
 
@@ -67,8 +67,8 @@ public class FitDescriptionTests
     public void CutsFromTheMiddleSoTheTailSurvives()
     {
         // Two titles differing only at the end must stay distinguishable.
-        var rights = Ui.FitDescription("Splitting No-Nonsense Guide to Animal Rights.pdf:");
-        var welfare = Ui.FitDescription("Splitting No-Nonsense Guide to Animal Welfare.pdf:");
+        string rights = Ui.FitDescription("Splitting No-Nonsense Guide to Animal Rights.pdf:");
+        string welfare = Ui.FitDescription("Splitting No-Nonsense Guide to Animal Welfare.pdf:");
         Assert.NotEqual(rights, welfare);
         Assert.Contains("…", rights);
     }

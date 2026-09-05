@@ -11,20 +11,20 @@
 // The positional order is kept from the original so image-watermark-tui, and any
 // existing shell aliases, keep working unchanged.
 
-var a = new Args("image-watermark", "Tile a rotated text watermark across an image")
+ArgVals a = new Args("image-watermark", "Tile a rotated text watermark across an image")
     .Opt("-r", "--rotation", @default: "45", help: "Rotation angle of the watermark text")
     .Opt("-c", "--colour", @default: "255,0,0", help: "Watermark colour as R,G,B")
     .Rest("arguments", min: 3,
           help: "input_image output_image watermark_text [font_size] [spacing] [opacity]")
     .Parse(args);
 
-var rest = a.Rest;
-var inputImage = rest[0];
-var outputImage = rest[1];
-var watermarkText = rest[2];
-int fontSize = rest.Count > 3 && int.TryParse(rest[3], out var fs) ? fs : 72;
-int spacing = rest.Count > 4 && int.TryParse(rest[4], out var sp) ? sp : 50;
-int opacity = rest.Count > 5 && int.TryParse(rest[5], out var op) ? op : 128;
+IReadOnlyList<string> rest = a.Rest;
+string inputImage = rest[0];
+string outputImage = rest[1];
+string watermarkText = rest[2];
+int fontSize = rest.Count > 3 && int.TryParse(rest[3], out int fs) ? fs : 72;
+int spacing = rest.Count > 4 && int.TryParse(rest[4], out int sp) ? sp : 50;
+int opacity = rest.Count > 5 && int.TryParse(rest[5], out int op) ? op : 128;
 
 if (!File.Exists(inputImage))
 {
@@ -35,11 +35,11 @@ if (!File.Exists(inputImage))
 
 // Prefer the font the original hardcoded, but fall back to whatever fontconfig
 // offers rather than failing outright.
-var font = ResolveFont("Cantarell");
+string font = ResolveFont("Cantarell");
 
 // ImageMagick wants the alpha channel as a fraction; the CLI takes 0-255.
-var alpha = (Math.Clamp(opacity, 0, 255) / 255.0).ToString("0.###", CultureInfo.InvariantCulture);
-var fill = $"rgba({a.Str("colour")},{alpha})";
+string alpha = (Math.Clamp(opacity, 0, 255) / 255.0).ToString("0.###", CultureInfo.InvariantCulture);
+string fill = $"rgba({a.Str("colour")},{alpha})";
 
 // Render the text once into a named memory register (mpr:wm), rotate it, pad it
 // with the requested spacing, then tile that single stamp across a transparent
@@ -83,6 +83,6 @@ return 0;
 /// Find a usable font file, preferring `preferred`.
 static string ResolveFont(string preferred)
 {
-    var matched = Proc.Capture("fc-match", "-f", "%{file}", preferred);
+    string matched = Proc.Capture("fc-match", "-f", "%{file}", preferred);
     return File.Exists(matched) ? matched : preferred;
 }

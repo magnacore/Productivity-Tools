@@ -7,11 +7,11 @@
 // Pick a TOTP entry from the password store, copy the current code, and print it
 // large enough to read off the screen while typing it somewhere else.
 
-var a = new Args("otp-copy", "Copy a TOTP code from the password store")
+ArgVals a = new Args("otp-copy", "Copy a TOTP code from the password store")
     .Pos("entry", "Name of the otp store entry (see otp-copy-tui to pick from a list)")
     .Parse(args);
 
-var entries = PassStore.Entries("otp");
+IReadOnlyList<string> entries = PassStore.Entries("otp");
 
 if (entries.Count == 0)
 {
@@ -20,7 +20,7 @@ if (entries.Count == 0)
     return 1;
 }
 
-var selection = a.Str("entry");
+string selection = a.Str("entry");
 
 if (!entries.Contains(selection, StringComparer.Ordinal))
 {
@@ -29,7 +29,7 @@ if (!entries.Contains(selection, StringComparer.Ordinal))
     return 1;
 }
 
-var totp = Proc.Capture("pass", "otp", $"otp/{selection}");
+string totp = Proc.Capture("pass", "otp", $"otp/{selection}");
 
 if (string.IsNullOrWhiteSpace(totp))
 {
@@ -41,7 +41,7 @@ if (string.IsNullOrWhiteSpace(totp))
 Clip.Copy(totp);
 
 // Split into two groups, which is how these codes are read aloud and typed.
-var grouped = totp.Length > 3 ? $"{totp[..3]} {totp[3..]}" : totp;
+string grouped = totp.Length > 3 ? $"{totp[..3]} {totp[3..]}" : totp;
 Proc.Run("figlet", "-c", "-f", "big", grouped);
 
 return Ui.Done();

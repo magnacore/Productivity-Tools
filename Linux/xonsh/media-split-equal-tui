@@ -11,7 +11,7 @@
 // The durations come from the caller (the ranger bindings pass their own), so the
 // only thing asked here is what should happen to the originals.
 
-var a = new Args("media-split-equal-tui", "Ask about the originals, then run media-split-equal")
+ArgVals a = new Args("media-split-equal-tui", "Ask about the originals, then run media-split-equal")
     .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
     .Opt("-t", "--threshold_seconds", required: true,
          help: "Threshold in seconds beyond which the media should be split")
@@ -20,10 +20,10 @@ var a = new Args("media-split-equal-tui", "Ask about the originals, then run med
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
-var deleteChoice = Dlg.DeleteOriginals("Media");
+bool? deleteChoice = Dlg.DeleteOriginals("Media");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-var callArgs = new List<string>
+List<string> callArgs = new()
 {
     "-s", a.Str("split_duration"),
     "-t", a.Str("threshold_seconds"),

@@ -11,17 +11,17 @@
 // The PDF's modification time is carried onto the audio, so a date-sorted
 // library keeps its order.
 
-var a = new Args("pdf-convert-audio", "Convert PDFs to audio by chaining text extraction and TTS")
+ArgVals a = new Args("pdf-convert-audio", "Convert PDFs to audio by chaining text extraction and TTS")
     .Rest("files", min: 1, help: "PDF files to convert")
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Convert pdf to audio...");
 
 int converted = 0;
 
-foreach (var file in allFiles)
+foreach (string file in allFiles)
 {
     if (!Fs.IsPdf(file))
     {
@@ -29,9 +29,9 @@ foreach (var file in allFiles)
         continue;
     }
 
-    var (filename, _) = Fs.SplitExt(file);
-    var textFilename = filename + ".txt";
-    var outputAudioFilename = filename + ".mkv";
+    (string? filename, string _) = Fs.SplitExt(file);
+    string textFilename = filename + ".txt";
+    string outputAudioFilename = filename + ".mkv";
 
     Ui.Info($"Extracting text from {file}...");
     if (Proc.Call("pdf-convert-text", file) != 0 || !File.Exists(textFilename))

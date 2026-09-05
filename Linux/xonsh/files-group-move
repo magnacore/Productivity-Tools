@@ -12,43 +12,43 @@
 
 using System.Text.RegularExpressions;
 
-var a = new Args("files-group-move", "Move files into folders named after their common prefix")
+ArgVals a = new Args("files-group-move", "Move files into folders named after their common prefix")
     .Rest("files", min: 1, help: "Files to group")
     .Parse(args);
 
 // Candidate groups: files in the same directory whose names match once digits
 // and dots are removed, so "ep01.mkv" and "ep02.mkv" land together.
-var groups = new Dictionary<(string Key, string Dir), List<string>>();
+Dictionary<(string Key, string Dir), List<string>> groups = new();
 
-foreach (var filePath in a.Rest)
+foreach (string filePath in a.Rest)
 {
-    var directory = Path.GetDirectoryName(filePath) ?? string.Empty;
-    var file = Path.GetFileName(filePath);
-    var key = new string(file.Where(ch => !char.IsDigit(ch) && ch != '.').ToArray());
+    string directory = Path.GetDirectoryName(filePath) ?? string.Empty;
+    string file = Path.GetFileName(filePath);
+    string key = new(file.Where(ch => !char.IsDigit(ch) && ch != '.').ToArray());
 
-    if (!groups.TryGetValue((key, directory), out var list))
+    if (!groups.TryGetValue((key, directory), out List<string>? list))
         groups[(key, directory)] = list = [];
     list.Add(file);
 }
 
 Ui.Begin("Grouping files...");
 
-foreach (var (key, group) in groups)
+foreach (((string Key, string Dir) key, List<string>? group) in groups)
 {
     // A group of one is just a file; there is nothing to gather.
     if (group.Count <= 1) continue;
 
-    var folderName = CleanPrefix(LongestCommonPrefix(group));
+    string folderName = CleanPrefix(LongestCommonPrefix(group));
     if (folderName.Length == 0)
     {
         Ui.Warn($"Skipping {group.Count} files with no usable common prefix.");
         continue;
     }
 
-    var folderPath = Path.Combine(key.Dir, folderName);
+    string folderPath = Path.Combine(key.Dir, folderName);
     Directory.CreateDirectory(folderPath);
 
-    foreach (var file in group)
+    foreach (string file in group)
     {
         try { Fs.Move(Path.Combine(key.Dir, file), Path.Combine(folderPath, file)); }
         catch (Exception ex) { Ui.Err($"Could not move {file}: {ex.Message}"); }
@@ -63,9 +63,9 @@ static string LongestCommonPrefix(List<string> strings)
 {
     if (strings.Count == 0) return string.Empty;
 
-    var shortest = strings.MinBy(s => s.Length)!;
+    string shortest = strings.MinBy(s => s.Length)!;
     for (int i = 0; i < shortest.Length; i++)
-        foreach (var other in strings)
+        foreach (string other in strings)
             if (other[i] != shortest[i]) return shortest[..i];
 
     return shortest;

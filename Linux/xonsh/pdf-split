@@ -13,17 +13,17 @@
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Writer;
 
-var a = Jobs.Add(new Args("pdf-split", "Split PDFs into parts of N pages")
+ArgVals a = Jobs.Add(new Args("pdf-split", "Split PDFs into parts of N pages")
     .Pos("split_page", "Pages per part")
     .Rest("files", min: 1, help: "PDFs to split"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 int splitPage = Math.Max(a.Int("split_page", 10), 1);
 
 Ui.Begin($"Splitting PDFs to {splitPage} pages each...");
 
-var pdfs = allFiles.Where(Fs.IsPdf).ToList();
+List<string> pdfs = allFiles.Where(Fs.IsPdf).ToList();
 if (pdfs.Count == 0) return Ui.NoFiles("No PDFs selected!");
 
 int failures = 0;
@@ -36,19 +36,19 @@ Ui.Track2(pdfs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Splitting {pdfs.Count} 
 {
     try
     {
-        var (fileName, _) = Fs.SplitExt(fname);
+        (string? fileName, string _) = Fs.SplitExt(fname);
 
-        using var pdf = PdfDocument.Open(fname);
+        using PdfDocument pdf = PdfDocument.Open(fname);
         int totalPages = pdf.NumberOfPages;
 
         // Every description is padded to one width by FitDescription, so the bar
         // starts in the same column for every document however long its title.
-        var advance = addBar(
+        Action<double> advance = addBar(
             $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Splitting {fname}:"))}[/]", totalPages);
 
         int part = 1;
         int countdown = totalPages;
-        var builder = new PdfDocumentBuilder();
+        PdfDocumentBuilder builder = new();
 
         for (int page = 1; page <= totalPages; page++)
         {
@@ -59,7 +59,7 @@ Ui.Track2(pdfs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Splitting {pdfs.Count} 
             if (builder.Pages.Count == splitPage || page == totalPages)
             {
                 int pagePercent = page * 100 / totalPages;
-                var outputFilename =
+                string outputFilename =
                     $"{fileName}-{part:D4}-{countdown:D4}r-{pagePercent:D3}p.pdf";
 
                 File.WriteAllBytes(outputFilename, builder.Build());

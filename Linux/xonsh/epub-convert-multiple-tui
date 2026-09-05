@@ -17,14 +17,14 @@
 // invoked through the xonsh interpreter explicitly, so it does not matter
 // whether the file happens to be executable.
 
-var a = new Args("epub-convert-multiple-tui", "Choose an EPUB conversion in a dialog, then run it")
+ArgVals a = new Args("epub-convert-multiple-tui", "Choose an EPUB conversion in a dialog, then run it")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Epubs to process")
     .Parse(args);
 
-var files = a.Rest;
+IReadOnlyList<string> files = a.Rest;
 
-var format = Dlg.Choose(
+int? format = Dlg.Choose(
     "Convert epub", "What is the output file format?",
     "PDF : Portable Document Format",
     "Plain text file",
@@ -42,7 +42,7 @@ string program;
 switch (format.Value)
 {
     case 0:
-        var size = Dlg.Choose(
+        int? size = Dlg.Choose(
             "Choose page size", "What is the output file dimensions?",
             "Ranger preview",
             "A4 page @300 DPI");
@@ -84,7 +84,7 @@ if (a.Flag("dry-run"))
 // C# program and goes through the normal PATH/sibling lookup.
 if (program == "epub-split")
 {
-    var script = FindXonsh("epub-split");
+    string? script = FindXonsh("epub-split");
     if (script is null)
     {
         Ui.Err("Could not find the xonsh epub-split.");
@@ -112,7 +112,7 @@ return Proc.Call(program, callArgs);
 /// // comment.
 static string? FindXonsh(string name)
 {
-    foreach (var candidate in new[]
+    foreach (string? candidate in new[]
              {
                  Path.Combine(Paths.ScriptDir, name),
                  Path.Combine(Paths.ScriptDir, "..", "Xonsh", name),
@@ -127,7 +127,7 @@ static string? FindXonsh(string name)
 
         try
         {
-            var shebang = File.ReadLines(full).FirstOrDefault() ?? string.Empty;
+            string shebang = File.ReadLines(full).FirstOrDefault() ?? string.Empty;
             if (shebang.Contains("xonsh", StringComparison.OrdinalIgnoreCase)) return full;
         }
         catch (Exception ex) when (Fs.IsExpectedIoFailure(ex)) { }

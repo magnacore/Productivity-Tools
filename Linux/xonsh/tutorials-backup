@@ -6,7 +6,7 @@
 
 // Mirror the tutorials drive onto its backup.
 
-var a = Sys.WithDryRun(new Args("tutorials-backup", "Mirror the LEARNING drive onto TutsBackup")).Parse(args);
+ArgVals a = Sys.WithDryRun(new Args("tutorials-backup", "Mirror the LEARNING drive onto TutsBackup")).Parse(args);
 Sys.Apply(a);
 
 Ui.Begin("Backup Tutorials...");

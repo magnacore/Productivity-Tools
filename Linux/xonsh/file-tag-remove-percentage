@@ -8,18 +8,18 @@
 
 using System.Text.RegularExpressions;
 
-var a = new Args("file-tag-remove-percentage", "Remove the remaining/percent tag from file names")
+ArgVals a = new Args("file-tag-remove-percentage", "Remove the remaining/percent tag from file names")
     .Rest("files", min: 1, help: "Files to untag")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Removing percentage tag ...");
 
 Ui.Track(files, "[bold cyan]Untagging : [/]", file =>
 {
-    var (name, ext) = Fs.SplitExt(file);
-    var newFilename = (Pattern.PercentageTag().Replace(name, string.Empty) + ext).Trim();
+    (string? name, string? ext) = Fs.SplitExt(file);
+    string newFilename = (Pattern.PercentageTag().Replace(name, string.Empty) + ext).Trim();
 
     if (newFilename == file || newFilename.Length == 0) return;
 

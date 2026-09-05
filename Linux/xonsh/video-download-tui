@@ -10,7 +10,7 @@
 //
 // Picks the download profile, then hands it over. The downloading lives there.
 
-var a = new Args("video-download-tui", "Choose a download profile in a dialog, then run video-download")
+ArgVals a = new Args("video-download-tui", "Choose a download profile in a dialog, then run video-download")
     .Flag("-u", "--no-update", help: "Skip the yt-dlp self-update")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Parse(args);
@@ -22,7 +22,7 @@ var a = new Args("video-download-tui", "Choose a download profile in a dialog, t
     ("other",   "Other (plain download)"),
 ];
 
-var chosen = Dlg.Choose("Video Download", "What is the source of the videos?",
+int? chosen = Dlg.Choose("Video Download", "What is the source of the videos?",
                         [.. sources.Select(s => s.Label)]);
 
 if (chosen is null)
@@ -31,7 +31,7 @@ if (chosen is null)
     return 0;
 }
 
-var callArgs = new List<string> { "-s", sources[chosen.Value].Value };
+List<string> callArgs = new() { "-s", sources[chosen.Value].Value };
 if (a.Flag("no-update")) callArgs.Add("-u");
 
 if (a.Flag("dry-run"))

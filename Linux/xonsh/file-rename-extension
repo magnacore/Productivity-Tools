@@ -7,16 +7,16 @@
 // Change the extension of the selected files — for the common case where a file
 // is already in the right container but carries the wrong suffix.
 
-var a = new Args("file-rename-extension", "Change the extension of the selected files")
+ArgVals a = new Args("file-rename-extension", "Change the extension of the selected files")
     .Opt("-e", "--extension", required: true,
          help: "New extension, without the dot (e.g. mkv, opus, mka, txt, md)")
     .Rest("files", min: 1, help: "Files to rename")
     .Parse(args);
 
-var files = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> files = Fs.SortedFiles(a.Rest);
 
 // Accept "mkv" and ".mkv" alike; the dot is added when the name is rebuilt.
-var extensionChoice = a.Str("extension").TrimStart('.');
+string extensionChoice = a.Str("extension").TrimStart('.');
 
 if (extensionChoice.Length == 0)
 {
@@ -24,9 +24,9 @@ if (extensionChoice.Length == 0)
     return 2;
 }
 
-foreach (var file in files)
+foreach (string file in files)
 {
-    var (name, ext) = Fs.SplitExt(file);
+    (string? name, string? ext) = Fs.SplitExt(file);
 
     // An empty extension means a directory, which has nothing to rename.
     if (ext.Length == 0) continue;

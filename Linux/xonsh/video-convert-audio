@@ -9,12 +9,12 @@
 // The output is .mka because not every video carries Opus audio, and the ogg
 // container only accepts Opus. Matroska takes whatever codec is already there.
 
-var a = Jobs.Add(new Args("video-convert-audio", "Extract the audio track from videos into .mka")
+ArgVals a = Jobs.Add(new Args("video-convert-audio", "Extract the audio track from videos into .mka")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Video/")
     .Rest("files", min: 1, help: "Files to process"))
     .Parse(args);
 
-var allFiles = Fs.SortedFiles(a.Rest);
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 Ui.Begin("Extracting audio form video...");
 
@@ -29,10 +29,10 @@ Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Extracting from {al
 {
     if (!Fs.IsVideo(file)) return;
 
-    var filename = Fs.SplitExt(file).Name + ".mka";
+    string filename = Fs.SplitExt(file).Name + ".mka";
 
     // -n so an existing extraction is never silently overwritten.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 100);
 
     if (Media.ConvertWithProgress(
             file, filename,

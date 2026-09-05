@@ -13,7 +13,7 @@
 // snippet or a URL will fail to typeset. Three things keep that in check —
 // see PandocArgs below.
 
-var a = Jobs.Add(new Args("document-convert", "Convert documents to another format with pandoc")
+ArgVals a = Jobs.Add(new Args("document-convert", "Convert documents to another format with pandoc")
     .Opt("-p", "--pdf-engine", @default: "xelatex",
          help: "LaTeX engine for PDF output")
     .Flag("-r", "--raw",
@@ -22,15 +22,15 @@ var a = Jobs.Add(new Args("document-convert", "Convert documents to another form
     .Rest("files", min: 1, help: "Files to convert"))
     .Parse(args);
 
-var extension = a.Str("extension").TrimStart('.');
-var allFiles = Fs.SortedFiles(a.Rest);
+string extension = a.Str("extension").TrimStart('.');
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 bool toPdf = extension.Equals("pdf", StringComparison.OrdinalIgnoreCase);
 bool sanitise = !a.Flag("raw") && toPdf;
 
 // xelatex understands Unicode; pdflatex does not, and dies on the first emoji.
 // It is also the engine that honours mainfont/monofont below — under pdflatex
 // those were silently ignored, so the chosen fonts never actually applied.
-var pdfEngine = a.Str("pdf-engine");
+string pdfEngine = a.Str("pdf-engine");
 if (toPdf && !Proc.Exists(pdfEngine))
 {
     Ui.Warn($"{pdfEngine} is not installed; letting pandoc choose the PDF engine.");
@@ -48,10 +48,10 @@ Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {allFile
 {
     // No progress to read out of this tool, so the bar is one step: the spinner
     // shows the file is in flight, and a failure leaves the bar visibly unfilled.
-    var advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 1);
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{file}:"))}[/]", 1);
 
-    var (fileName, _) = Fs.SplitExt(file);
-    var output = $"{fileName}.{extension}";
+    (string? fileName, string _) = Fs.SplitExt(file);
+    string output = $"{fileName}.{extension}";
 
     // Plain text has no markup to honour, so any special character in it is just a
     // character. Escaping them says so without changing how the text is set.
@@ -72,7 +72,7 @@ Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {allFile
 
     try
     {
-        var (ok, error) = Proc.TryRun("pandoc", PandocArgs(source, output));
+        (bool ok, string? error) = Proc.TryRun("pandoc", PandocArgs(source, output));
 
         if (ok)
         {
@@ -85,7 +85,7 @@ Ui.Track2(allFiles, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {allFile
             // Say why. A bare "could not convert" sends you hunting for a cause
             // pandoc already explained.
             Ui.Line($"[bold red]Could not convert {Ui.Esc(file)} to {Ui.Esc(extension)}[/]");
-            foreach (var line in FirstLines(error, 4))
+            foreach (string line in FirstLines(error, 4))
                 Ui.Line($"[dim]    {Ui.Esc(line)}[/]");
             Interlocked.Increment(ref failures);
         }
@@ -104,7 +104,7 @@ return Ui.Done(failures);
 /// The pandoc command line for one file.
 List<string> PandocArgs(string source, string output)
 {
-    var pandocArgs = new List<string> { "-s" };
+    List<string> pandocArgs = new() { "-s" };
 
     // Landscape A4 with generous margins, and typefaces chosen for long reading.
     pandocArgs.AddRange([
@@ -143,9 +143,9 @@ static string? WriteEscapedCopy(string file)
 {
     try
     {
-        var text = File.ReadAllText(file).Replace("\0", string.Empty);
+        string text = File.ReadAllText(file).Replace("\0", string.Empty);
 
-        var scratch = Path.Combine(Path.GetTempPath(), $"document-convert-{Fs.Uuid()}.md");
+        string scratch = Path.Combine(Path.GetTempPath(), $"document-convert-{Fs.Uuid()}.md");
         File.WriteAllText(scratch, EscapeMarkdown(text));
         return scratch;
     }
@@ -162,8 +162,8 @@ static string EscapeMarkdown(string text)
 {
     const string Special = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 
-    var sb = new StringBuilder(text.Length + text.Length / 4);
-    foreach (var ch in text)
+    StringBuilder sb = new(text.Length + text.Length / 4);
+    foreach (char ch in text)
     {
         if (Special.Contains(ch, StringComparison.Ordinal)) sb.Append('\\');
         sb.Append(ch);
