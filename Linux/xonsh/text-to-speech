@@ -6,13 +6,37 @@
 #:include utilities.cs
 
 // Read text files aloud with Google's Wavenet voices and save the result as
-// Opus audio in an .mkv container.
+// Opus audio in a Matroska container.
 //
 // The text is scrubbed first: markup, decoration and boilerplate that reads
 // badly out loud is either removed or rewritten into something speakable.
+//
+// Two limits shape everything below. Google rejects a single request over 5,000
+// characters, and it synthesises one request at a time -- so anything longer is
+// split into chunks at sentence boundaries, each chunk synthesised separately, and
+// the pieces joined back into one audio file. On top of that sits a hard 10,000
+// character cap per file: not an API limit but a spending guard, because a request
+// is billed by the character and a stray large file is an expensive accident.
 
+using System.Text;
 using System.Text.RegularExpressions;
 using Google.Cloud.TextToSpeech.V1;
+
+// The spending guard. Deliberately a constant and not a flag: a cap that can be
+// raised from the command line is not a cap, and the whole point is that no
+// accident gets past it. Measured on the *cleaned* text, which is what actually
+// leaves this machine.
+const int MaxCharacters = 10_000;
+
+// Google's own limit is 5,000 characters per request. Chunks are measured in UTF-8
+// bytes rather than characters and given headroom, because the limit is applied to
+// the encoded request and one character is not always one byte.
+const int MaxChunkBytes = 4_500;
+
+// Three files at a time, fixed rather than a -j flag. This is a metered network
+// service, not local CPU work, so the right number comes from Google's quota and
+// not from this machine's core count.
+const int MaxParallel = 3;
 
 ArgVals a = new Args("text-to-speech", "Convert text files to speech with Google Cloud TTS")
     .Opt("-v", "--voice", @default: "Female", choices: ["Female", "Male"], help: "Which voice to use")
@@ -35,6 +59,59 @@ Ui.Begin("Converting text to speech...");
 // https://cloud.google.com/text-to-speech/docs/voices
 string voiceName = a.Str("voice") == "Male" ? "en-US-Wavenet-D" : "en-US-Wavenet-C";
 
+List<string> textFiles = allFiles.Where(Fs.IsText).ToList();
+foreach (string skipped in allFiles.Where(f => !Fs.IsText(f)))
+    Ui.Warn($"Skipping {skipped}");
+
+if (textFiles.Count == 0) return Ui.NoFiles("No text files selected!");
+
+int failures = 0;
+
+// Read, clean, measure and chunk every file before a single request is sent. Doing
+// this up front means an over-cap file is refused without ever reaching Google, and
+// that the refusal is printed plainly rather than smeared across a live progress
+// display.
+List<Job> jobs = [];
+foreach (string file in textFiles)
+{
+    string cleaned;
+    try
+    {
+        cleaned = Clean(File.ReadAllText(file));
+    }
+    catch (Exception ex)
+    {
+        Ui.Err($"Could not read {file}: {ex.Message}");
+        failures++;
+        continue;
+    }
+
+    if (cleaned.Length > MaxCharacters)
+    {
+        Ui.Err($"Refusing {file}: {cleaned.Length:N0} characters after cleaning, " +
+               $"over the {MaxCharacters:N0} cap. Split it first, with text-split.");
+        failures++;
+        continue;
+    }
+
+    if (cleaned.Trim().Length == 0)
+    {
+        Ui.Warn($"Nothing to say in {file} once cleaned. Skipping.");
+        continue;
+    }
+
+    jobs.Add(new Job(file, Chunk(cleaned, MaxChunkBytes)));
+}
+
+if (jobs.Count == 0)
+{
+    Snd.Error();
+    return Ui.Done(failures);
+}
+
+Ui.Info($"{jobs.Count} file(s), {jobs.Sum(j => j.Chunks.Count)} request(s), " +
+        $"{MaxParallel} at a time.");
+
 TextToSpeechClient client;
 try
 {
@@ -48,37 +125,97 @@ catch (Exception ex)
     return 1;
 }
 
-Ui.Track(allFiles, "[bold cyan]TTS : [/]", file =>
+// A bar per file counting its requests plus the join, with the overall file bar
+// pinned underneath. The client is shared across threads deliberately -- Google's
+// generated clients are documented as thread-safe, and one channel is cheaper than
+// three.
+Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} file(s):"))}[/]",
+          (job, addBar) =>
 {
-    if (!Fs.IsText(file)) return;
+    // Chunks plus one step for joining them, so the bar only completes once the
+    // audio is actually on disk.
+    Action<double> advance = addBar(
+        $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{job.File} ({job.Chunks.Count} req):"))}[/]",
+        job.Chunks.Count + 1);
 
-    string outputFilename = Fs.SplitExt(file).Name + ".mkv";
+    string outputFilename = Fs.SplitExt(job.File).Name + ".mkv";
 
+    // Every chunk of every file gets its own directory, so three files in flight
+    // cannot tread on each other's parts.
+    DirectoryInfo work = Directory.CreateTempSubdirectory("text-to-speech-");
     try
     {
-        byte[] audio = Synthesize(client, voiceName, File.ReadAllText(file));
-        File.WriteAllBytes(outputFilename, audio);
+        List<string> parts = [];
+        for (int i = 0; i < job.Chunks.Count; i++)
+        {
+            byte[] audio = Synthesize(client, voiceName, job.Chunks[i]);
 
-        // Keep the source's date so the audiobook sorts with its text.
-        Fs.CopyTimestamp(file, outputFilename);
+            // Ogg Opus, exactly as Google returns it. The bytes are not touched
+            // again: the join is a container remux, not a re-encode.
+            string part = Path.Combine(work.FullName, $"part-{i:D4}.ogg");
+            File.WriteAllBytes(part, audio);
+            parts.Add(part);
+            advance(1);
+        }
+
+        if (!Join(parts, outputFilename))
+        {
+            Ui.Line($"[bold red]Could not join the audio for {Ui.Esc(job.File)}[/]");
+            Snd.Error();
+            Interlocked.Increment(ref failures);
+            return;
+        }
+
+        advance(1);
+
+        // Keep the source's date so the audiobook sorts with its text. This matters
+        // more now than it did serially: three files finish in whatever order the
+        // service returns them, so without this a date-sorted listing is a jumble.
+        Fs.CopyTimestamp(job.File, outputFilename);
 
         Ui.Line($"[bold green]{Ui.Esc(outputFilename)} created.[/]");
     }
     catch (Exception ex)
     {
-        Ui.Line($"[bold red]Could not convert {Ui.Esc(file)}: {ex.Message}[/]");
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(job.File)}: {ex.Message}[/]");
         Snd.Error();
+        Interlocked.Increment(ref failures);
     }
-});
+    finally
+    {
+        try { work.Delete(recursive: true); }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+        {
+            Ui.Line($"[yellow]Left temporary files in {Ui.Esc(work.FullName)}: {ex.Message}[/]");
+        }
+    }
+}, maxParallel: MaxParallel);
 
-return Ui.Done();
+return Ui.Done(failures);
+
+/// Join the synthesised parts into one Matroska file.
+///
+/// mkvmerge's append syntax ("a + b + c") rather than a re-encode: every part came
+/// from the same voice and the same AudioConfig, so the streams are identical in
+/// codec and sample rate and can simply be laid end to end. It overwrites an
+/// existing output silently, which is what this program has always done.
+///
+/// This is also what makes the .mkv name honest. Before chunking there was only ever
+/// one part, and it was written straight to disk -- so the file was Ogg carrying a
+/// .mkv extension. Players sniff the content and never minded, but a single Ogg
+/// stream is not something more parts can be appended to.
+static bool Join(IReadOnlyList<string> parts, string output)
+{
+    List<string> args = ["-q", "-o", output, parts[0]];
+    foreach (string part in parts.Skip(1)) { args.Add("+"); args.Add(part); }
+
+    return Proc.Ok("mkvmerge", args);
+}
 
 static byte[] Synthesize(TextToSpeechClient client, string voiceName, string text)
 {
     // "en-US-Wavenet-C" -> "en-US"
     string languageCode = string.Join("-", voiceName.Split('-').Take(2));
-
-    text = Clean(text);
 
     SynthesizeSpeechResponse response = client.SynthesizeSpeech(new SynthesizeSpeechRequest
     {
@@ -97,6 +234,106 @@ static byte[] Synthesize(TextToSpeechClient client, string voiceName, string tex
     return response.AudioContent.ToByteArray();
 }
 
+/// Split cleaned text into pieces small enough for one request.
+///
+/// Where the cut falls is audible, so the boundaries are chosen rather than counted
+/// to: a sentence end first, a word break if one sentence is somehow too long for a
+/// whole request, and only as a last resort a cut mid-word. Cutting mid-sentence
+/// would put a hard stop and a fresh breath in the middle of a clause.
+///
+/// Measured in UTF-8 bytes because that is what the request carries.
+static List<string> Chunk(string text, int maxBytes)
+{
+    // Trim first. Text ending in whitespace otherwise produces a final chunk holding
+    // nothing but that whitespace, whenever the chunk before it happened to fill up
+    // exactly: a billable request that synthesises silence, an extra near-empty
+    // segment in the joined audio, and input Google may reject as empty. Leading and
+    // trailing whitespace is inaudible, so nothing is lost by dropping it.
+    text = text.Trim();
+
+    List<string> chunks = [];
+    StringBuilder current = new();
+    int currentBytes = 0;
+
+    foreach (string piece in SentencePieces(text))
+    {
+        foreach (string unit in FitToLimit(piece, maxBytes))
+        {
+            int unitBytes = Encoding.UTF8.GetByteCount(unit);
+
+            if (currentBytes > 0 && currentBytes + unitBytes > maxBytes)
+            {
+                chunks.Add(current.ToString());
+                current.Clear();
+                currentBytes = 0;
+            }
+
+            current.Append(unit);
+            currentBytes += unitBytes;
+        }
+    }
+
+    if (current.Length > 0) chunks.Add(current.ToString());
+
+    // The trim above handles the common case, but an interior run of whitespace long
+    // enough to be split on its own would produce the same useless request. Both are
+    // silent either way, so neither is worth paying for.
+    chunks.RemoveAll(c => c.Trim().Length == 0);
+
+    // A file that cleaned down to whitespace is filtered out before this is called,
+    // so an empty result would mean the splitting itself dropped the text.
+    return chunks.Count > 0 ? chunks : [text];
+}
+
+/// Break text at sentence ends and line breaks.
+///
+/// The pattern matches positions, not characters -- a lookbehind and a lookahead with
+/// nothing in between -- so concatenating everything back together reproduces the
+/// input exactly. Nothing is dropped and no spacing is invented.
+static string[] SentencePieces(string text)
+    => Regex.Split(text, @"(?<=[.!?])(?=\s)|(?<=\n)");
+
+/// Cut one piece down until every part fits a single request.
+///
+/// Only reached when a piece is already too big on its own: a sentence running to
+/// thousands of characters, or a run with no spaces at all, such as a long URL.
+static IEnumerable<string> FitToLimit(string piece, int maxBytes)
+{
+    if (Encoding.UTF8.GetByteCount(piece) <= maxBytes)
+    {
+        yield return piece;
+        yield break;
+    }
+
+    // Split after each run of whitespace, again as a zero-width match so the words
+    // keep the spacing that separated them.
+    foreach (string word in Regex.Split(piece, @"(?<=\s)(?=\S)"))
+    {
+        if (Encoding.UTF8.GetByteCount(word) <= maxBytes)
+        {
+            yield return word;
+            continue;
+        }
+
+        // Nothing left to break on. Cut by character count, stepping back off a
+        // surrogate pair so a cut never lands inside one astral character and
+        // produces a lone surrogate that encodes as replacement bytes.
+        int start = 0;
+        while (start < word.Length)
+        {
+            int take = Math.Min(word.Length - start, maxBytes);
+
+            while (take > 1 && Encoding.UTF8.GetByteCount(word.AsSpan(start, take)) > maxBytes)
+                take--;
+
+            if (take > 1 && char.IsHighSurrogate(word[start + take - 1])) take--;
+
+            yield return word.Substring(start, take);
+            start += take;
+        }
+    }
+}
+
 /// Rewrite the things that read badly when spoken aloud.
 static string Clean(string text)
 {
@@ -113,3 +350,6 @@ static string Clean(string text)
     text = Regex.Replace(text, "(={2,}|-{2,})", string.Empty);
     return text;
 }
+
+/// One file's worth of work: the source, and the requests it was split into.
+internal sealed record Job(string File, IReadOnlyList<string> Chunks);

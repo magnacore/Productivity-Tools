@@ -5,8 +5,13 @@
 #:include utilities.cs
 
 // Split text files into size-bounded parts, cutting only at sentence ends so no
-// part begins mid-thought. Sized for the Google TTS request limit by default,
-// which is why text-to-speech wants its input through here first.
+// part begins mid-thought.
+//
+// text-to-speech no longer needs this as a first step: it chunks internally for the
+// 5,000 character request limit and joins the audio back together. What it will not
+// do is exceed its own 10,000 character spending cap, so this is still how a long
+// document is broken up small enough to be spoken -- and it is what the refusal
+// message points at.
 
 using System.Text.RegularExpressions;
 
