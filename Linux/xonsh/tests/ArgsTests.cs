@@ -74,4 +74,65 @@ public class ArgsTests
         // A comma-decimal locale must not turn 1.5 into 15.
         Assert.Equal(1.5, Parse("-s", "1.5").Dbl("speed"), 3);
     }
+
+    // Nothing type-checks an option -- Args stores every value as a string -- so a
+    // mistyped number reaches the tool being driven unless Int/Dbl catch it. That is
+    // not hypothetical: epub-convert-multiple handing ebook-convert
+    // "--custom-size 0x968" does not fail, it hangs.
+
+    [Fact]
+    public void Int_FallsBackToDeclaredDefault_WhenValueIsNotANumber()
+    {
+        ArgVals a = new Args("t", "")
+            .Opt("-w", "--width", @default: "946")
+            .Parse(["-w", "abc"]);
+
+        Assert.Equal(946, a.Int("width"));
+    }
+
+    [Fact]
+    public void Int_PrefersASuppliedValue_OverTheDeclaredDefault()
+    {
+        ArgVals a = new Args("t", "")
+            .Opt("-w", "--width", @default: "946")
+            .Parse(["-w", "800"]);
+
+        Assert.Equal(800, a.Int("width"));
+    }
+
+    [Fact]
+    public void Int_UsesTheDeclaredDefault_WhenTheOptionIsAbsent()
+    {
+        ArgVals a = new Args("t", "").Opt("-w", "--width", @default: "946").Parse([]);
+
+        Assert.Equal(946, a.Int("width"));
+    }
+
+    [Fact]
+    public void Int_UsesTheCallerFallback_WhenNoDefaultWasDeclared()
+    {
+        ArgVals a = new Args("t", "").Opt("-w", "--width").Parse(["-w", "abc"]);
+
+        Assert.Equal(7, a.Int("width", 7));
+    }
+
+    [Fact]
+    public void Int_UsesTheCallerFallback_WhenTheDeclaredDefaultIsNotANumber()
+    {
+        ArgVals a = new Args("t", "")
+            .Opt("-w", "--width", @default: "wide")
+            .Parse(["-w", "abc"]);
+
+        Assert.Equal(7, a.Int("width", 7));
+    }
+
+    [Fact]
+    public void Dbl_FallsBackToDeclaredDefault_WhenValueIsNotANumber()
+    {
+        ArgVals a = new Args("t", "")
+            .Opt("-v", "--volume", @default: "0.4")
+            .Parse(["-v", "loud"]);
+
+        Assert.Equal(0.4, a.Dbl("volume"));
+    }
 }

@@ -7,7 +7,7 @@ the plain-git equivalents are given below — they are what the helper runs anyw
 
 | Branch | Holds |
 | --- | --- |
-| `main` | Only what is installed and known to work. Every commit is a release and carries a tag. Never commit here directly. |
+| `main` | Known-good releases. Every commit is a release and carries a tag. Never commit here directly. |
 | `develop` | Integration branch. Work lands here first and sits until it is released. |
 
 `main` is the revert point: `git switch main` gets you a state that ran.
@@ -50,7 +50,8 @@ git merge --no-ff release/1.1.0
 git branch -d release/1.1.0
 ```
 
-Then install from `main`.
+Nothing to install afterwards — `~/.local/bin` is a symlink to this directory, so
+whatever is checked out here is what runs. Leave `develop` checked out for daily use.
 
 ## Hotfix branches
 
@@ -143,12 +144,28 @@ type is named once rather than twice.
 Adding a check is usually cheaper than the bug it prevents. The `--dry-run` one found a
 real gap the first time it ran.
 
-## What this repository does not cover
+## The working tree is live
 
-Installation. These programs run from `~/.local/bin`, and copying them there is a
-separate, manual step. A file edited here has no effect until it is installed — and
-`utilities.cs` and `tui.cs` must be installed alongside, since every program is
-compiled with them.
+`~/.local/bin` is a symlink to this directory. Not a copy of it — the same inode. So
+there is no install step and never was: an edit takes effect the moment it is saved,
+and `git switch` changes the running toolset underneath whoever is using it.
+
+Three things follow, all of which have bitten:
+
+- A half-written or broken file breaks the running system immediately. Stripping the
+  `#!/bin/sh` line off five programs left them unrunnable until someone noticed.
+- A branch checkout silently changes behaviour mid-session. An experiment that
+  changed a default page size was live in the file manager while it was checked out.
+- Undoing an experiment needs no reinstall, because nothing was ever copied anywhere.
+  Deleting the branch is the whole of the undo.
+
+So do risky or bulk work in a worktree rather than in place:
+
+```sh
+git worktree add ../CS-work feature/x     # CS/ stays on develop, tools untouched
+```
+
+## What this repository does not cover
 
 The xonsh originals in `../Xonsh` are not tracked here. They are the reference for
 what the ported behaviour is supposed to be, and worth keeping for that reason.

@@ -194,18 +194,21 @@ Build output goes to `~/.local/share/dotnet/runfile` (~2 MB per program).
 
 ## Installing
 
-Not done for you, by design. When you want it:
+There is nothing to install, and on this machine nothing was:
 
 ```sh
-for f in <program-names>; do ln -sfn "$PWD/$f" ~/.local/bin/"$f"; done
-ln -sfn "$PWD/utilities.cs" ~/.local/bin/utilities.cs
-ln -sfn "$PWD/tui.cs"       ~/.local/bin/tui.cs
-ln -sfn "$PWD/global.json"  ~/.local/bin/global.json
+ln -sfn "$PWD" ~/.local/bin        # the whole directory, one symlink
 ```
 
-`utilities.cs`, `tui.cs` and `global.json` must be alongside the symlinks:
-`#:include` resolves relative to the **entry file's own directory**, which for a
-symlinked program is `~/.local/bin`, not this folder.
+`~/.local/bin` *is* this folder. Editing a program here changes the command that
+runs, immediately — no copy, no build step, no way to be out of date. It also means
+a broken file in this tree is a broken command on the system, so keep the tree
+working and do experiments in a `git worktree`.
+
+Linking the directory rather than each file also settles `#:include` for free.
+Include paths resolve relative to the **entry file's own directory**, so a
+per-program symlink would need `utilities.cs`, `tui.cs` and `global.json` copied or
+linked next to it; with the directory linked they are already there.
 
 Note that these share names with the xonsh originals. Whichever comes first on
 `PATH` wins, so install deliberately.

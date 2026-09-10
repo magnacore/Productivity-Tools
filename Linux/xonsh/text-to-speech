@@ -6,7 +6,8 @@
 #:include utilities.cs
 
 // Read text files aloud with Google's Wavenet voices and save the result as
-// Opus audio in a Matroska container.
+// Opus audio in a Matroska container -- .mka, the audio-only Matroska extension,
+// since there is no video track here.
 //
 // The text is scrubbed first: markup, decoration and boilerplate that reads
 // badly out loud is either removed or rewritten into something speakable.
@@ -138,7 +139,7 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} f
         $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{job.File} ({job.Chunks.Count} req):"))}[/]",
         job.Chunks.Count + 1);
 
-    string outputFilename = Fs.SplitExt(job.File).Name + ".mkv";
+    string outputFilename = Fs.SplitExt(job.File).Name + ".mka";
 
     // Every chunk of every file gets its own directory, so three files in flight
     // cannot tread on each other's parts.
@@ -200,10 +201,16 @@ return Ui.Done(failures);
 /// codec and sample rate and can simply be laid end to end. It overwrites an
 /// existing output silently, which is what this program has always done.
 ///
-/// This is also what makes the .mkv name honest. Before chunking there was only ever
-/// one part, and it was written straight to disk -- so the file was Ogg carrying a
-/// .mkv extension. Players sniff the content and never minded, but a single Ogg
-/// stream is not something more parts can be appended to.
+/// The output is .mka rather than .mkv: same container either way, but .mka is the
+/// extension for a Matroska holding audio and no video, which is what this is. The
+/// suite already draws that line -- media-split-equal picks .mkv or .mka by whether
+/// the source has video, and Fs.IsAudio knows .mka by name because /etc/mime.types
+/// does not.
+///
+/// Going through mkvmerge is also what makes the extension honest at all. Before
+/// chunking there was only ever one part, written straight to disk, so the file was
+/// Ogg carrying a Matroska extension. Players sniff the content and never minded, but
+/// a single Ogg stream is not something more parts can be appended to.
 static bool Join(IReadOnlyList<string> parts, string output)
 {
     List<string> args = ["-q", "-o", output, parts[0]];

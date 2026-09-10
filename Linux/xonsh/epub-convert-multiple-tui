@@ -44,7 +44,7 @@ switch (format.Value)
     case 0:
         int? size = Dlg.Choose(
             "Choose page size", "What is the output file dimensions?",
-            "Ranger preview",
+            "Canger preview",
             "A4 page @300 DPI");
 
         if (size is null)

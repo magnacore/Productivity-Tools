@@ -2318,8 +2318,9 @@ internal sealed class Args
         HashSet<string> present = new(StringComparer.Ordinal);
         List<string> loose = new();
 
+        Dictionary<string, string> declared = new(StringComparer.Ordinal);
         foreach (Spec spec in _specs)
-            if (spec.Default is not null) values[spec.Key] = spec.Default;
+            if (spec.Default is not null) values[spec.Key] = declared[spec.Key] = spec.Default;
 
         bool optionsDone = false;
 
@@ -2397,7 +2398,7 @@ internal sealed class Args
         if (_rest is null && rest.Count > 0)
             Fail($"unrecognized arguments: {string.Join(' ', rest)}");
 
-        return new ArgVals(values, present, positional, rest);
+        return new ArgVals(values, present, positional, rest, declared);
     }
 
     private static void Consume(Spec spec, string? attached, string[] argv, ref int i,
@@ -2507,12 +2508,19 @@ internal sealed class ArgVals
     private readonly HashSet<string> _present;
     private readonly Dictionary<string, string> _positional;
 
+    /// The defaults as declared, kept apart from _values because a supplied value
+    /// overwrites the default there. Int and Dbl need the original back when what the
+    /// user supplied is not a number at all.
+    private readonly Dictionary<string, string> _defaults;
+
     internal ArgVals(Dictionary<string, string> values, HashSet<string> present,
-                     Dictionary<string, string> positional, List<string> rest)
+                     Dictionary<string, string> positional, List<string> rest,
+                     Dictionary<string, string>? defaults = null)
     {
         _values = values;
         _present = present;
         _positional = positional;
+        _defaults = defaults ?? new Dictionary<string, string>(StringComparer.Ordinal);
         Rest = rest;
     }
 
@@ -2538,13 +2546,40 @@ internal sealed class ArgVals
         return _values.TryGetValue(name, out string? v) ? v : null;
     }
 
+    /// The option as a whole number.
+    ///
+    /// A value that will not parse falls back to the option's own declared default
+    /// before it falls back to `fallback`, so mistyping "-w abc" behaves exactly like
+    /// omitting -w. Nothing type-checks an option -- Args stores every value as a
+    /// string -- so this is the only thing standing between a typo and a nonsense
+    /// number reaching the tool being driven. epub-convert-multiple passing
+    /// "--custom-size 0x968" to ebook-convert does not fail; it hangs.
+    ///
+    /// This is also why callers need not repeat the default as `fallback`. Writing it
+    /// twice used to be the only way to get this behaviour, which meant editing the
+    /// declared default silently left a stale second copy behind.
     public int Int(string name, int fallback = 0)
-        => int.TryParse(Str(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out int v)
-            ? v : fallback;
+    {
+        if (int.TryParse(Str(name), NumberStyles.Integer, CultureInfo.InvariantCulture,
+                         out int v)) return v;
 
+        return int.TryParse(DeclaredDefault(name), NumberStyles.Integer,
+                            CultureInfo.InvariantCulture, out int d) ? d : fallback;
+    }
+
+    /// The option as a decimal, falling back the same way Int does.
     public double Dbl(string name, double fallback = 0)
-        => double.TryParse(Str(name), NumberStyles.Float, CultureInfo.InvariantCulture, out double v)
-            ? v : fallback;
+    {
+        if (double.TryParse(Str(name), NumberStyles.Float, CultureInfo.InvariantCulture,
+                            out double v)) return v;
+
+        return double.TryParse(DeclaredDefault(name), NumberStyles.Float,
+                               CultureInfo.InvariantCulture, out double d) ? d : fallback;
+    }
+
+    /// What the option was declared with, or null if it was declared without one.
+    private string? DeclaredDefault(string name)
+        => _defaults.TryGetValue(name.TrimStart('-'), out string? d) ? d : null;
 
     /// argparse's str2bool: "yes/true/t/y/1/on" are true, everything else false.
     public bool Bool(string name, bool fallback = false)

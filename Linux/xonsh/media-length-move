@@ -15,7 +15,7 @@ ArgVals a = new Args("media-length-move", "Bundle media files into a folder base
     .Flag("-n", "--dry-run", help: "Show the selection without moving anything")
     .Parse(args);
 
-int durationMinutes = a.Int("duration", 180);
+int durationMinutes = a.Int("duration");
 bool sortByTime = a.Bool("sort", true);
 bool dryRun = a.Flag("dry-run");
 

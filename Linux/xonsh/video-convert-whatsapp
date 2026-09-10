@@ -15,7 +15,7 @@ ArgVals a = new Args("video-convert-whatsapp", "Convert videos for sharing on Wh
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
-int bitrate = a.Int("bitrate", 500);
+int bitrate = a.Int("bitrate");
 string timestamp = Fs.Timestamp();
 
 Ui.Begin("Convert videos for sharing on WhatsApp");

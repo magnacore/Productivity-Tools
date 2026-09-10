@@ -25,7 +25,7 @@ ArgVals a = Jobs.Add(new Args("epub-convert-multiple", "Convert EPUBs to PDF or 
 IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
 
 string outputFormat = a.Str("output_format");
-string dimension = $"{a.Int("width", 946)}x{a.Int("length", 968)}";
+string dimension = $"{a.Int("width")}x{a.Int("length")}";
 string fontSize = a.Str("font_size");
 string margin = a.Str("margin");
 

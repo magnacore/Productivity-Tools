@@ -31,7 +31,8 @@ foreach (string file in allFiles)
 
     (string? filename, string _) = Fs.SplitExt(file);
     string textFilename = filename + ".txt";
-    string outputAudioFilename = filename + ".mkv";
+    // Must match what text-to-speech writes: .mka, audio-only Matroska.
+    string outputAudioFilename = filename + ".mka";
 
     Ui.Info($"Extracting text from {file}...");
     if (Proc.Call("pdf-convert-text", file) != 0 || !File.Exists(textFilename))

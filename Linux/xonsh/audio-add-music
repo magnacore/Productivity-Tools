@@ -41,10 +41,10 @@ if (!Fs.IsAudio(input1) && !Fs.IsAudio(input2))
     return 1;
 }
 
-double volume = Math.Clamp(a.Dbl("volume", 0.4), 0.01, 1.0);
+double volume = Math.Clamp(a.Dbl("volume"), 0.01, 1.0);
 
 // The mpv playback speeds this collection is listened at.
-double playbackSpeed = Math.Clamp(a.Dbl("speed", 1.5), 0.5, 4.0);
+double playbackSpeed = Math.Clamp(a.Dbl("speed"), 0.5, 4.0);
 
 // --music names one of the two inputs; whichever it is, the other is the speech.
 string backgroundMusic = a.Str("music");
