@@ -201,9 +201,10 @@ ln -sfn "$PWD" ~/.local/bin        # the whole directory, one symlink
 ```
 
 `~/.local/bin` *is* this folder. Editing a program here changes the command that
-runs, immediately — no copy, no build step, no way to be out of date. It also means
-a broken file in this tree is a broken command on the system, so keep the tree
-working and do experiments in a `git worktree`.
+runs, immediately — no copy, no build step, no way to be out of date. Checking out a
+feature branch is therefore how you try it: everything picks it up at once. The other
+side of that is that a broken file here is a broken command on the system, so run
+`./check.sh` after any bulk edit.
 
 Linking the directory rather than each file also settles `#:include` for free.
 Include paths resolve relative to the **entry file's own directory**, so a

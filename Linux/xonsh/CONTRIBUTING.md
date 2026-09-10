@@ -150,20 +150,18 @@ real gap the first time it ran.
 there is no install step and never was: an edit takes effect the moment it is saved,
 and `git switch` changes the running toolset underneath whoever is using it.
 
-Three things follow, all of which have bitten:
+Two things follow, and they pull in opposite directions:
 
-- A half-written or broken file breaks the running system immediately. Stripping the
-  `#!/bin/sh` line off five programs left them unrunnable until someone noticed.
-- A branch checkout silently changes behaviour mid-session. An experiment that
-  changed a default page size was live in the file manager while it was checked out.
-- Undoing an experiment needs no reinstall, because nothing was ever copied anywhere.
-  Deleting the branch is the whole of the undo.
+- **This is how you test.** Check a feature branch out here and the file manager, the
+  shell aliases and everything else immediately use it. Nothing to install, nothing to
+  point anywhere. Deleting the branch is the whole of the undo.
+- **So never leave the tree broken.** A half-written file is a broken command on the
+  system, not a broken file in a sandbox. A script that stripped the `#!/bin/sh` line
+  off five programs left them unrunnable until someone noticed.
 
-So do risky or bulk work in a worktree rather than in place:
-
-```sh
-git worktree add ../CS-work feature/x     # CS/ stays on develop, tools untouched
-```
+The second is a discipline, not a reason to work somewhere else: after any bulk or
+scripted edit, run `./check.sh` before moving on. Its `--help works for every program`
+invariant catches precisely that failure.
 
 ## What this repository does not cover
 
