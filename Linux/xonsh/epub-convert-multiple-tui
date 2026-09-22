@@ -10,13 +10,6 @@
 //
 // Picks the output shape, then delegates. Nothing is converted here.
 //
-// epub-split is the one xonsh script kept as-is: its chapter chunking —
-// splitting XHTML on tag boundaries, reopening the ancestors it cut through,
-// re-injecting the <head> metadata ebooklib drops, copying only referenced
-// media — works, and reimplementing it would risk subtly broken books. It is
-// invoked through the xonsh interpreter explicitly, so it does not matter
-// whether the file happens to be executable.
-
 ArgVals a = new Args("epub-convert-multiple-tui", "Choose an EPUB conversion in a dialog, then run it")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Epubs to process")
@@ -80,58 +73,4 @@ if (a.Flag("dry-run"))
     return 0;
 }
 
-// epub-split is xonsh, so run it under xonsh. Everything else here is a sibling
-// C# program and goes through the normal PATH/sibling lookup.
-if (program == "epub-split")
-{
-    string? script = FindXonsh("epub-split");
-    if (script is null)
-    {
-        Ui.Err("Could not find the xonsh epub-split.");
-        Ui.Line("[dim]Looked beside this script and in ~/.local/bin.[/]");
-        Snd.Error();
-        return 1;
-    }
-
-    int code = Proc.Run("/opt/anaconda3/envs/xonsh/bin/xonsh", [script, .. callArgs]);
-
-    // The notification is played here rather than inside the xonsh script.
-    // Backgrounded from xonsh, a helper process writes terminfo escapes to the
-    // terminal after the script has exited, landing in a file manager's redrawn
-    // UI. Snd goes straight to ffplay from this foreground process instead.
-    if (code == 0) Snd.Success(); else Snd.Error();
-    return code;
-}
-
 return Proc.Call(program, callArgs);
-
-/// Locate a xonsh script, checking that it really is one.
-///
-/// The shebang check matters because a C# program of the same name may sit in the
-/// same directory: handing a C# file to xonsh gets a SyntaxError on its first
-/// // comment.
-static string? FindXonsh(string name)
-{
-    foreach (string? candidate in new[]
-             {
-                 Path.Combine(Paths.ScriptDir, name),
-                 Path.Combine(Paths.ScriptDir, "..", "Xonsh", name),
-                 Path.Combine(Paths.LocalBin, name),
-             })
-    {
-        string full;
-        try { full = Path.GetFullPath(candidate); }
-        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex)) { continue; }
-
-        if (!File.Exists(full)) continue;
-
-        try
-        {
-            string shebang = File.ReadLines(full).FirstOrDefault() ?? string.Empty;
-            if (shebang.Contains("xonsh", StringComparison.OrdinalIgnoreCase)) return full;
-        }
-        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex)) { }
-    }
-
-    return null;
-}

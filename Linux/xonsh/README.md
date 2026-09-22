@@ -291,11 +291,12 @@ land in the middle of its UI, and the trailing reset un-sets the keypad mode the
 file manager just set for itself. Measured: 21 bytes of escape sequences arriving
 after the foreground command exited; with stdout on `/dev/null`, zero.
 
-That is enough when the caller is `/bin/sh`. It is **not** enough under xonsh,
-whose job control still lets the escapes through — measured at 14 bytes even with
-the redirect in place. So the xonsh `epub-split` plays no sound at all;
-`epub-convert-multiple-tui` plays it afterwards, from the foreground, where `Snd`
-reaches `ffplay` directly and writes nothing.
+That is enough when the caller is `/bin/sh`. It was **not** enough under xonsh,
+whose job control let the escapes through — measured at 14 bytes even with the
+redirect in place. That was why `epub-split` played no sound of its own and
+`epub-convert-multiple-tui` played one for it. Now that nothing here runs under
+xonsh, the question is moot: every program ends in `Ui.Done`, which reaches
+`ffplay` directly from the foreground and writes nothing to the terminal.
 
 
 ## Rules after external output
@@ -350,7 +351,7 @@ Measured on this machine:
 | `epub-convert-multiple`, four epubs to PDF | 7.6 s | 2.5 s at `-j 4` | 3.1× |
 | `image-watermark-tui`, eight 1200×900 images | 7.6 s | 1.7 s at `-j 8` | 4.4× |
 | `pdf-split`, seven 60-page PDFs | 1.9 s | 0.9 s at `-j 8` | 2.2× |
-| `epub-split` (xonsh), six epubs → 162 parts | 3.4 s | 1.0 s at `-j 6` | 3.5× |
+| `epub-split`, six epubs → 412 parts | 4.8 s | 1.6 s at `-j 6` | 3.0× |
 | `epub-convert-multiple`, six epubs → PDF | 17.1 s | 4.5 s at `-j 6` | 3.8× |
 
 The binaries these drive (Opus, cwebp, tesseract, pdftotext, Calibre, magick) each
@@ -364,8 +365,7 @@ enough of both to be worth overlapping.
 ### One display for every parallel program
 
 Anything with `-j` uses the same **nested** display, via `Ui.Track2`: a bar per item
-on top, and the overall bar pinned underneath. (The xonsh `epub-split` matches it
-with rich's equivalent.) A single shared bar tells you how many items are done but
+on top, and the overall bar pinned underneath. A single shared bar tells you how many items are done but
 not which are running, which reads as though nothing is happening in parallel at all
 — so every one of these programs shows what is in flight.
 
@@ -577,22 +577,33 @@ Deliberate, all of them:
 - **Parallelism** where the work is independent: `media-length`, `media-length-tag`,
   `image-convert`, `image-convert-text`, `pdf-convert-text`.
 - **`--help` and `--dry-run`** on programs that previously had neither.
-- **`epub-split` is left in xonsh**, sitting in this folder alongside the C#
-  programs (with `utilities.xsh` beside it). Its EPUB chunking — cutting XHTML on
-  tag boundaries, reopening ancestor elements across the cut, re-injecting
-  `<head>` metadata, copying only referenced media — works, and reimplementing it
-  would risk producing subtly broken books for no gain.
-  `epub-convert-multiple-tui` invokes it through the xonsh interpreter explicitly,
-  checking the shebang first so a same-named C# file can never be handed to xonsh.
+- **`epub-split` is C# too**, which retired the last xonsh script and `utilities.xsh`
+  with it. Reading is VersOne.Epub's job; the EPUB writer is hand-rolled on
+  `ZipArchive` and `XDocument`, because the OCF container has rules a general library
+  need not respect -- `mimetype` first and stored uncompressed -- and because each
+  part needs a manifest listing only what it actually contains.
 
-  It does, however, match the C# programs' behaviour: it takes `-j/--jobs` with the
-  same machine-derived default, splits books concurrently on a thread pool (zlib and
-  lxml release the GIL for the heavy work, so this is a real 3.5× on six books), and
-  draws the same nested display — a bar per book with an overall bar underneath. Two
-  things used to corrupt that display and are now handled: ebooklib triggers an lxml
-  `FutureWarning` on every `read_epub`, which is silenced before ebooklib is
-  imported; and `file-tag-percentage` draws its own progress bar, so it is run as a
-  plain subprocess with its output discarded rather than through xonsh's
-  `@()` form — which also makes it safe to call from a worker thread.
+  Porting it was worth doing for reasons that only showed up once epubcheck was
+  pointed at the old output: not one part it produced was valid. It omitted `dc:title`,
+  `dc:language` and the required `nav` item; it treated `nav.xhtml` as a chapter and
+  split that too; and, worst, ebooklib rebuilt each chapter through an HTML parser,
+  lowercasing attribute names. SVG's `viewBox` became `viewbox` and
+  `preserveAspectRatio` became `preserveaspectratio`, both case-sensitive, so cover
+  scaling broke silently. Readers never complained; the validator did.
+
+  The C# version never re-serialises the markup. Chunks are cut from the original text
+  and pasted back between its own prelude and postlude, so what lands on disk is the
+  source's own bytes. Resources keep their original paths and their original bytes, so
+  every relative reference still resolves -- including the ones inside stylesheets,
+  which are scanned for `url(...)` so a CSS background image is not left dangling.
+  Obfuscated fonts survive too: `META-INF/encryption.xml` is carried over and the
+  identifier it keys off is preserved.
+
+  Measured against the three books in a twelve-book sample that were already valid --
+  the other nine fail epubcheck as they ship -- structural errors went from 70 to zero,
+  and clean parts from 0/25 to 12/25. What remains are cross-references whose targets
+  now live in another part, which is inherent to splitting and cannot be fixed without
+  rewriting links inside the markup, at the cost of the byte-exactness above.
+
 - **`fontpreview-ueberzug`** is copied unchanged. It was already a POSIX shell
   script driving fzf and ImageMagick, not Python.

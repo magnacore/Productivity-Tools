@@ -1,479 +1,672 @@
-#!/opt/anaconda3/envs/xonsh/bin/xonsh
+#!/bin/sh
+//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package VersOne.Epub@3.3.6
+#:property Configuration=Release
+#:include utilities.cs
 
-import os
-import re
-import argparse
-import subprocess
-import warnings
+// Split EPUBs into byte-bounded parts, each one a complete, valid EPUB.
+//
+// The hard requirement is fidelity: a part must render exactly as the source did.
+// Two rules deliver that, and everything else follows from them.
+//
+// The chapter markup is never re-serialised. Chunks are cut out of the original
+// text and pasted back between the original prelude and postlude, so what is
+// written is the source's own bytes. The xonsh predecessor went through ebooklib,
+// which rebuilds the document with an HTML parser and lowercases attribute names --
+// turning SVG's case-sensitive viewBox into viewbox and preserveAspectRatio into
+// preserveaspectratio, which breaks cover scaling. epubcheck caught it; readers do
+// not.
+//
+// Resources keep their original paths and their original bytes. Stylesheets, fonts
+// and scripts are copied byte-for-byte to the same location inside the container, so
+// every relative reference in the markup -- href="../styles/main.css", url(fonts/x.otf)
+// inside that CSS -- still resolves. Rewriting paths would mean rewriting every
+// reference to them, including ones inside stylesheets.
+//
+// Reading is VersOne.Epub's job: it knows EPUB 2 and 3, spine order, and where the
+// package document lives. Writing is done here, because the OCF container has rules
+// a general library need not respect -- mimetype first and stored uncompressed -- and
+// because a part needs a freshly built manifest listing only what it actually
+// contains.
 
-# ebooklib asks lxml for '//xmlns:rootfile[@media-type]', which lxml warns about on
-# every read_epub. That is one multi-line FutureWarning per book, on stderr, landing
-# in the middle of the live progress display and breaking it. Nothing here acts on
-# FutureWarnings, so switch them off before ebooklib is imported.
-warnings.simplefilter("ignore", FutureWarning)
+using System.IO.Compression;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using VersOne.Epub;
+using VersOne.Epub.Schema;
+using static Vocabulary;
 
-import ebooklib as eb
-from ebooklib import epub
-from rich.console import Console, Group
-from rich.live import Live
-from rich.progress import (
-    Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn,
-)
-from rich import print
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import sys
+ArgVals a = Jobs.Add(new Args("epub-split", "Split EPUBs into parts of N kilobytes")
+    .Opt("-s", "--sizekb", @default: "10", help: "Split size in KB")
+    .Rest("files", min: 1, help: "Epubs to split"))
+    .Parse(args);
 
-myhome = os.path.expanduser('~')
-sys.path.append(f"{myhome}/.local/bin")
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+double sizeKb = Math.Max(a.Dbl("sizekb"), 0.5);
 
-# No notification sound is played from here, deliberately.
-#
-# This script used to end with "audio-play ... &". Backgrounded from xonsh, that
-# child writes terminfo escapes to the terminal a moment AFTER this script has
-# exited — by which time a file manager has redrawn its UI, so they land in the
-# middle of it and reset the keypad mode it just set for itself. (Backgrounded
-# from /bin/sh the same command is silent; it is xonsh's job control that lets it
-# through.)
-#
-# epub-convert-multiple-tui plays the sound instead, in the foreground, once this
-# has finished.
+Ui.Begin("Splitting epubs...");
 
-from utilities import get_mime, get_filename_extension
+List<string> epubs = allFiles.Where(Fs.IsEpub).ToList();
+foreach (string skipped in allFiles.Where(f => !Fs.IsEpub(f)))
+    Ui.Warn($"Skipping {skipped}");
 
-console = Console()
+if (epubs.Count == 0) return Ui.NoFiles("No EPUBs selected!");
 
-# HTML void elements -- tags that never have a closing form, so they
-# must not be pushed onto the open-tag stack.
-VOID_ELEMENTS = {
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-    'link', 'meta', 'source', 'track', 'wbr',
+int failures = 0;
+
+// A bar per book counting its chapters, with the overall bar pinned underneath.
+// Each worker touches only its own book and its own output folder, so nothing here
+// is shared between them.
+Ui.Track2(epubs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Split {epubs.Count} epub(s):"))}[/]",
+          (file, addBar) =>
+{
+    try
+    {
+        if (!SplitOne(file, sizeKb, addBar)) Interlocked.Increment(ref failures);
+    }
+    catch (Exception ex)
+    {
+        Ui.Line($"[bold red]Could not split {Ui.Esc(file)}: {ex.Message}[/]");
+        Interlocked.Increment(ref failures);
+    }
+}, Jobs.From(a));
+
+return Ui.Done(failures);
+
+/// Split one book. Returns false if anything went wrong with it.
+static bool SplitOne(string file, double sizeKb, Func<string, int, Action<double>> addBar)
+{
+    string stem = Fs.SplitExt(file).Name;
+    Directory.CreateDirectory(stem);
+
+    EpubBook book = EpubReader.ReadBook(file);
+    using ZipArchive source = ZipFile.OpenRead(file);
+
+    SourceInfo info = SourceInfo.From(book, source);
+
+    Action<double> advance = addBar(
+        $"[bold cyan]{Ui.Esc(Ui.FitDescription(Path.GetFileName(file) + ":"))}[/]",
+        Math.Max(book.ReadingOrder.Count, 1));
+
+    int partNumber = 0;
+
+    foreach (EpubLocalTextContentFile chapter in book.ReadingOrder)
+    {
+        // Raw bytes from the container, not VersOne's decoded string: a chapter that
+        // needs no splitting is then written back byte-identical.
+        ZipArchiveEntry? entry = source.GetEntry(chapter.FilePath);
+        if (entry is null) { advance(1); continue; }
+
+        byte[] original = ReadEntry(entry);
+        IReadOnlyList<string> chunks = SplitHtmlBySize(original, sizeKb);
+
+        for (int i = 0; i < chunks.Count; i++)
+        {
+            // One chunk means the chapter was under the limit, so hand back exactly
+            // what was read rather than a re-encoding of it.
+            byte[] chunkBytes = chunks.Count == 1
+                ? original
+                : new UTF8Encoding(false).GetBytes(chunks[i]);
+
+            partNumber++;
+            string output = Path.Combine(stem, $"{stem}-{partNumber:D3}.epub");
+
+            WritePart(output, source, info, chapter.FilePath, chunkBytes, chunks[i]);
+        }
+
+        advance(1);
+    }
+
+    if (partNumber == 0)
+    {
+        Ui.Line($"[bold red]No chapters found in {Ui.Esc(file)}[/]");
+        return false;
+    }
+
+    StampParts(file, stem);
+    return TagParts(stem);
 }
 
-TAG_NAME_RE = re.compile(r'<\s*([A-Za-z_][A-Za-z0-9_:.\-]*)')
-
-# Attributes that reference external manifest resources. Used to decide
-# which images / audio / video to copy into a given split.
-RESOURCE_ATTR_RE = re.compile(
-    r'''(?:src|href|xlink:href|poster|data)\s*=\s*(["'])([^"']+)\1''',
-    re.IGNORECASE,
-)
-
-# Helpers for pulling title / link / script back out of the original <head>.
-# ebooklib's EpubHtml.get_content() discards the <head> from the supplied
-# content and rebuilds it from self.title + self.links + self.metas, so we
-# have to re-inject anything we want preserved.
-ATTR_RE = re.compile(r'''([\w:][\w:.\-]*)\s*=\s*(["'])(.*?)\2''')
-HEAD_RE = re.compile(r'<head\b[^>]*>(.*?)</head>', re.IGNORECASE | re.DOTALL)
-TITLE_RE = re.compile(r'<title\b[^>]*>(.*?)</title>', re.IGNORECASE | re.DOTALL)
-LINK_RE = re.compile(r'<link\b([^>]*?)/?>', re.IGNORECASE)
-SCRIPT_RE = re.compile(r'<script\b([^>]*?)(?:/>|>.*?</script>)', re.IGNORECASE | re.DOTALL)
-
-
-def is_epub_html(variable):
-    return isinstance(variable, epub.EpubHtml)
-
-
-def split_html_by_size(html_bytes, split_after_kb):
-    """Split an XHTML chapter into byte-bounded, well-formed chunks.
-
-    Each returned chunk is a complete XHTML document that re-uses the original
-    document's prelude (XML decl, DOCTYPE, <html>, <head>, <body> open) and
-    its postlude (</body></html>). This keeps every chunk styled by the same
-    CSS / font <link>s as the original -- not just the first one.
-
-    Tag balance is maintained by flushing only at element boundaries (right
-    after a closing tag) and by closing any still-open ancestor tags at the
-    end of one chunk and reopening them at the start of the next.
-    """
-    chunk_limit = int(split_after_kb * 1024)
-    text = html_bytes.decode('utf-8', errors='replace')
-
-    body_open = re.search(r'<body\b[^>]*>', text, re.IGNORECASE)
-    body_close = text.rfind('</body>')
-
-    if not body_open or body_close < 0 or body_close < body_open.end():
-        # No usable body markers -- nothing safe to split, return unchanged.
-        return [html_bytes]
-
-    prelude = text[:body_open.end()]      # ... <html><head>...</head><body ...>
-    postlude = text[body_close:]          # </body>...</html>
-    body_inner = text[body_open.end():body_close]
-
-    overhead = len(prelude.encode('utf-8')) + len(postlude.encode('utf-8'))
-    available = max(chunk_limit - overhead, 1)
-
-    tokens = re.findall(r'<[^>]+>|[^<]+', body_inner)
-
-    chunks_inner = []
-    current = []
-    current_size = 0
-    open_stack = []  # list of raw opening-tag strings, used for reopen on split
-
-    for tok in tokens:
-        current.append(tok)
-        current_size += len(tok.encode('utf-8'))
-
-        if tok.startswith('</'):
-            # Closing tag -- pop the matching ancestor (best-effort by name).
-            if open_stack:
-                open_stack.pop()
-            # An element just ended: this is a safe place to flush.
-            if current_size >= available:
-                closing = ''.join(
-                    f'</{TAG_NAME_RE.match(t).group(1)}>'
-                    for t in reversed(open_stack)
-                    if TAG_NAME_RE.match(t)
-                )
-                reopening = ''.join(open_stack)
-                chunks_inner.append(''.join(current) + closing)
-                current = [reopening] if reopening else []
-                current_size = len(reopening.encode('utf-8'))
-        elif tok.startswith('<!') or tok.startswith('<?'):
-            # Comment / DOCTYPE / processing instruction -- no stack effect.
-            pass
-        elif tok.startswith('<'):
-            # Opening or self-closing tag.
-            is_self_close = tok.rstrip('>').rstrip().endswith('/')
-            m = TAG_NAME_RE.match(tok)
-            if m and not is_self_close and m.group(1).lower() not in VOID_ELEMENTS:
-                open_stack.append(tok)
-
-    if current:
-        chunks_inner.append(''.join(current))
-
-    return [(prelude + inner + postlude).encode('utf-8') for inner in chunks_inner]
-
-
-def referenced_resources(chunk_bytes):
-    """Return the set of resource paths (full path and basename) referenced
-    by src/href/xlink:href/poster/data attributes in a chunk."""
-    text = chunk_bytes.decode('utf-8', errors='replace')
-    refs = set()
-    for _, val in RESOURCE_ATTR_RE.findall(text):
-        refs.add(val)
-        refs.add(os.path.basename(val))
-    return refs
-
-
-def extract_head_metadata(html_bytes):
-    """Pull <title>, <link>, and <script src=...> out of the original
-    document's <head>. Returns (title_or_None, list_of_link_dicts).
-
-    Each link dict is suitable to splat into ebooklib's EpubHtml.add_link.
-    Script tags are returned in the same list with type='text/javascript' --
-    that's how ebooklib distinguishes them when it writes the new <head>.
-    """
-    text = html_bytes.decode('utf-8', errors='replace')
-    head_match = HEAD_RE.search(text)
-    if not head_match:
-        return None, []
-    head_inner = head_match.group(1)
-
-    title_match = TITLE_RE.search(head_inner)
-    title = title_match.group(1).strip() if title_match else None
-    if title == '':
-        title = None
-
-    def parse_attrs(s):
-        return {m.group(1): m.group(3) for m in ATTR_RE.finditer(s)}
-
-    links = []
-    for m in LINK_RE.finditer(head_inner):
-        attrs = parse_attrs(m.group(1))
-        if attrs.get('href'):
-            links.append(attrs)
-    for m in SCRIPT_RE.finditer(head_inner):
-        attrs = parse_attrs(m.group(1))
-        if attrs.get('src'):
-            attrs.setdefault('type', 'text/javascript')
-            links.append(attrs)
-
-    return title, links
-
-
-def run_percentage_tag(file_name):
-    """Hand this book's freshly written parts to file-tag-percentage.
-
-    A plain subprocess with its output discarded, rather than xonsh's
-    "file-tag-percentage @(files)" form, for two reasons. It draws its own progress
-    bar, which fought the live display here and left a trail of half-drawn "Tagging"
-    bars down the screen. And xonsh's subprocess syntax is not safe to call from a
-    worker thread, which is where this now runs.
-    """
-    all_files = os.listdir(f'./{file_name}')
-
-    # Matched on the exact shape the writer above produces -- "<stem>-NNN.epub" --
-    # and NOT with fnmatch, which reads its pattern as a glob. A book whose title
-    # contains glob punctuation therefore matched nothing: for
-    # "Animal Rights [2nd Edition]" the brackets became a character class, the list
-    # came back empty, and that book went untagged. It looked random only because it
-    # depended on which titles happened to be selected.
-    matching_files = sorted(f for f in all_files if is_part_of(f, file_name))
-
-    if not matching_files:
-        print(f"[bold red]No parts found to tag in {file_name}[/bold red]")
-        return 1
-
-    matching_files = [f"./{file_name}/{f}" for f in matching_files]
-
-    # Output captured rather than discarded, and the exit code checked. Discarding
-    # both is what let the failure above go unnoticed.
-    result = subprocess.run(['file-tag-percentage'] + matching_files,
-                            capture_output=True, text=True, check=False)
-
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or '').strip().splitlines()
-        print(f"[bold red]Could not tag the parts of {file_name}[/bold red]")
-        for line in detail[:3]:
-            print(f"[dim]    {line}[/dim]")
-        return 1
-
-    return 0
-
-
-PART_RE = re.compile(r'-\d{3,}\.epub$', re.IGNORECASE)
-
-
-def is_part_of(candidate, stem):
-    """True when `candidate` is one of `stem`'s parts: the stem, then "-NNN.epub".
-
-    A plain prefix test would also accept a different book whose title merely starts
-    with this one's.
-    """
-    if not candidate.startswith(stem):
-        return False
-
-    return PART_RE.fullmatch(candidate[len(stem):]) is not None
-
-
-def fit(text, width):
-    """Pad or middle-truncate to exactly `width` characters.
-
-    Every bar description is passed through this so they are all the same width,
-    which keeps the bars starting in the same column however long a book's name is.
-    Cut from the middle: two long titles are as often told apart by their tails as
-    their heads, and this keeps the extension and trailing colon.
-    """
-    if len(text) <= width:
-        return text.ljust(width)
-
-    keep = width - 1                       # one character for the ellipsis
-    head = (keep + 1) // 2                 # odd character to the head
-    return text[:head] + '\u2026' + text[len(text) - (keep - head):]
-
-
-def description_width():
-    """Two fifths of the terminal, bounded so the name is neither squeezed to
-    nothing nor allowed to crowd out the bar. Mirrors the C# programs."""
-    try:
-        columns = os.get_terminal_size().columns
-    except OSError:
-        columns = 100
-    return max(20, min(columns * 2 // 5, 56))
-
-
-def default_jobs():
-    """How many books to split at once, derived the same way the C# programs derive
-    their -j default: half the cores, capped by what free memory allows."""
-    cores = max(1, (os.cpu_count() or 2) // 2)
-    try:
-        with open('/proc/meminfo') as meminfo:
-            for line in meminfo:
-                if line.startswith('MemAvailable:'):
-                    megabytes = int(line.split()[1]) // 1024
-                    return max(1, min(cores, megabytes // 512))
-    except (OSError, ValueError, IndexError):
-        pass
-    return cores
-
-
-def stamp_parts(source, output_folder_name):
-    """Copy the source's mtime onto each part, one millisecond apart."""
-    try:
-        # Integer nanoseconds, not float seconds: adding 0.001 to a 1.5e9-second
-        # float lands on 0.000999927, which is still strictly ordered but needlessly
-        # imprecise. os.utime's ns form is exact.
-        source_ns = os.stat(source).st_mtime_ns
-    except OSError:
-        return
-
-    parts = sorted(
-        os.path.join(output_folder_name, name)
-        for name in os.listdir(output_folder_name)
-    )
-
-    for index, part in enumerate(parts):
-        try:
-            stamp_ns = source_ns + index * 1_000_000  # one millisecond apart
-            os.utime(part, ns=(stamp_ns, stamp_ns))
-        except OSError:
-            pass
-
-
-MEDIA_FILTERS = [eb.ITEM_IMAGE, eb.ITEM_AUDIO, eb.ITEM_VIDEO]
-
-
-def split_one(file, chunk_size, per_book, width):
-    """Split a single epub. Runs on a worker thread, touching only its own book and
-    its own output folder, so nothing here is shared with the other workers."""
-    output_folder_name, _ = get_filename_extension(file)
-    os.makedirs(output_folder_name, exist_ok=True)
-
-    book = epub.read_epub(file)
-    chapters = list(book.get_items_of_type(eb.ITEM_DOCUMENT))
-
-    # rich's Progress guards its own state with a lock, so adding a task and
-    # advancing it from a worker thread is safe.
-    task = per_book.add_task(
-        f"[bold cyan]{fit(os.path.basename(file) + ':', width)}[/bold cyan]",
-        total=max(len(chapters), 1),
-    )
-
-    i = 0
-    for chapter in chapters:
-        chapter_content = chapter.content
-        chapter_title = chapter.get_name()
-
-        # Pull the title + stylesheet/script links out of the original
-        # chapter's <head>. ebooklib will reconstruct the new <head> from
-        # these -- if we don't re-inject them, every chunk loses its CSS
-        # and reverts to the reader's default styling.
-        head_title, head_links = extract_head_metadata(chapter_content)
-
-        chunks = split_html_by_size(chapter_content, chunk_size)
-
-        for chunk in chunks:
-            new_book = epub.EpubBook()
-            new_chapter = epub.EpubHtml(
-                title=head_title or chapter_title.split(".")[0],
-                file_name=chapter_title,
-                content=chunk,
-            )
-            for link in head_links:
-                new_chapter.add_link(**link)
-
-            chunk_refs = referenced_resources(chunk)
-
-            # Copy non-HTML manifest items. Stylesheets / fonts / scripts /
-            # nav / etc. are copied unconditionally so every chunk renders
-            # with the same styling as the source. Media items are copied
-            # only when this chunk actually references them.
-            for item in book.get_items():
-                if is_epub_html(item):
-                    continue
-                if item.get_type() in MEDIA_FILTERS:
-                    name = item.get_name()
-                    if name in chunk_refs or os.path.basename(name) in chunk_refs:
-                        new_book.add_item(item)
-                else:
-                    new_book.add_item(item)
-
-            new_book.add_item(new_chapter)
-            new_book.toc = [new_chapter]
-            new_book.spine = [new_chapter]
-
-            output_file = os.path.join(
-                output_folder_name,
-                f"{output_folder_name}-{str(i+1).zfill(3)}.epub",
-            )
-            i += 1
-            epub.write_epub(output_file, new_book)
-
-        per_book.advance(task)
-
-    # Give every part the book's own date, offset a millisecond each.
-    #
-    # Two reasons. The parts are written now, so without this they cluster at
-    # "now" instead of sitting where the book did in a date-sorted listing. And
-    # several are written inside the same millisecond, so they end up with
-    # byte-identical timestamps — nothing for a sort to order them by, and a
-    # file manager's tie-break can then show part 003 before part 001.
-    stamp_parts(file, output_folder_name)
-
-    # Handed back so a tagging failure counts as a failure for this book rather than
-    # passing silently, which is how the glob bug above stayed hidden.
-    return run_percentage_tag(output_folder_name)
-
-
-def process_files(args):
-    width = description_width()
-
-    columns = (
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeRemainingColumn(elapsed_when_finished=True),
-    )
-
-    # Two Progress objects rather than one. A Group renders its members in order, so
-    # this puts the per-book bars on top and the overall bar underneath, and keeps it
-    # there as books come and go. When a run has more books than the terminal has
-    # rows, rich crops the top of the group, so the overall bar stays on screen where
-    # it can still be read.
-    per_book = Progress(*columns)
-    overall = Progress(*columns)
-
-    # get_mime calls mimetypes.init(), which rebuilds a module-global map. Filter
-    # here, on the main thread, rather than inside the workers.
-    epubs = [f for f in args.files
-             if get_mime(f, part=1) in ('epub', 'epub+zip')]
-
-    for skipped in [f for f in args.files if f not in epubs]:
-        print(f"[yellow]Skipping {skipped}[/yellow]")
-
-    if not epubs:
-        return 0
-
-    total = overall.add_task(
-        f"[bold cyan]{fit(f'Split {len(epubs)} epub(s):', width)}[/bold cyan]",
-        total=len(epubs),
-    )
-
-    failures = 0
-
-    with Live(Group(per_book, overall), refresh_per_second=12):
-        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-            futures = {pool.submit(split_one, f, args.sizekb, per_book, width): f
-                       for f in epubs}
-
-            # as_completed, not pool.map: map yields in submission order, which would
-            # hold the overall bar back behind whichever book happens to be slowest.
-            for future in as_completed(futures):
-                try:
-                    if future.result():
-                        failures += 1
-                except Exception as err:
-                    print(f"[bold red]Could not split {futures[future]}: {err}[/bold red]")
-                    failures += 1
-                overall.advance(total)
-
-    return failures
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Split an EPUB file into smaller parts.")
-    parser.add_argument('-s', '--sizekb', type=float, default=10.0, required=False, help="Split size in KB")
-    parser.add_argument('-j', '--jobs', type=int, default=default_jobs(), required=False,
-                        help="Books to split at once, 1 for one at a time "
-                             f"(default: {default_jobs()})")
-    parser.add_argument('files', nargs='+', help="Epubs to split")
-
-    # argparse prints usage and exits via SystemExit on bad args; intercept
-    # that so we can still play the error sound, then let it propagate.
-    try:
-        args = parser.parse_args()
-    except SystemExit as err:
-        if err.code not in (None, 0):
-            pass  # the caller reports failure; see the note at the top
-        raise
-
-    failures = process_files(args)
-
-    console.rule(style="cyan")
-
-    if failures:
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+/// Copy the book's date onto each part, a millisecond apart.
+///
+/// Two reasons. The parts are written now, so without this they cluster at "now"
+/// instead of sitting where the book did in a date-sorted listing. And several are
+/// written inside the same millisecond, so they would otherwise share a timestamp
+/// exactly -- nothing for a sort to order them by, and a file manager's tie-break can
+/// then show part 003 before part 001.
+static void StampParts(string source, string folder)
+{
+    string[] parts = Directory.GetFiles(folder);
+    Array.Sort(parts, StringComparer.Ordinal);
+
+    for (int i = 0; i < parts.Length; i++) Fs.CopyTimestamp(source, parts[i], i);
+}
+
+/// Hand this book's parts to file-tag-percentage.
+///
+/// Kept as a separate process on purpose -- these programs are meant to compose --
+/// and quiet, because it draws its own progress bar which would fight the live
+/// display here. The exit code is checked rather than discarded: swallowing it is how
+/// the predecessor's tagging bug stayed hidden for so long.
+static bool TagParts(string folder)
+{
+    List<string> parts = Directory.GetFiles(folder)
+        .Where(f => IsPartOf(Path.GetFileName(f), Path.GetFileName(folder)))
+        .OrderBy(f => f, StringComparer.Ordinal)
+        .ToList();
+
+    if (parts.Count == 0)
+    {
+        Ui.Line($"[bold red]No parts found to tag in {Ui.Esc(folder)}[/]");
+        return false;
+    }
+
+    if (Proc.Call("file-tag-percentage", parts, quiet: true) != 0)
+    {
+        Ui.Line($"[bold red]Could not tag the parts of {Ui.Esc(folder)}[/]");
+        return false;
+    }
+
+    return true;
+}
+
+/// True when a name is one of this book's parts: the stem, then "-NNN.epub".
+///
+/// Anchored rather than a bare prefix test, which would also accept a different book
+/// whose title merely starts with this one's.
+static bool IsPartOf(string candidate, string stem)
+    => candidate.StartsWith(stem, StringComparison.Ordinal)
+       && Regex.IsMatch(candidate[stem.Length..], @"^-\d{3,}\.epub$", RegexOptions.IgnoreCase);
+
+/// Split one XHTML chapter into byte-bounded, well-formed chunks.
+///
+/// Every chunk is a complete document reusing the original's prelude (XML
+/// declaration, DOCTYPE, html, head, body open) and postlude (body and html close).
+/// That is what keeps each chunk styled by the same CSS and font links as the
+/// original, rather than only the first one.
+///
+/// Balance is kept by flushing only at element boundaries -- immediately after a
+/// closing tag -- and by closing any still-open ancestors at the end of a chunk and
+/// reopening them at the start of the next.
+///
+/// Splitting the text and rejoining it reproduces the input exactly, so a chapter
+/// that fits in one chunk comes back unchanged.
+static IReadOnlyList<string> SplitHtmlBySize(byte[] html, double splitAfterKb)
+{
+    int chunkLimit = (int)(splitAfterKb * 1024);
+    string text = new UTF8Encoding(false).GetString(html);
+
+    Match bodyOpen = Regex.Match(text, @"<body\b[^>]*>", RegexOptions.IgnoreCase);
+    int bodyClose = text.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
+
+    // No usable body markers: nothing safe to split, so leave it alone.
+    if (!bodyOpen.Success || bodyClose < 0 || bodyClose < bodyOpen.Index + bodyOpen.Length)
+        return [text];
+
+    int bodyStart = bodyOpen.Index + bodyOpen.Length;
+    string prelude = text[..bodyStart];
+    string postlude = text[bodyClose..];
+    string bodyInner = text[bodyStart..bodyClose];
+
+    int overhead = Encoding.UTF8.GetByteCount(prelude) + Encoding.UTF8.GetByteCount(postlude);
+    int available = Math.Max(chunkLimit - overhead, 1);
+
+    List<string> chunks = [];
+    StringBuilder current = new();
+    int currentSize = 0;
+    List<string> openStack = [];   // raw opening tags, so they can be reopened verbatim
+
+    foreach (Match token in Regex.Matches(bodyInner, @"<[^>]+>|[^<]+"))
+    {
+        string tok = token.Value;
+        current.Append(tok);
+        currentSize += Encoding.UTF8.GetByteCount(tok);
+
+        if (tok.StartsWith("</", StringComparison.Ordinal))
+        {
+            // An element just ended: the one safe place to flush.
+            if (openStack.Count > 0) openStack.RemoveAt(openStack.Count - 1);
+
+            if (currentSize >= available)
+            {
+                StringBuilder closing = new();
+                for (int i = openStack.Count - 1; i >= 0; i--)
+                {
+                    string? name = TagName(openStack[i]);
+                    if (name is not null) closing.Append($"</{name}>");
+                }
+
+                string reopening = string.Concat(openStack);
+                chunks.Add(current.ToString() + closing);
+
+                current.Clear().Append(reopening);
+                currentSize = Encoding.UTF8.GetByteCount(reopening);
+            }
+        }
+        else if (tok.StartsWith("<!", StringComparison.Ordinal)
+                 || tok.StartsWith("<?", StringComparison.Ordinal))
+        {
+            // Comment, DOCTYPE or processing instruction: no effect on the stack.
+        }
+        else if (tok.StartsWith('<'))
+        {
+            bool selfClosing = tok.TrimEnd('>').TrimEnd().EndsWith('/');
+            string? name = TagName(tok);
+
+            if (name is not null && !selfClosing && !VoidElements.Contains(name))
+                openStack.Add(tok);
+        }
+    }
+
+    if (current.Length > 0) chunks.Add(current.ToString());
+
+    // A flush that lands on the last element leaves the trailing whitespace behind as
+    // a chunk of its own: a part whose body holds nothing but a newline. epubcheck
+    // rejects it ("element body incomplete"), and there would be nothing to read in
+    // it anyway.
+    chunks.RemoveAll(inner => !HasContent(inner));
+
+    return chunks.Count == 0
+        ? [text]
+        : chunks.Select(inner => prelude + inner + postlude).ToList();
+}
+
+/// Whether a chunk body would render anything at all.
+///
+/// Text counts, and so does any element that is itself the content -- an image, a
+/// figure, a rule. Markup alone does not: a lone reopened wrapper is an empty part.
+static bool HasContent(string inner)
+{
+    if (Regex.IsMatch(inner, @"<(img|svg|video|audio|object|iframe|hr|table|canvas)\b",
+                      RegexOptions.IgnoreCase)) return true;
+
+    return Regex.Replace(inner, @"<[^>]+>", string.Empty).Trim().Length > 0;
+}
+
+/// The element name out of a raw tag, or null if it does not look like one.
+static string? TagName(string tag)
+{
+    Match m = Regex.Match(tag, @"<\s*([A-Za-z_][A-Za-z0-9_:.\-]*)");
+    return m.Success ? m.Groups[1].Value : null;
+}
+
+/// The manifest resources a chunk actually points at, by full path and by bare name.
+static HashSet<string> ReferencedResources(string chunk)
+{
+    HashSet<string> refs = new(StringComparer.OrdinalIgnoreCase);
+
+    foreach (Match m in Regex.Matches(chunk,
+        @"(?:src|href|xlink:href|poster|data)\s*=\s*(""|')([^""']+)\1",
+        RegexOptions.IgnoreCase))
+    {
+        string value = m.Groups[2].Value;
+        refs.Add(value);
+        refs.Add(Path.GetFileName(value));
+    }
+
+    return refs;
+}
+
+// ── Writing ──────────────────────────────────────────────────────────────────
+
+/// An href relative to the package document, which is what the manifest wants.
+static string HrefFor(string zipPath, string opfDir)
+    => opfDir.Length > 0 && zipPath.StartsWith(opfDir + "/", StringComparison.Ordinal)
+        ? zipPath[(opfDir.Length + 1)..]
+        : zipPath;
+
+/// A container path from one relative reference, resolving "." and ".." the way a
+/// reading system does when it follows a link out of a stylesheet.
+static string ResolveRelative(string baseDir, string href)
+{
+    string cleaned = Uri.UnescapeDataString(href.Split('#')[0].Split('?')[0]);
+    List<string> segments = [];
+
+    foreach (string segment in $"{baseDir}/{cleaned}".Split('/', StringSplitOptions.RemoveEmptyEntries))
+    {
+        if (segment == ".") continue;
+        if (segment == "..") { if (segments.Count > 0) segments.RemoveAt(segments.Count - 1); continue; }
+        segments.Add(segment);
+    }
+
+    return string.Join('/', segments);
+}
+
+static byte[] ReadEntry(ZipArchiveEntry entry)
+{
+    using Stream stream = entry.Open();
+    using MemoryStream buffer = new();
+    stream.CopyTo(buffer);
+    return buffer.ToArray();
+}
+
+/// Write one part: a complete EPUB holding a single chunk and what it needs to render.
+static void WritePart(string output, ZipArchive source, SourceInfo info,
+                      string chapterZipPath, byte[] chunkBytes, string chunkText)
+{
+    if (File.Exists(output)) File.Delete(output);
+
+    using FileStream file = File.Create(output);
+    using ZipArchive part = new(file, ZipArchiveMode.Create);
+
+    // The OCF container requires "mimetype" to be the first entry and stored
+    // uncompressed. Readers are lenient about it; epubcheck is not, and neither are
+    // some retail validators.
+    WriteEntry(part, "mimetype", "application/epub+zip"u8.ToArray(), CompressionLevel.NoCompression);
+
+    WriteXml(part, "META-INF/container.xml", new XDocument(
+        new XDeclaration("1.0", "utf-8", null),
+        new XElement(Ocf + "container", new XAttribute("version", "1.0"),
+            new XElement(Ocf + "rootfiles",
+                new XElement(Ocf + "rootfile",
+                    new XAttribute("full-path", info.OpfPath),
+                    new XAttribute("media-type", "application/oebps-package+xml"))))));
+
+    // Obfuscated fonts are decoded with a key derived from the identifier, which is
+    // carried over unchanged, so the declaration has to come along too.
+    if (info.HasEncryption)
+    {
+        ZipArchiveEntry? encryption = source.GetEntry("META-INF/encryption.xml");
+        if (encryption is not null)
+            WriteEntry(part, "META-INF/encryption.xml", ReadEntry(encryption));
+    }
+
+    WriteEntry(part, chapterZipPath, chunkBytes);
+
+    HashSet<string> referenced = ReferencedResources(chunkText);
+
+    // Everything that is not a chapter, a table of contents, or optional media comes
+    // along: stylesheets, fonts and scripts, whether or not the markup names them.
+    List<ResourceItem> carried = info.Items
+        .Where(i => !i.IsDocument && !i.IsToc && i.ZipPath != chapterZipPath
+                    && !i.IsOptionalMedia)
+        .ToList();
+
+    // Stylesheets reference images of their own -- background: url(../Images/rule.png)
+    // -- and those references are invisible to a scan of the markup. Missing them
+    // leaves the part valid-looking but visibly wrong, and epubcheck reports the
+    // image as unresolvable. Read each carried stylesheet and fold its references in
+    // before deciding which media to copy.
+    foreach (ResourceItem sheet in carried.Where(i => i.MediaType == "text/css"))
+    {
+        ZipArchiveEntry? entry = source.GetEntry(sheet.ZipPath);
+        if (entry is null) continue;
+
+        string css = new UTF8Encoding(false).GetString(ReadEntry(entry));
+        string sheetDir = Path.GetDirectoryName(sheet.ZipPath)?.Replace('\\', '/') ?? string.Empty;
+
+        foreach (Match m in Regex.Matches(css, @"url\(\s*['""]?([^)'""]+)['""]?\s*\)",
+                                          RegexOptions.IgnoreCase))
+        {
+            string target = m.Groups[1].Value.Trim();
+            if (target.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) continue;
+
+            referenced.Add(target);
+            referenced.Add(Path.GetFileName(target));
+            referenced.Add(ResolveRelative(sheetDir, target));
+        }
+    }
+
+    List<ResourceItem> copied = [];
+
+    foreach (ResourceItem item in info.Items)
+    {
+        // Other chapters, and the source's own table of contents, are not part of
+        // this part. A fresh one is generated below.
+        if (item.IsDocument || item.IsToc) continue;
+        if (item.ZipPath == chapterZipPath) continue;
+
+        if (item.IsOptionalMedia
+            && !referenced.Contains(item.Href)
+            && !referenced.Contains(item.ZipPath)
+            && !referenced.Contains(Path.GetFileName(item.ZipPath))) continue;
+
+        ZipArchiveEntry? entry = source.GetEntry(item.ZipPath);
+        if (entry is null) continue;
+
+        // Byte-for-byte. Re-encoding a stylesheet or a font is how subtle rendering
+        // differences creep in.
+        WriteEntry(part, item.ZipPath, ReadEntry(entry));
+        copied.Add(item);
+    }
+
+    // The chapter keeps whatever id the source gave it, so any manifest-relative
+    // reference still lines up.
+    ResourceItem? original = info.Items.FirstOrDefault(i => i.ZipPath == chapterZipPath);
+    string chunkId = original?.Id ?? "chunk";
+    string chunkHref = HrefFor(chapterZipPath, info.OpfDir);
+
+    string tocPath = info.OpfDir.Length > 0
+        ? $"{info.OpfDir}/{(info.IsEpub3 ? "nav.xhtml" : "toc.ncx")}"
+        : info.IsEpub3 ? "nav.xhtml" : "toc.ncx";
+
+    if (info.IsEpub3) WriteNav(part, tocPath, info.Title, chunkHref);
+    else WriteNcx(part, tocPath, info, chunkHref);
+
+    WriteOpf(part, info, chunkId, chunkHref, chunkText, copied,
+             HrefFor(tocPath, info.OpfDir));
+}
+
+/// The package document: metadata, a manifest of exactly what this part contains,
+/// and a spine of the one chunk.
+static void WriteOpf(ZipArchive part, SourceInfo info, string chunkId, string chunkHref,
+                     string chunkText, IReadOnlyList<ResourceItem> copied, string tocHref)
+{
+    XElement metadata = new(Opf + "metadata",
+        new XAttribute(XNamespace.Xmlns + "dc", Dc.NamespaceName),
+        new XElement(Dc + "identifier",
+            new XAttribute("id", info.IdentifierId),
+            info.Scheme is not null && !info.IsEpub3
+                ? new XAttribute(Opf + "scheme", info.Scheme) : null,
+            info.Identifier),
+        // dc:title and dc:language are required. The predecessor omitted both, which
+        // is two of the five errors epubcheck reported against its output.
+        new XElement(Dc + "title", info.Title),
+        new XElement(Dc + "language", info.Language));
+
+    if (info.IsEpub3)
+        metadata.Add(new XElement(Opf + "meta",
+            new XAttribute("property", "dcterms:modified"),
+            DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")));
+
+    XElement manifest = new(Opf + "manifest");
+
+    // EPUB 3 wants the features a document uses declared here. Missing "svg" was
+    // another of the predecessor's errors.
+    List<string> properties = [];
+    if (info.IsEpub3)
+    {
+        if (Regex.IsMatch(chunkText, @"<svg\b", RegexOptions.IgnoreCase)) properties.Add("svg");
+        if (Regex.IsMatch(chunkText, @"<script\b", RegexOptions.IgnoreCase)) properties.Add("scripted");
+        if (Regex.IsMatch(chunkText, @"<math\b", RegexOptions.IgnoreCase)) properties.Add("mathml");
+    }
+
+    manifest.Add(new XElement(Opf + "item",
+        new XAttribute("id", chunkId),
+        new XAttribute("href", chunkHref),
+        new XAttribute("media-type", "application/xhtml+xml"),
+        properties.Count > 0 ? new XAttribute("properties", string.Join(' ', properties)) : null));
+
+    manifest.Add(info.IsEpub3
+        ? new XElement(Opf + "item",
+            new XAttribute("id", "nav"), new XAttribute("href", tocHref),
+            new XAttribute("media-type", "application/xhtml+xml"),
+            new XAttribute("properties", "nav"))
+        : new XElement(Opf + "item",
+            new XAttribute("id", "ncx"), new XAttribute("href", tocHref),
+            new XAttribute("media-type", "application/x-dtbncx+xml")));
+
+    foreach (ResourceItem item in copied)
+        manifest.Add(new XElement(Opf + "item",
+            new XAttribute("id", item.Id),
+            new XAttribute("href", HrefFor(item.ZipPath, info.OpfDir)),
+            new XAttribute("media-type", item.MediaType),
+            item.Properties is not null && info.IsEpub3
+                ? new XAttribute("properties", item.Properties) : null));
+
+    XElement spine = new(Opf + "spine",
+        info.IsEpub3 ? null : new XAttribute("toc", "ncx"),
+        new XElement(Opf + "itemref", new XAttribute("idref", chunkId)));
+
+    WriteXml(part, info.OpfPath, new XDocument(
+        new XDeclaration("1.0", "utf-8", null),
+        new XElement(Opf + "package",
+            new XAttribute("version", info.IsEpub3 ? "3.0" : "2.0"),
+            new XAttribute("unique-identifier", info.IdentifierId),
+            metadata, manifest, spine)));
+}
+
+/// EPUB 2's navigation document.
+static void WriteNcx(ZipArchive part, string path, SourceInfo info, string chunkHref)
+    => WriteXml(part, path, new XDocument(
+        new XDeclaration("1.0", "utf-8", null),
+        new XElement(Ncx + "ncx",
+            new XAttribute("version", "2005-1"),
+            new XElement(Ncx + "head",
+                Meta("dtb:uid", info.Identifier), Meta("dtb:depth", "1"),
+                Meta("dtb:totalPageCount", "0"), Meta("dtb:maxPageNumber", "0")),
+            new XElement(Ncx + "docTitle", new XElement(Ncx + "text", info.Title)),
+            new XElement(Ncx + "navMap",
+                new XElement(Ncx + "navPoint",
+                    new XAttribute("id", "navPoint-1"), new XAttribute("playOrder", "1"),
+                    new XElement(Ncx + "navLabel", new XElement(Ncx + "text", info.Title)),
+                    new XElement(Ncx + "content", new XAttribute("src", chunkHref)))))));
+
+static XElement Meta(string name, string content)
+    => new(Ncx + "meta", new XAttribute("name", name), new XAttribute("content", content));
+
+/// EPUB 3's navigation document. Exactly one manifest item must carry the "nav"
+/// property; the predecessor shipped none, which epubcheck rejects outright.
+static void WriteNav(ZipArchive part, string path, string title, string chunkHref)
+    => WriteXml(part, path, new XDocument(
+        new XDeclaration("1.0", "utf-8", null),
+        new XElement(Xhtml + "html",
+            new XAttribute(XNamespace.Xmlns + "epub", Ops.NamespaceName),
+            new XElement(Xhtml + "head", new XElement(Xhtml + "title", title)),
+            new XElement(Xhtml + "body",
+                new XElement(Xhtml + "nav",
+                    new XAttribute(Ops + "type", "toc"),
+                    new XElement(Xhtml + "h1", title),
+                    new XElement(Xhtml + "ol",
+                        new XElement(Xhtml + "li",
+                            new XElement(Xhtml + "a",
+                                new XAttribute("href", chunkHref), title)))))))); 
+
+static void WriteXml(ZipArchive part, string path, XDocument doc)
+{
+    using MemoryStream buffer = new();
+    doc.Save(buffer, SaveOptions.None);
+    WriteEntry(part, path, buffer.ToArray());
+}
+
+static void WriteEntry(ZipArchive part, string path, byte[] content,
+                       CompressionLevel level = CompressionLevel.Optimal)
+{
+    ZipArchiveEntry entry = part.CreateEntry(Normalise(path), level);
+    using Stream stream = entry.Open();
+    stream.Write(content);
+}
+
+/// One manifest entry of the source book, with where it actually lives in the zip.
+internal sealed record ResourceItem(
+    string ZipPath, string Href, string Id, string MediaType, string? Properties)
+{
+    public bool IsDocument => MediaType == "application/xhtml+xml";
+
+    /// The table of contents, in either of its forms. Never copied: it points at
+    /// chapters that are not in this part, which would leave dangling links.
+    public bool IsToc => MediaType == "application/x-dtbncx+xml"
+                         || (Properties?.Contains("nav", StringComparison.Ordinal) ?? false);
+
+    /// Copied only when the chunk actually references it. Stylesheets, fonts and
+    /// scripts come along unconditionally, because the markup's styling depends on
+    /// them whether or not it names them directly.
+    public bool IsOptionalMedia => MediaType.StartsWith("image/", StringComparison.Ordinal)
+                                   || MediaType.StartsWith("audio/", StringComparison.Ordinal)
+                                   || MediaType.StartsWith("video/", StringComparison.Ordinal);
+}
+
+/// Everything about the source needed to build a part from it.
+internal sealed record SourceInfo(
+    string OpfPath, string OpfDir, bool IsEpub3,
+    string Title, string Language, string Identifier, string IdentifierId, string? Scheme,
+    IReadOnlyList<ResourceItem> Items, bool HasEncryption)
+{
+    public static SourceInfo From(EpubBook book, ZipArchive source)
+    {
+        EpubPackage package = book.Schema.Package;
+        EpubMetadata meta = package.Metadata;
+
+        string contentDir = book.Schema.ContentDirectoryPath ?? string.Empty;
+
+        List<ResourceItem> items = [];
+        foreach (EpubManifestItem item in package.Manifest.Items)
+        {
+            string href = Uri.UnescapeDataString(item.Href);
+            string zipPath = contentDir.Length > 0 ? $"{contentDir}/{href}" : href;
+
+            items.Add(new ResourceItem(
+                Normalise(zipPath), item.Href, item.Id, item.MediaType,
+                item.Properties is { Count: > 0 }
+                    ? string.Join(' ', item.Properties.Select(p => p.ToString().ToLowerInvariant()))
+                    : null));
+        }
+
+        EpubMetadataIdentifier? id = meta.Identifiers.FirstOrDefault();
+
+        return new SourceInfo(
+            OpfPath: FindOpfPath(source),
+            OpfDir: contentDir,
+            IsEpub3: package.EpubVersion >= EpubVersion.EPUB_3,
+            Title: meta.Titles.FirstOrDefault()?.Title ?? book.Title ?? "Untitled",
+            Language: meta.Languages.FirstOrDefault()?.Language ?? "en",
+            // The identifier is carried over rather than regenerated. EPUB font
+            // obfuscation derives its key from it, so a new one would silently break
+            // every embedded font in the part.
+            Identifier: id?.Identifier ?? $"urn:uuid:{Guid.NewGuid()}",
+            IdentifierId: string.IsNullOrEmpty(id?.Id) ? "bookid" : id.Id,
+            Scheme: id?.Scheme,
+            Items: items,
+            HasEncryption: source.GetEntry("META-INF/encryption.xml") is not null);
+    }
+
+    /// Where the package document lives, read from the container rather than guessed.
+    private static string FindOpfPath(ZipArchive source)
+    {
+        ZipArchiveEntry? container = source.GetEntry("META-INF/container.xml");
+        if (container is null) return "content.opf";
+
+        using Stream stream = container.Open();
+        XDocument doc = XDocument.Load(stream);
+
+        string? path = doc.Descendants(Ocf + "rootfile")
+            .Select(r => (string?)r.Attribute("full-path")).FirstOrDefault(p => p is not null);
+
+        return path is null ? "content.opf" : Normalise(Uri.UnescapeDataString(path));
+    }
+}
+
+/// The XML vocabularies an EPUB is built from, and the one HTML fact the splitter
+/// needs. Gathered into a type because a file of top-level statements cannot declare
+/// fields, and the static local functions above cannot capture locals.
+internal static class Vocabulary
+{
+    /// A zip path in the one form everything here compares against.
+    internal static string Normalise(string path) => path.Replace('\\', '/').TrimStart('/');
+
+    internal static readonly XNamespace Opf = "http://www.idpf.org/2007/opf";
+    internal static readonly XNamespace Dc = "http://purl.org/dc/elements/1.1/";
+    internal static readonly XNamespace Ocf = "urn:oasis:names:tc:opendocument:xmlns:container";
+    internal static readonly XNamespace Ncx = "http://www.daisy.org/z3986/2005/ncx/";
+    internal static readonly XNamespace Xhtml = "http://www.w3.org/1999/xhtml";
+    internal static readonly XNamespace Ops = "http://www.idpf.org/2007/ops";
+
+    /// Tags with no closing form, so they must never be pushed onto the open-tag stack.
+    internal static readonly HashSet<string> VoidElements = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "source", "track", "wbr",
+    };
+}

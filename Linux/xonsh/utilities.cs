@@ -13,7 +13,8 @@
 //  This file declares types only (no top-level statements), so that including
 //  scripts can keep using top-level statements themselves.
 //
-//  Ported from utilities.xsh and py_utilities.py.
+//  Ported from the xonsh originals in ../Xonsh, which remain the reference for
+//  behaviour this suite is meant to reproduce.
 //
 //  Analyzer posture: this file is clean under `AnalysisMode=All` apart from two
 //  rules it deliberately violates.
@@ -988,9 +989,10 @@ internal static partial class Fs
         return pieces[part].Trim().ToLowerInvariant();
     }
 
-    /// utilities.xsh notes get_mime failing on .mka. /etc/mime.types actually maps
-    /// it correctly now, but the explicit check is kept so the suite behaves the
-    /// same on a machine with a thinner mime database.
+    /// .mka is checked by extension as well as by mime type. The xonsh original hit
+    /// machines whose mime database did not know it; /etc/mime.types maps it correctly
+    /// here, but the explicit check keeps the suite behaving the same on one that does
+    /// not.
     public static bool IsAudio(string f) => Mime(f) == "audio" || Ext(f) == ".mka";
     public static bool IsVideo(string f) => Mime(f) == "video";
     public static bool IsImage(string f) => Mime(f) == "image";
@@ -1142,9 +1144,9 @@ internal static partial class Fs
     /// The body of the `file-rename-valid` script: slugify each name, renaming on
     /// disk, and return the new names in order.
     ///
-    /// This replaces utilities.xsh's set_valid_file_names(), which shelled out to
-    /// `file-rename-valid` and then ast.literal_eval'd a Python list off stdout.
-    /// Done in-process there is no subprocess and no parsing.
+    /// Done in process. The xonsh original shelled out to `file-rename-valid` and then
+    /// parsed a Python list back off its stdout, which is a subprocess and a parser for
+    /// work that is a loop over File.Move.
     public static IReadOnlyList<string> RenameToValid(IEnumerable<string> files)
     {
         List<string> result = new();
