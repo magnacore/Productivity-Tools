@@ -35,6 +35,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using VersOne.Epub;
+using VersOne.Epub.Options;
 using VersOne.Epub.Schema;
 using static Vocabulary;
 
@@ -81,7 +82,15 @@ static bool SplitOne(string file, double sizeKb, Func<string, int, Action<double
     string stem = Fs.SplitExt(file).Name;
     Directory.CreateDirectory(stem);
 
-    EpubBook book = EpubReader.ReadBook(file);
+    // The lenient overload can return null where the strict one would have thrown:
+    // a file that is not readable as an EPUB at all, rather than merely malformed.
+    EpubBook? book = EpubReader.ReadBook(file, Lenient());
+    if (book is null)
+    {
+        Ui.Line($"[bold red]Not a readable EPUB: {Ui.Esc(file)}[/]");
+        return false;
+    }
+
     using ZipArchive source = ZipFile.OpenRead(file);
 
     SourceInfo info = SourceInfo.From(book, source);
@@ -128,6 +137,74 @@ static bool SplitOne(string file, double sizeKb, Func<string, int, Action<double
     StampParts(file, stem);
     return TagParts(stem);
 }
+
+/// Read the way a reading system does, rather than the way the specification says.
+///
+/// Real books are frequently malformed and readers cope, so a splitter that refuses
+/// them is useless on an actual library: nine of twelve books sampled from one fail
+/// epubcheck as they ship. The specific book that prompted this has
+/// `&lt;meta name="cover" content="Images/default_cover.jpeg"/&gt;`, putting an href
+/// where the format requires a manifest item id -- every reader shows the cover, and
+/// a strict parse throws.
+///
+/// Leniency is granted only where it cannot change the output. The cover, the guide,
+/// collections, the source's navigation and its table of contents are all read and
+/// discarded here, because each part gets a freshly generated one; a malformed one
+/// therefore cannot hurt. Invalid or duplicated manifest entries are skipped rather
+/// than fatal, since an entry with no href is nothing this could copy anyway.
+///
+/// What is deliberately left strict is the container and the spine. Without those
+/// there is no chapter order and nothing to split, and silently producing zero parts
+/// would be worse than saying so.
+static EpubReaderOptions Lenient() => new()
+{
+    BookCoverReaderOptions =
+    {
+        Epub2MetadataIgnoreMissingContent = true,
+        Epub2MetadataIgnoreMissingManifestItem = true,
+        Epub2MetadataIgnoreMissingContentFile = true,
+        Epub3IgnoreMissingContentFile = true,
+        IgnoreRemoteContentFileError = true,
+    },
+    PackageReaderOptions =
+    {
+        IgnoreMissingToc = true,
+        SkipInvalidManifestItems = true,
+        SkipDuplicateManifestItemIds = true,
+        SkipDuplicateManifestHrefs = true,
+        SkipInvalidSpineItems = true,
+        SkipInvalidGuideReferences = true,
+        SkipInvalidCollections = true,
+    },
+    ContentReaderOptions =
+    {
+        IgnoreMissingFileError = true,
+        SkipItemsWithDuplicateHrefs = true,
+        SkipItemsWithDuplicateFilePaths = true,
+    },
+    SpineReaderOptions =
+    {
+        IgnoreMissingManifestItems = true,
+        IgnoreMissingContentFiles = true,
+    },
+    MetadataReaderOptions = { SkipLinksWithoutHrefs = true, IgnoreLinkWithoutRelError = true },
+    NavigationReaderOptions =
+    {
+        AllowEpub2NavigationItemsWithEmptyTitles = true,
+        SkipRemoteNavigationItems = true,
+        SkipNavigationItemsReferencingMissingContent = true,
+    },
+    Epub3NavDocumentReaderOptions =
+    {
+        IgnoreMissingNavManifestItemError = true,
+        IgnoreMissingNavFileError = true,
+        IgnoreNavFileIsNotValidXmlError = true,
+        IgnoreMissingHtmlElementError = true,
+        IgnoreMissingBodyElementError = true,
+        SkipNavsWithMissingOlElements = true,
+        SkipInvalidLiElements = true,
+    },
+};
 
 /// Copy the book's date onto each part, a millisecond apart.
 ///
