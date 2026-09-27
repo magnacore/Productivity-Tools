@@ -41,6 +41,7 @@ for p in reversed([
         "/usr/local/bin",
         "/sbin/",
         $HOME + "/.local/bin",
+		"/opt/anaconda3/envs/dotnet/lib/dotnet",
 ]):
     if p not in $PATH:
         $PATH.insert(0, p)
