@@ -323,3 +323,9 @@ if rm_status then
     -- conceallevel is required by render-markdown to hide the backticks and formatting symbols
     vim.opt.conceallevel = 2 
 end
+
+-- Automatically correct common capitalization typos
+vim.cmd("cnoreabbrev Wq wq")
+vim.cmd("cnoreabbrev WQ wq")
+vim.cmd("cnoreabbrev W w")
+vim.cmd("cnoreabbrev Q q")
