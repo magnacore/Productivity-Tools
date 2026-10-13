@@ -1518,6 +1518,13 @@ internal static partial class Fs
 //  disagree on the same folder. ffprobe also reads the real stream, where tag
 //  metadata lies on VBR and truncated files.
 // =============================================================================
+/// A cutting plan for one file: the argument mkvmerge is given, and the part lengths
+/// in seconds that argument will produce.
+internal sealed record SplitPlan(string SplitArgument, IReadOnlyList<int> PartLengths)
+{
+    public int PartCount => PartLengths.Count;
+}
+
 internal static class Media
 {
     /// get_duration() — seconds, or 0 with a warning when ffprobe has no answer.
@@ -1632,6 +1639,127 @@ internal static class Media
         });
 
         return (ok, reported);
+    }
+
+    /// How one file should be cut, and what that will produce.
+    ///
+    /// Kept here rather than in media-split-equal so it can be unit tested: this is
+    /// arithmetic that decides where a recording gets cut, and the program it serves is
+    /// top-level statements that no test project can reference.
+    public static SplitPlan? PlanSplit(double duration, int splitDuration, int threshold,
+                                       int minPart, bool equal)
+    {
+        if (duration <= 0 || splitDuration <= 0) return null;
+
+        int whole = (int)(duration / splitDuration);
+        double tail = duration - ((double)whole * splitDuration);
+
+        // Shorter than a single part. mkvmerge is still asked to split, with an interval
+        // longer than the file, so the one part it writes carries the "-001" the rest of
+        // the program matches on.
+        if (whole == 0) return Single(duration);
+
+        return equal
+            ? EqualParts(duration, splitDuration, threshold, whole)
+            : FixedParts(duration, splitDuration, minPart, whole, tail);
+    }
+
+    /// Parts of one length, with nothing left over.
+    ///
+    /// The remainder is spread across the parts, making each a little longer than asked
+    /// for. How much longer is bounded by the threshold, which is already the statement
+    /// of how long a piece of media may be before it is worth cutting up: a part that
+    /// stays under it is, by the caller's own definition, a reasonable thing to listen
+    /// to in one sitting.
+    ///
+    /// So: take the whole parts that fit, unless sharing the remainder among them would
+    /// push a part to the threshold, in which case cut one more. The smallest count that
+    /// keeps every part under the threshold is whole(duration / threshold) + 1, so the
+    /// answer is whichever of the two is larger.
+    ///
+    /// That bound also removes the need for a separate guard against the degenerate
+    /// case. Anything reaching here is already longer than the threshold -- shorter
+    /// files are left alone -- so duration / threshold is at least one, the count is at
+    /// least two, and a file can never come back as a single unsplit part.
+    private static SplitPlan EqualParts(double duration, int splitDuration, int threshold,
+                                        int whole)
+    {
+        int bound = threshold > 0 ? (int)(duration / threshold) + 1 : 1;
+        int count = Math.Max(Math.Max(whole, bound), 1);
+
+        if (count <= 1) return Single(duration);
+
+        // Cut points rather than a repeating interval, because a real duration is not a
+        // whole number and an interval has to be. ffprobe reports a nominal 310 second
+        // file as 310.008, and ceil(310.008 / 10) is 32 where ceil(310 / 10) is 31 --
+        // nine parts a second too long, and the tenth left as a 22 second stub. Placing
+        // the cuts puts the rounding error where it belongs, under a second on the last
+        // part, and guarantees the count.
+        List<int> cuts = [];
+        for (int i = 1; i < count; i++) cuts.Add((int)Math.Round(i * duration / count));
+
+        return new SplitPlan($"timecodes:{string.Join(',', cuts.Select(c => $"{c}s"))}",
+                             LengthsForCuts(duration, cuts));
+    }
+
+    /// What a set of cut points divides a file of this length into.
+    private static List<int> LengthsForCuts(double duration, IReadOnlyList<int> cuts)
+    {
+        List<int> lengths = [];
+        int previous = 0;
+
+        foreach (int cut in cuts)
+        {
+            lengths.Add(cut - previous);
+            previous = cut;
+        }
+
+        lengths.Add((int)Math.Round(duration) - previous);
+        return lengths;
+    }
+
+    /// Parts of exactly the requested length, with whatever is left over kept as the
+    /// last part -- unless it is too short to be worth having, in which case the part
+    /// before it swallows it.
+    private static SplitPlan FixedParts(double duration, int splitDuration, int minPart,
+                                        int whole, double tail)
+    {
+        // Divides exactly, or the remainder is substantial enough to stand on its own.
+        // Either way a plain interval produces it.
+        if (tail == 0 || tail >= minPart)
+            return new SplitPlan($"duration:{splitDuration}s", LengthsFor(duration, splitDuration));
+
+        // The remainder is too short to be its own part. One interval cannot express
+        // "every part exact except the last", so the cuts are placed explicitly and the
+        // final one is left out, letting the last part run long by that remainder.
+        if (whole == 1) return Single(duration);
+
+        List<int> cuts = [];
+        for (int i = 1; i < whole; i++) cuts.Add(i * splitDuration);
+
+        return new SplitPlan($"timecodes:{string.Join(',', cuts.Select(c => $"{c}s"))}",
+                             LengthsForCuts(duration, cuts));
+    }
+
+    /// The whole file as a single numbered part.
+    private static SplitPlan Single(double duration)
+        => new($"duration:{(int)Math.Ceiling(duration) + 1}s",
+               [(int)Math.Round(duration)]);
+
+    /// What a repeating interval cuts a file of this length into.
+    private static List<int> LengthsFor(double duration, int interval)
+    {
+        List<int> lengths = [];
+        double left = duration;
+
+        while (left > interval)
+        {
+            lengths.Add(interval);
+            left -= interval;
+        }
+
+        lengths.Add((int)Math.Round(left));
+        return lengths;
     }
 
     public static double Duration(string file)

@@ -8,27 +8,83 @@
 
 // Dialog front end for media-split-equal.
 //
-// The durations come from the caller (the ranger bindings pass their own), so the
-// only thing asked here is what should happen to the originals.
+// Everything the CLI needs is collected here, in dialogs: how long each part should
+// be, and what to do with the originals. It takes no options of its own beyond
+// --dry-run, which is the pattern the rest of the suite follows -- the CLI is the
+// thing with flags, and the wrapper is the thing that asks.
+//
+// The two presets are the two durations that were previously wired into the ranger
+// bindings, carried over exactly rather than reinvented: 5 minutes with equal parts,
+// and 7.5 minutes without. The labels give each one at 1.5x as well, because that is
+// the speed this collection is actually listened at, and a part's useful length is
+// its length at the speed it will be played.
 
-ArgVals a = new Args("media-split-equal-tui", "Ask about the originals, then run media-split-equal")
-    .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
-    .Opt("-t", "--threshold_seconds", required: true,
-         help: "Threshold in seconds beyond which the media should be split")
-    .Flag("-e", "--equal", help: "Create approximately equal parts")
+using System.Globalization;
+using System.Text.RegularExpressions;
+
+ArgVals a = new Args("media-split-equal-tui", "Choose a part length in a dialog, then run media-split-equal")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
+int? choice = Dlg.Choose("Split media", "How long should each part be?",
+    "5m   @1x   /   3.5m @1.5x",
+    "7.5m @1x   /   5m   @1.5x",
+    "Custom...");
+
+if (choice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+int splitSeconds;
+int thresholdSeconds;
+
+switch (choice.Value)
+{
+    // The two lengths this collection has always been split at. Both keep their ten
+    // minute threshold: below that there is not enough material for a split to be
+    // worth doing.
+    case 0:
+        splitSeconds = 300; thresholdSeconds = 600;
+        break;
+
+    case 1:
+        splitSeconds = 450; thresholdSeconds = 600;
+        break;
+
+    default:
+        int? custom = AskDuration();
+        if (custom is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+        splitSeconds = custom.Value;
+
+        // A fixed ten minute threshold makes no sense once the length is chosen
+        // freely -- asking for hour-long parts should not split a 15 minute file into
+        // one. Split only what would yield at least two parts, and never below the
+        // threshold the presets use.
+        thresholdSeconds = Math.Max(600, splitSeconds * 2);
+        break;
+}
+
+// What to do with the time that does not divide evenly. Equal first, so it is what
+// Enter gives you: a tail shorter than the rest is the more annoying outcome, since
+// it reads as a part but is over before the session is.
+int? evenness = Dlg.Choose("Part lengths",
+    $"{Media.Hms(splitSeconds)} does not always divide a file evenly.\n\nWhat should happen to the remainder?",
+    "Equal   -  spread it, so every part is a little longer",
+    "Fixed   -  keep the length exact, leaving a short part at the end");
+
+if (evenness is null) { Ui.Warn("Operation cancelled by user."); return 0; }
+
+bool equal = evenness.Value == 0;
+
 bool? deleteChoice = Dlg.DeleteOriginals("Media");
 if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
-List<string> callArgs = new()
-{
-    "-s", a.Str("split_duration"),
-    "-t", a.Str("threshold_seconds"),
-};
-if (a.Flag("equal")) callArgs.Add("-e");
+List<string> callArgs =
+[
+    "-s", splitSeconds.ToString(CultureInfo.InvariantCulture),
+    "-t", thresholdSeconds.ToString(CultureInfo.InvariantCulture),
+];
+if (equal) callArgs.Add("-e");
 if (deleteChoice.Value) callArgs.Add("-d");
 callArgs.AddRange(a.Rest);
 
@@ -39,3 +95,49 @@ if (a.Flag("dry-run"))
 }
 
 return Proc.Call("media-split-equal", callArgs);
+
+/// Ask for a part length until one parses, or the dialog is cancelled.
+///
+/// Re-asking with the reason attached beats failing the whole run over a typo, since
+/// the files have already been chosen by this point.
+static int? AskDuration()
+{
+    string message = "How long should each part be?\n\nGive a unit: 5m, 90s, 1.5h.";
+
+    while (true)
+    {
+        string? typed = Dlg.Input("Custom part length", message);
+        if (typed is null) return null;
+
+        int? seconds = ParseDuration(typed);
+        if (seconds is not null) return seconds;
+
+        message = $"\"{typed}\" is not a length.\n\nGive a number and a unit: 5m, 90s, 1.5h.";
+    }
+}
+
+/// A duration in seconds from "5m", "90s", "1.5h". Units are case insensitive.
+///
+/// A bare number is refused on purpose, and this is the whole reason the parser
+/// exists rather than an int.TryParse. The CLI takes seconds, so "1" typed by someone
+/// thinking in minutes would silently mean one second, and an hour of audio would
+/// come back as three and a half thousand files. Demanding the unit makes the
+/// magnitude something the user stated rather than something the program assumed.
+static int? ParseDuration(string text)
+{
+    Match m = Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([smh])$", RegexOptions.IgnoreCase);
+    if (!m.Success) return null;
+
+    if (!double.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture,
+                         out double value)) return null;
+
+    int multiplier = char.ToLowerInvariant(m.Groups[2].Value[0]) switch
+    {
+        's' => 1,
+        'm' => 60,
+        _ => 3600,
+    };
+
+    int seconds = (int)Math.Round(value * multiplier);
+    return seconds > 0 ? seconds : null;
+}

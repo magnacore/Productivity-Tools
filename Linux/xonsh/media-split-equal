@@ -7,25 +7,43 @@
 // Split long media into session-sized parts, then tag the parts with their
 // position in the set so progress is visible from the file name alone.
 //
-// Nothing is split unless something is longer than the threshold, so this is safe
-// to run across a whole folder.
+// Two ways to divide a file, and the difference is what happens to the time that
+// does not divide evenly. --equal spreads it, so every part is the same length and
+// nothing is left over; how far that may stretch a part is bounded by the threshold,
+// which already says how long a piece may be before it wants cutting up. Without
+// --equal each part is exactly the length asked for and the remainder becomes a
+// final, shorter part, unless it is below --min-part, in which case the part before
+// it swallows it rather than leaving a two second file nobody wants.
+//
+// Only files longer than the threshold are touched. Parts inherit their source's
+// modified time, so splitting some files in a folder and leaving others alone keeps
+// the whole folder in its original order.
 
 ArgVals a = new Args("media-split-equal", "Split media files into parts")
     .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
     .Opt("-t", "--threshold_seconds", required: true,
          help: "Threshold in seconds beyond which the media should be split")
-    .Flag("-e", "--equal", help: "Create approximately equal parts")
+    .Flag("-e", "--equal", help: "Equal parts with no remainder, rather than exact parts with a short last one")
+    .Opt("-m", "--min-part", @default: "30",
+         help: "Fixed mode only: seconds below which a leftover part is absorbed instead of kept")
     .Flag("-d", "--delete", help: "Trash the originals instead of filing them under Original_Media/")
     .Rest("files", min: 1, help: "Files to process")
     .Parse(args);
 
 int splitDuration = a.Int("split_duration");
 int thresholdSeconds = a.Int("threshold_seconds");
+int minPart = a.Int("min-part");
 bool equal = a.Flag("equal");
 
 if (splitDuration <= 0)
 {
     Console.Error.WriteLine("error: --split_duration must be positive");
+    return 2;
+}
+
+if (minPart < 0)
+{
+    Console.Error.WriteLine("error: --min-part cannot be negative");
     return 2;
 }
 
@@ -60,6 +78,7 @@ if (!toSplit)
 }
 
 bool deleteOriginals = a.Flag("delete");
+int failures = 0;
 
 Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
 {
@@ -69,10 +88,39 @@ Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
         return;
     }
 
+    // Probed once and carried, rather than once here and again inside the splitter.
+    double duration = Media.Duration(file);
+
+    // A duration of zero is what Media.Duration returns when ffprobe cannot read the
+    // file. Treated as a failure rather than a short file: the alternative is what
+    // this used to do, which was copy it as a single part and move the original away,
+    // so an unreadable file looked exactly like a successful split.
+    if (duration <= 0)
+    {
+        Ui.Line($"[bold red]Could not read the duration of {Ui.Esc(file)}[/]");
+        failures++;
+        return;
+    }
+
+    // Per file, not once for the whole run. A short clip sitting among long ones used
+    // to be renamed to "-part-001", tagged as a one-item set and have its original
+    // filed away, for a split into a single part. Leaving it alone costs nothing:
+    // parts inherit their source's modified time, so an untouched file still sorts
+    // exactly where it did.
+    if (duration <= thresholdSeconds)
+    {
+        Ui.Line($"[yellow]Leaving {Ui.Esc(file)} alone: {Media.Hms(duration)} is under the threshold[/]");
+        return;
+    }
+
     (string? filename, string _) = Fs.SplitExt(file);
     string newFilename = filename + "-part" + (Fs.IsVideo(file) ? ".mkv" : ".mka");
 
-    SplitFile(file, newFilename, splitDuration, equal);
+    if (!SplitFile(file, newFilename, duration, splitDuration, thresholdSeconds, minPart, equal))
+    {
+        failures++;
+        return;   // the original stays put: nothing was produced from it
+    }
 
     // Stamp the parts with the source's date before the source is moved away, so
     // the whole group keeps its place in a modified-time sort. Each part is offset
@@ -87,34 +135,31 @@ Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
     RunPercentageTag(filename);
 });
 
-return Ui.Done();
+return Ui.Done(failures);
 
-/// Split one file, absorbing the leftover tail into the parts rather than
-/// leaving a stub at the end.
-static void SplitFile(string file, string newFilename, int splitDuration, bool equal)
+/// Split one file according to the plan, returning whether it worked.
+///
+/// The plan decides both how many parts there are and how mkvmerge is told to make
+/// them -- a repeating interval where one will do, explicit cut points where it will
+/// not. Media.PlanSplit holds that arithmetic, and is unit tested.
+static bool SplitFile(string file, string newFilename, double duration,
+                      int splitDuration, int threshold, int minPart, bool equal)
 {
-    double duration = Media.Duration(file);
-    int parts = (int)(duration / splitDuration);
+    SplitPlan? plan = Media.PlanSplit(duration, splitDuration, threshold, minPart, equal);
 
-    int effectiveDuration;
-    if (parts == 0)
+    if (plan is null)
     {
-        // Shorter than one part: mkvmerge just copies it.
-        effectiveDuration = splitDuration;
-    }
-    else
-    {
-        // Spread the remainder over the parts so none is much shorter.
-        double remaining = duration % splitDuration;
-        int excess = (int)Math.Ceiling(remaining / parts);
-
-        // Without --equal, only absorb a remainder small enough not to distort
-        // the part length noticeably.
-        effectiveDuration = (equal || excess < 30) ? splitDuration + excess : splitDuration;
+        Ui.Line($"[bold red]Could not work out how to split {Ui.Esc(file)}[/]");
+        return false;
     }
 
-    if (!Proc.Ok("mkvmerge", "-q", "-o", newFilename, file, "--split", $"duration:{effectiveDuration}s"))
+    if (!Proc.Ok("mkvmerge", "-q", "-o", newFilename, file, "--split", plan.SplitArgument))
+    {
         Ui.Line($"[bold red]Could not split {Ui.Esc(file)}[/]");
+        return false;
+    }
+
+    return true;
 }
 
 /// The part files mkvmerge just wrote for this source, in order.
