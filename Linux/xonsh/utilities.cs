@@ -1646,7 +1646,7 @@ internal static class Media
     /// Kept here rather than in media-split-equal so it can be unit tested: this is
     /// arithmetic that decides where a recording gets cut, and the program it serves is
     /// top-level statements that no test project can reference.
-    public static SplitPlan? PlanSplit(double duration, int splitDuration, int threshold,
+    public static SplitPlan? PlanSplit(double duration, int splitDuration, int maxPart,
                                        int minPart, bool equal)
     {
         if (duration <= 0 || splitDuration <= 0) return null;
@@ -1660,34 +1660,39 @@ internal static class Media
         if (whole == 0) return Single(duration);
 
         return equal
-            ? EqualParts(duration, splitDuration, threshold, whole)
+            ? EqualParts(duration, splitDuration, maxPart, whole, tail)
             : FixedParts(duration, splitDuration, minPart, whole, tail);
     }
 
     /// Parts of one length, with nothing left over.
     ///
     /// The remainder is spread across the parts, making each a little longer than asked
-    /// for. How much longer is bounded by the threshold, which is already the statement
-    /// of how long a piece of media may be before it is worth cutting up: a part that
-    /// stays under it is, by the caller's own definition, a reasonable thing to listen
-    /// to in one sitting.
+    /// for. How much longer is bounded by maxPart: beyond that, one more part is cut
+    /// instead, which makes every part slightly shorter than asked for rather than much
+    /// longer. The smallest count that keeps every part under the bound is
+    /// whole(duration / maxPart) + 1, so the answer is whichever is larger.
     ///
-    /// So: take the whole parts that fit, unless sharing the remainder among them would
-    /// push a part to the threshold, in which case cut one more. The smallest count that
-    /// keeps every part under the threshold is whole(duration / threshold) + 1, so the
-    /// answer is whichever of the two is larger.
-    ///
-    /// That bound also removes the need for a separate guard against the degenerate
-    /// case. Anything reaching here is already longer than the threshold -- shorter
-    /// files are left alone -- so duration / threshold is at least one, the count is at
-    /// least two, and a file can never come back as a single unsplit part.
-    private static SplitPlan EqualParts(double duration, int splitDuration, int threshold,
-                                        int whole)
+    /// The floor of two parts matters whenever the bound is generous. Asking for hour
+    /// long parts with a two hour bound leaves a 1h24m file with one whole part and a
+    /// remainder that fits comfortably under the bound, so the arithmetic alone would
+    /// hand it back unsplit -- which is not a split at all. Anything reaching here is
+    /// longer than one part, so two is always the right minimum.
+    private static SplitPlan EqualParts(double duration, int splitDuration, int maxPart,
+                                        int whole, double tail)
     {
-        int bound = threshold > 0 ? (int)(duration / threshold) + 1 : 1;
-        int count = Math.Max(Math.Max(whole, bound), 1);
+        // Divides exactly -- or near enough. A measured duration carries fractions a
+        // nominal one does not, and a remainder of eight milliseconds is not a remainder;
+        // treating it as one would halve a file that is already exactly one part long.
+        //
+        // Cut explicitly rather than handing over an interval. mkvmerge given
+        // "duration:30s" for a 90.008 second file cuts at 30, 60 and 90 and writes the
+        // leftover as a fourth part six milliseconds long -- which then gets numbered
+        // and percentage tagged like any other. Leaving the final cut out lets the last
+        // part carry the fraction instead.
+        if (tail < 1) return ExactCuts(duration, splitDuration, whole);
 
-        if (count <= 1) return Single(duration);
+        int bound = maxPart > 0 ? (int)(duration / maxPart) + 1 : 1;
+        int count = Math.Max(Math.Max(whole, bound), 2);
 
         // Cut points rather than a repeating interval, because a real duration is not a
         // whole number and an interval has to be. ffprobe reports a nominal 310 second
@@ -1724,18 +1729,27 @@ internal static class Media
     private static SplitPlan FixedParts(double duration, int splitDuration, int minPart,
                                         int whole, double tail)
     {
-        // Divides exactly, or the remainder is substantial enough to stand on its own.
-        // Either way a plain interval produces it.
-        if (tail == 0 || tail >= minPart)
+        // The remainder stands on its own only if it is both a real remainder and long
+        // enough to be worth having. A plain interval produces that: mkvmerge writes the
+        // leftover as the final part.
+        if (tail >= 1 && tail >= minPart)
             return new SplitPlan($"duration:{splitDuration}s", LengthsFor(duration, splitDuration));
 
-        // The remainder is too short to be its own part. One interval cannot express
-        // "every part exact except the last", so the cuts are placed explicitly and the
-        // final one is left out, letting the last part run long by that remainder.
-        if (whole == 1) return Single(duration);
+        // Otherwise the last part absorbs it.
+        return ExactCuts(duration, splitDuration, whole);
+    }
+
+    /// Parts of exactly this length, with the last one carrying whatever is left over.
+    ///
+    /// Cuts are placed rather than a repeating interval handed over, because an interval
+    /// makes mkvmerge write the leftover as a part of its own however small it is. One
+    /// fewer cut than parts, so the final part runs to the end of the file.
+    private static SplitPlan ExactCuts(double duration, int splitDuration, int count)
+    {
+        if (count <= 1) return Single(duration);
 
         List<int> cuts = [];
-        for (int i = 1; i < whole; i++) cuts.Add(i * splitDuration);
+        for (int i = 1; i < count; i++) cuts.Add(i * splitDuration);
 
         return new SplitPlan($"timecodes:{string.Join(',', cuts.Select(c => $"{c}s"))}",
                              LengthsForCuts(duration, cuts));

@@ -166,6 +166,46 @@ public class SplitPlanTests
         Assert.All(plan.PartLengths, length => Assert.InRange(length, 31, 31));
     }
 
+    [Theory]
+    // A measured duration is never whole. ffprobe calls a nominally 60 second file
+    // 60.008, and equal mode must leave no remainder -- so without this it would cut a
+    // file that is already exactly one part long into two halves.
+    [InlineData(60.008, 60)] [InlineData(300.004, 300)] [InlineData(3600.992, 3600)]
+    [InlineData(900.008, 300)] [InlineData(1200.05, 300)]
+    public void EqualTreatsANegligibleRemainderAsNone(double duration, int split)
+    {
+        SplitPlan plan = Plan(duration, split, equal: true, threshold: split * 2);
+
+        // The count is the parts that fit, with the fraction carried by the last one --
+        // not an extra part for the fraction itself.
+        Assert.Equal((int)(duration / split), plan.PartCount);
+        Assert.Equal((int)Math.Round(duration), plan.PartLengths.Sum());
+    }
+
+    [Theory]
+    // length, requested part, bound
+    [InlineData(90.008, 30, 60)] [InlineData(900.008, 300, 600)] [InlineData(60.008, 60, 120)]
+    [InlineData(310.008, 30, 60)] [InlineData(5040.008, 3600, 7200)] [InlineData(1000.008, 300, 600)]
+    [InlineData(3100.004, 300, 600)] [InlineData(1199.5, 300, 600)]
+    public void NoPlanEverProducesAFragment(double duration, int split, int bound)
+    {
+        // The reason this matters: handing mkvmerge a repeating interval makes it write
+        // whatever is left at the end as a part of its own, however small. A 90.008
+        // second file cut at 30 seconds came back as three parts and a fourth of six
+        // milliseconds, numbered and percentage tagged like any other. Nothing was lost,
+        // but a six millisecond file is not a part.
+        foreach (bool equal in new[] { true, false })
+        {
+            SplitPlan plan = Media.PlanSplit(duration, split, bound, Floor, equal)!;
+
+            Assert.All(plan.PartLengths, length => Assert.True(length >= 1,
+                $"{(equal ? "equal" : "fixed")} produced a part of {length}s"));
+
+            // And the whole file is still accounted for.
+            Assert.InRange(plan.PartLengths.Sum(), duration - plan.PartCount, duration + plan.PartCount);
+        }
+    }
+
     // ── fixed ────────────────────────────────────────────────────────────────
 
     [Fact]

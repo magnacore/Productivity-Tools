@@ -35,7 +35,7 @@ int? choice = Dlg.Choose("Split media", "How long should each part be?",
 if (choice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
 int splitSeconds;
-int thresholdSeconds;
+int maxPart;
 
 switch (choice.Value)
 {
@@ -43,11 +43,11 @@ switch (choice.Value)
     // minute threshold: below that there is not enough material for a split to be
     // worth doing.
     case 0:
-        splitSeconds = 300; thresholdSeconds = 600;
+        splitSeconds = 300; maxPart = 600;
         break;
 
     case 1:
-        splitSeconds = 450; thresholdSeconds = 600;
+        splitSeconds = 450; maxPart = 600;
         break;
 
     default:
@@ -56,11 +56,14 @@ switch (choice.Value)
 
         splitSeconds = custom.Value;
 
-        // A fixed ten minute threshold makes no sense once the length is chosen
-        // freely -- asking for hour-long parts should not split a 15 minute file into
-        // one. Split only what would yield at least two parts, and never below the
-        // threshold the presets use.
-        thresholdSeconds = Math.Max(600, splitSeconds * 2);
+        // How far equal mode may stretch a part before cutting another instead. Twice
+        // the chosen length, which is the ratio the 5 minute preset has always had, and
+        // never tighter than the ten minutes both presets use.
+        //
+        // This does not decide which files get split -- anything longer than one part
+        // does. The two were once the same number, which meant an hour-long split
+        // quietly ignored everything under two hours.
+        maxPart = Math.Max(600, splitSeconds * 2);
         break;
 }
 
@@ -82,7 +85,7 @@ if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 List<string> callArgs =
 [
     "-s", splitSeconds.ToString(CultureInfo.InvariantCulture),
-    "-t", thresholdSeconds.ToString(CultureInfo.InvariantCulture),
+    "-t", maxPart.ToString(CultureInfo.InvariantCulture),
 ];
 if (equal) callArgs.Add("-e");
 if (deleteChoice.Value) callArgs.Add("-d");

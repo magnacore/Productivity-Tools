@@ -9,20 +9,20 @@
 //
 // Two ways to divide a file, and the difference is what happens to the time that
 // does not divide evenly. --equal spreads it, so every part is the same length and
-// nothing is left over; how far that may stretch a part is bounded by the threshold,
-// which already says how long a piece may be before it wants cutting up. Without
-// --equal each part is exactly the length asked for and the remainder becomes a
-// final, shorter part, unless it is below --min-part, in which case the part before
-// it swallows it rather than leaving a two second file nobody wants.
+// nothing is left over, stretching each part up to --max-part before cutting another
+// one instead. Without --equal each part is exactly the length asked for and the
+// remainder becomes a final, shorter part, unless it is below --min-part, in which
+// case the part before it swallows it rather than leaving a two second file nobody
+// wants.
 //
-// Only files longer than the threshold are touched. Parts inherit their source's
-// modified time, so splitting some files in a folder and leaving others alone keeps
-// the whole folder in its original order.
+// Only files longer than one part are touched. Parts inherit their source's modified
+// time, so splitting some files in a folder and leaving others alone keeps the whole
+// folder in its original order.
 
 ArgVals a = new Args("media-split-equal", "Split media files into parts")
     .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
-    .Opt("-t", "--threshold_seconds", required: true,
-         help: "Threshold in seconds beyond which the media should be split")
+    .Opt("-t", "--max-part", required: true,
+         help: "Equal mode only: the longest a part may be stretched to, in seconds")
     .Flag("-e", "--equal", help: "Equal parts with no remainder, rather than exact parts with a short last one")
     .Opt("-m", "--min-part", @default: "30",
          help: "Fixed mode only: seconds below which a leftover part is absorbed instead of kept")
@@ -31,7 +31,7 @@ ArgVals a = new Args("media-split-equal", "Split media files into parts")
     .Parse(args);
 
 int splitDuration = a.Int("split_duration");
-int thresholdSeconds = a.Int("threshold_seconds");
+int maxPart = a.Int("max-part");
 int minPart = a.Int("min-part");
 bool equal = a.Flag("equal");
 
@@ -52,7 +52,7 @@ if (minPart < 0)
 IReadOnlyList<string> cleanFileNames = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
 Ui.Begin("Splitting media...");
-Ui.Info($"Looking for media longer than threshold of {thresholdSeconds / 60} minutes...");
+Ui.Info($"Splitting anything longer than {Media.Hms(splitDuration)}...");
 
 // One pass to decide whether there is anything worth splitting at all.
 bool toSplit = false;
@@ -61,7 +61,7 @@ foreach (string file in cleanFileNames)
     if (!Fs.IsMedia(file)) continue;
 
     double duration = Media.Duration(file);
-    if (duration > thresholdSeconds)
+    if (Math.Round(duration) > splitDuration)
     {
         Ui.Good($"Media of length {Media.Hms(duration)} found. Will split...");
         toSplit = true;
@@ -102,21 +102,32 @@ Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
         return;
     }
 
-    // Per file, not once for the whole run. A short clip sitting among long ones used
-    // to be renamed to "-part-001", tagged as a one-item set and have its original
-    // filed away, for a split into a single part. Leaving it alone costs nothing:
-    // parts inherit their source's modified time, so an untouched file still sorts
-    // exactly where it did.
-    if (duration <= thresholdSeconds)
+    // Longer than one part is the whole test of whether a file is worth splitting,
+    // and it is applied per file rather than once for the run.
+    //
+    // This used to be the --max-part value, which conflated two different questions.
+    // That value bounds how far equal mode may stretch a part, so it is reasonably
+    // generous -- twice the part length for a custom choice. Used as the gate as well,
+    // it meant a file had to be twice the length asked for before it was touched: an
+    // hour-long split ignored anything under two hours, so a 1h24m recording came back
+    // untouched. The larger the part requested, the more material the rule was willing
+    // to overlook, which is exactly backwards.
+    //
+    // Leaving a short file alone costs nothing, because parts inherit their source's
+    // modified time: an untouched file still sorts exactly where it did.
+    // Rounded, because a measured duration is never whole: ffprobe calls a 60 second
+    // file 60.008, which would slip past a bare comparison and be "split" into one part
+    // -- or halved, in equal mode, since equal must leave no remainder.
+    if (Math.Round(duration) <= splitDuration)
     {
-        Ui.Line($"[yellow]Leaving {Ui.Esc(file)} alone: {Media.Hms(duration)} is under the threshold[/]");
+        Ui.Line($"[yellow]Leaving {Ui.Esc(file)} alone: {Media.Hms(duration)} is not longer than one part[/]");
         return;
     }
 
     (string? filename, string _) = Fs.SplitExt(file);
     string newFilename = filename + "-part" + (Fs.IsVideo(file) ? ".mkv" : ".mka");
 
-    if (!SplitFile(file, newFilename, duration, splitDuration, thresholdSeconds, minPart, equal))
+    if (!SplitFile(file, newFilename, duration, splitDuration, maxPart, minPart, equal))
     {
         failures++;
         return;   // the original stays put: nothing was produced from it
@@ -143,9 +154,9 @@ return Ui.Done(failures);
 /// them -- a repeating interval where one will do, explicit cut points where it will
 /// not. Media.PlanSplit holds that arithmetic, and is unit tested.
 static bool SplitFile(string file, string newFilename, double duration,
-                      int splitDuration, int threshold, int minPart, bool equal)
+                      int splitDuration, int maxPart, int minPart, bool equal)
 {
-    SplitPlan? plan = Media.PlanSplit(duration, splitDuration, threshold, minPart, equal);
+    SplitPlan? plan = Media.PlanSplit(duration, splitDuration, maxPart, minPart, equal);
 
     if (plan is null)
     {
