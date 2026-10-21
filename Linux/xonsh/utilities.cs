@@ -1776,6 +1776,38 @@ internal static class Media
         return lengths;
     }
 
+    /// Seconds from a typed duration: "90s", "39m", "1h", "1.5h". Null if it is not one.
+    ///
+    /// The unit is required, and that is the whole reason this exists rather than an
+    /// int.TryParse. Every caller works in a different unit -- media-split-equal takes
+    /// seconds, media-length-move takes minutes -- so a bare number means whatever that
+    /// program happens to use, which the person typing it has no reason to know. "1"
+    /// meaning one second where one minute was intended turns an hour of audio into
+    /// three and a half thousand files. Demanding the unit makes the magnitude something
+    /// the user stated rather than something the program assumed.
+    ///
+    /// Case insensitive, and a space before the unit is allowed, because "90 m" is what
+    /// people type.
+    public static int? ParseDuration(string text)
+    {
+        Match m = Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([smh])$",
+                              RegexOptions.IgnoreCase);
+        if (!m.Success) return null;
+
+        if (!double.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture,
+                             out double value)) return null;
+
+        int multiplier = char.ToLowerInvariant(m.Groups[2].Value[0]) switch
+        {
+            's' => 1,
+            'm' => 60,
+            _ => 3600,
+        };
+
+        int seconds = (int)Math.Round(value * multiplier);
+        return seconds > 0 ? seconds : null;
+    }
+
     public static double Duration(string file)
     {
         string text = Proc.Capture("ffprobe", "-v", "quiet", "-of", "csv=p=0",

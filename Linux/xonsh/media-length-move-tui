@@ -28,9 +28,20 @@ ArgVals a = new Args("media-length-move-tui", "Choose a media bundle size in a d
 int? chosen = Dlg.Choose(
     "Media Length Move",
     "Select the target duration for the media bundle @1.5x:",
-    [.. durations.Select(d => d.Label)]);
+    [.. durations.Select(d => d.Label), "Custom..."]);
 
 if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+// Custom sits past the end of the preset list.
+int? listeningMinutes = chosen.Value < durations.Length
+    ? durations[chosen.Value].Minutes
+    : AskListeningTime();
+
+if (listeningMinutes is null)
 {
     Ui.Warn("Operation cancelled by user.");
     return 0;
@@ -47,8 +58,10 @@ if (sortByTime is null)
 }
 
 // The choice is how long you want to listen; at 1.5x that consumes 1.5x as much
-// media, so the bundle has to be that much longer.
-int durationMinutes = (int)(durations[chosen.Value].Minutes * 1.5);
+// media, so the bundle has to be that much longer. A custom answer means the same
+// thing as a preset one -- listening time, not media length -- so it is multiplied
+// the same way.
+int durationMinutes = (int)(listeningMinutes.Value * 1.5);
 string sortArg = sortByTime.Value ? "true" : "false";
 
 Ui.Info($"\nRunning media-length-move (Duration: {durationMinutes}m, " +
@@ -61,3 +74,34 @@ if (a.Flag("dry-run"))
 }
 
 return Proc.Call("media-length-move", "-d", durationMinutes.ToString(), "-s", sortArg);
+
+/// Ask how long you want to listen for, until an answer parses or the dialog is
+/// cancelled. Returns whole minutes, which is what media-length-move takes.
+///
+/// Re-asking with the reason beats abandoning the run over a typo.
+static int? AskListeningTime()
+{
+    string message = "How long do you want to listen for?\n\nGive a unit: 1h, 39m, 90m.";
+
+    while (true)
+    {
+        string? typed = Dlg.Input("Custom listening time", message);
+        if (typed is null) return null;
+
+        int? seconds = Media.ParseDuration(typed);
+
+        // Whole minutes, because that is the unit the program downstream takes. Anything
+        // under half a minute would round to nothing, so it is refused rather than
+        // quietly becoming a zero-length bundle.
+        if (seconds is not null)
+        {
+            int minutes = (int)Math.Round(seconds.Value / 60.0);
+            if (minutes >= 1) return minutes;
+
+            message = $"\"{typed}\" is under a minute.\n\nGive a unit: 1h, 39m, 90m.";
+            continue;
+        }
+
+        message = $"\"{typed}\" is not a duration.\n\nGive a number and a unit: 1h, 39m, 90m.";
+    }
+}

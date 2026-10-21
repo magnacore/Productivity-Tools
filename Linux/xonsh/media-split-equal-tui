@@ -20,7 +20,6 @@
 // its length at the speed it will be played.
 
 using System.Globalization;
-using System.Text.RegularExpressions;
 
 ArgVals a = new Args("media-split-equal-tui", "Choose a part length in a dialog, then run media-split-equal")
     .Flag("-n", "--dry-run", help: "Show the composed command without running it")
@@ -115,35 +114,9 @@ static int? AskDuration()
         string? typed = Dlg.Input("Custom part length", message);
         if (typed is null) return null;
 
-        int? seconds = ParseDuration(typed);
+        int? seconds = Media.ParseDuration(typed);
         if (seconds is not null) return seconds;
 
         message = $"\"{typed}\" is not a length.\n\nGive a number and a unit: 5m, 90s, 1.5h.";
     }
-}
-
-/// A duration in seconds from "5m", "90s", "1.5h". Units are case insensitive.
-///
-/// A bare number is refused on purpose, and this is the whole reason the parser
-/// exists rather than an int.TryParse. The CLI takes seconds, so "1" typed by someone
-/// thinking in minutes would silently mean one second, and an hour of audio would
-/// come back as three and a half thousand files. Demanding the unit makes the
-/// magnitude something the user stated rather than something the program assumed.
-static int? ParseDuration(string text)
-{
-    Match m = Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([smh])$", RegexOptions.IgnoreCase);
-    if (!m.Success) return null;
-
-    if (!double.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture,
-                         out double value)) return null;
-
-    int multiplier = char.ToLowerInvariant(m.Groups[2].Value[0]) switch
-    {
-        's' => 1,
-        'm' => 60,
-        _ => 3600,
-    };
-
-    int seconds = (int)Math.Round(value * multiplier);
-    return seconds > 0 ? seconds : null;
 }
