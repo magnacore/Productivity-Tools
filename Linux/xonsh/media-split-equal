@@ -15,14 +15,19 @@
 // case the part before it swallows it rather than leaving a two second file nobody
 // wants.
 //
-// Only files longer than one part are touched. Parts inherit their source's modified
-// time, so splitting some files in a folder and leaving others alone keeps the whole
-// folder in its original order.
+// Only files longer than --threshold_seconds are touched. Parts inherit their
+// source's modified time, so splitting some files in a folder and leaving others
+// alone keeps the whole folder in its original order.
 
 ArgVals a = new Args("media-split-equal", "Split media files into parts")
     .Opt("-s", "--split_duration", required: true, help: "Duration in seconds to split the media")
-    .Opt("-t", "--max-part", required: true,
-         help: "Equal mode only: the longest a part may be stretched to, in seconds")
+    .Opt("-t", "--threshold_seconds", required: true,
+         help: "Seconds below which a file is left alone entirely")
+    // No declared default: the real one is twice --split_duration, which is not known
+    // until the arguments are parsed, and declaring "0" would advertise a nonsense
+    // value in --help.
+    .Opt("-x", "--max-part",
+         help: "Equal mode only: the longest a part may be stretched to (default: twice --split_duration)")
     .Flag("-e", "--equal", help: "Equal parts with no remainder, rather than exact parts with a short last one")
     .Opt("-m", "--min-part", @default: "30",
          help: "Fixed mode only: seconds below which a leftover part is absorbed instead of kept")
@@ -31,7 +36,12 @@ ArgVals a = new Args("media-split-equal", "Split media files into parts")
     .Parse(args);
 
 int splitDuration = a.Int("split_duration");
-int maxPart = a.Int("max-part");
+int thresholdSeconds = a.Int("threshold_seconds");
+
+// Twice the part length by default, which is the ratio the five minute preset has
+// always had. Only equal mode consults it, and only to decide whether to stretch the
+// parts or cut another one.
+int maxPart = a.Int("max-part") > 0 ? a.Int("max-part") : splitDuration * 2;
 int minPart = a.Int("min-part");
 bool equal = a.Flag("equal");
 
@@ -52,7 +62,7 @@ if (minPart < 0)
 IReadOnlyList<string> cleanFileNames = Fs.RenameToValid(Fs.SortedFiles(a.Rest));
 
 Ui.Begin("Splitting media...");
-Ui.Info($"Splitting anything longer than {Media.Hms(splitDuration)}...");
+Ui.Info($"Splitting anything longer than {Media.Hms(thresholdSeconds)}...");
 
 // One pass to decide whether there is anything worth splitting at all.
 bool toSplit = false;
@@ -61,7 +71,7 @@ foreach (string file in cleanFileNames)
     if (!Fs.IsMedia(file)) continue;
 
     double duration = Media.Duration(file);
-    if (Math.Round(duration) > splitDuration)
+    if (Math.Round(duration) > thresholdSeconds)
     {
         Ui.Good($"Media of length {Media.Hms(duration)} found. Will split...");
         toSplit = true;
@@ -102,25 +112,25 @@ Ui.Track(cleanFileNames, "[bold cyan]Splitting : [/]", file =>
         return;
     }
 
-    // Longer than one part is the whole test of whether a file is worth splitting,
-    // and it is applied per file rather than once for the run.
+    // The threshold alone decides this, applied per file rather than once for the run.
     //
-    // This used to be the --max-part value, which conflated two different questions.
-    // That value bounds how far equal mode may stretch a part, so it is reasonably
-    // generous -- twice the part length for a custom choice. Used as the gate as well,
-    // it meant a file had to be twice the length asked for before it was touched: an
-    // hour-long split ignored anything under two hours, so a 1h24m recording came back
-    // untouched. The larger the part requested, the more material the rule was willing
-    // to overlook, which is exactly backwards.
+    // It was briefly the part length instead, on the reasoning that anything longer
+    // than one part is worth cutting up. That holds for an hour-long split, where the
+    // threshold was otherwise derived as two hours and a 1h24m recording went
+    // untouched. It does not hold for the presets: an 8m56 file at a five minute part
+    // length is longer than one part, so it started being halved, when the entire point
+    // of a ten minute threshold is to leave it alone. The threshold is the caller's
+    // answer to this question and should not be second-guessed; what needed fixing was
+    // how the wrapper derives it for a custom length, not what the gate consults.
     //
     // Leaving a short file alone costs nothing, because parts inherit their source's
     // modified time: an untouched file still sorts exactly where it did.
-    // Rounded, because a measured duration is never whole: ffprobe calls a 60 second
-    // file 60.008, which would slip past a bare comparison and be "split" into one part
-    // -- or halved, in equal mode, since equal must leave no remainder.
-    if (Math.Round(duration) <= splitDuration)
+    //
+    // Rounded, because a measured duration is never whole: ffprobe calls a 600 second
+    // file 600.008, which would otherwise squeak past a threshold of exactly 600.
+    if (Math.Round(duration) <= thresholdSeconds)
     {
-        Ui.Line($"[yellow]Leaving {Ui.Esc(file)} alone: {Media.Hms(duration)} is not longer than one part[/]");
+        Ui.Line($"[yellow]Leaving {Ui.Esc(file)} alone: {Media.Hms(duration)} is under the threshold[/]");
         return;
     }
 

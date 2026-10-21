@@ -35,7 +35,7 @@ int? choice = Dlg.Choose("Split media", "How long should each part be?",
 if (choice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 
 int splitSeconds;
-int maxPart;
+int thresholdSeconds;
 
 switch (choice.Value)
 {
@@ -43,11 +43,11 @@ switch (choice.Value)
     // minute threshold: below that there is not enough material for a split to be
     // worth doing.
     case 0:
-        splitSeconds = 300; maxPart = 600;
+        splitSeconds = 300; thresholdSeconds = 600;
         break;
 
     case 1:
-        splitSeconds = 450; maxPart = 600;
+        splitSeconds = 450; thresholdSeconds = 600;
         break;
 
     default:
@@ -56,14 +56,17 @@ switch (choice.Value)
 
         splitSeconds = custom.Value;
 
-        // How far equal mode may stretch a part before cutting another instead. Twice
-        // the chosen length, which is the ratio the 5 minute preset has always had, and
-        // never tighter than the ten minutes both presets use.
+        // Longer than one part is worth splitting, so that is the threshold for a
+        // length chosen freely. Deriving it as twice the length, the way the presets
+        // happen to sit, is what left a 1h24m recording untouched under an hour-long
+        // split: the bigger the part asked for, the more material the rule overlooked.
         //
-        // This does not decide which files get split -- anything longer than one part
-        // does. The two were once the same number, which meant an hour-long split
-        // quietly ignored everything under two hours.
-        maxPart = Math.Max(600, splitSeconds * 2);
+        // The presets keep their own ten minutes rather than following this rule. That
+        // is not an inconsistency to tidy away -- it is the point. Ten minutes is the
+        // caller's standing answer for five minute parts, and an 8m56 file is meant to
+        // be left alone there, where an hour-long split has no such convention and
+        // "longer than a part" is the only sensible default.
+        thresholdSeconds = splitSeconds;
         break;
 }
 
@@ -85,7 +88,7 @@ if (deleteChoice is null) { Ui.Warn("Operation cancelled by user."); return 0; }
 List<string> callArgs =
 [
     "-s", splitSeconds.ToString(CultureInfo.InvariantCulture),
-    "-t", maxPart.ToString(CultureInfo.InvariantCulture),
+    "-t", thresholdSeconds.ToString(CultureInfo.InvariantCulture),
 ];
 if (equal) callArgs.Add("-e");
 if (deleteChoice.Value) callArgs.Add("-d");
