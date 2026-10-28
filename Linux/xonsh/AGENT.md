@@ -1,4 +1,4 @@
-- .NET is available in /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet
+- .NET is available in /usr/bin/dotnet
 - Write well documented code
 - Write secure code
 - Write maintainable code

@@ -23,7 +23,7 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-DOTNET=/opt/anaconda3/envs/dotnet/lib/dotnet/dotnet
+DOTNET=/usr/bin/dotnet
 FILTER="${1:-}"
 
 # --- Preconditions -----------------------------------------------------------

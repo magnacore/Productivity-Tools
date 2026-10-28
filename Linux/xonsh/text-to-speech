@@ -1,5 +1,5 @@
 #!/bin/sh
-//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
 #:package Spectre.Console@0.57.2
 #:package Google.Cloud.TextToSpeech.V1@3.18.0
 #:property Configuration=Release
@@ -15,19 +15,14 @@
 // Two limits shape everything below. Google rejects a single request over 5,000
 // characters, and it synthesises one request at a time -- so anything longer is
 // split into chunks at sentence boundaries, each chunk synthesised separately, and
-// the pieces joined back into one audio file. On top of that sits a hard 10,000
-// character cap per file: not an API limit but a spending guard, because a request
-// is billed by the character and a stray large file is an expensive accident.
+// the pieces joined back into one audio file. On top of that sits a default 11,000
+// character cap per file, --max-characters: not an API limit but a spending guard,
+// because a request is billed by the character and a stray large file is an expensive
+// accident.
 
 using System.Text;
 using System.Text.RegularExpressions;
 using Google.Cloud.TextToSpeech.V1;
-
-// The spending guard. Deliberately a constant and not a flag: a cap that can be
-// raised from the command line is not a cap, and the whole point is that no
-// accident gets past it. Measured on the *cleaned* text, which is what actually
-// leaves this machine.
-const int MaxCharacters = 10_000;
 
 // Google's own limit is 5,000 characters per request. Chunks are measured in UTF-8
 // bytes rather than characters and given headroom, because the limit is applied to
@@ -41,10 +36,34 @@ const int MaxParallel = 3;
 
 ArgVals a = new Args("text-to-speech", "Convert text files to speech with Google Cloud TTS")
     .Opt("-v", "--voice", @default: "Female", choices: ["Female", "Male"], help: "Which voice to use")
+    .Opt("-c", "--max-characters", @default: "11000",
+         help: "Refuse any file longer than this once cleaned")
     .Rest("files", min: 1, help: "Text files to convert")
     .Parse(args);
 
 IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+
+// The spending guard, measured on the cleaned text because that is what actually
+// leaves this machine. Requests are billed by the character, so a stray large file is
+// an expensive accident rather than a slow one.
+//
+// It was a constant until it wasn't: a cap that cannot be raised is only useful while
+// its value is right for every file you own, and one more than it is a reason to edit
+// the program. Raising it now takes an explicit flag, which is enough -- the guard is
+// against doing it by accident, not against deciding to.
+// Parsed strictly rather than through Args.Int, which falls back to the declared
+// default when a value will not parse. That fallback is right almost everywhere and
+// wrong here: this flag exists to *lower* the cap, so "-c 100O" with a letter O would
+// silently raise it to 11,000 and send the very file the flag was typed to refuse.
+// A cap that fails open is not a cap.
+string? capText = a.StrOrNull("max-characters");
+
+if (!int.TryParse(capText, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                  out int maxCharacters) || maxCharacters <= 0)
+{
+    Console.Error.WriteLine($"error: --max-characters must be a positive whole number, not \"{capText}\"");
+    return 2;
+}
 
 string privateKey = Path.Combine(Paths.SensitiveData, "gemini-service-account-tts.json");
 if (!File.Exists(privateKey))
@@ -87,10 +106,11 @@ foreach (string file in textFiles)
         continue;
     }
 
-    if (cleaned.Length > MaxCharacters)
+    if (cleaned.Length > maxCharacters)
     {
         Ui.Err($"Refusing {file}: {cleaned.Length:N0} characters after cleaning, " +
-               $"over the {MaxCharacters:N0} cap. Split it first, with text-split.");
+               $"over the {maxCharacters:N0} cap. Split it first with text-split, " +
+               $"or raise it with --max-characters.");
         failures++;
         continue;
     }
@@ -143,7 +163,7 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} f
 
     // Every chunk of every file gets its own directory, so three files in flight
     // cannot tread on each other's parts.
-    DirectoryInfo work = Directory.CreateTempSubdirectory("text-to-speech-");
+    DirectoryInfo work = Fs.TempDirectory("text-to-speech-");
     try
     {
         List<string> parts = [];
@@ -184,11 +204,7 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} f
     }
     finally
     {
-        try { work.Delete(recursive: true); }
-        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
-        {
-            Ui.Line($"[yellow]Left temporary files in {Ui.Esc(work.FullName)}: {ex.Message}[/]");
-        }
+        Fs.DeleteTempDirectory(work);
     }
 }, maxParallel: MaxParallel);
 

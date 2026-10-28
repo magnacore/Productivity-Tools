@@ -1,0 +1,65 @@
+#!/bin/sh
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for video-convert.
+//
+// Picks the settings, then hands over. All the walking and converting lives there.
+
+ArgVals a = new Args("video-convert-tui", "Choose conversion settings in a dialog, then run video-convert")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("folders", min: 1, help: "Input folder, and optionally an output folder")
+    .Parse(args);
+
+int? chosen = Dlg.Choose(
+    "Convert videos",
+    "How should the videos be converted?",
+    "WhatsApp  -  sized to share, cut into 80 second posts",
+    "Archive   -  as small as will stay readable, for keeping",
+    "Fast      -  quickest conversion, size unimportant");
+
+if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+string mode = chosen.Value switch
+{
+    0 => "whatsapp",
+    1 => "archive",
+    _ => "fast",
+};
+
+// Two choices rather than a percentage. A number invites tuning something there is
+// no way to evaluate from here, and the honest answer is only ever "all of it" or
+// "whatever is going spare".
+int? speed = Dlg.Choose(
+    "Conversion speed",
+    "How much of the machine should the conversion use?",
+    "Full speed   -  finish as soon as possible",
+    "Background   -  give way to whatever else you are doing");
+
+if (speed is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+List<string> callArgs = ["--mode", mode];
+
+if (speed.Value == 1) callArgs.Add("--background");
+
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]video-convert {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call("video-convert", callArgs);

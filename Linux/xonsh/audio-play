@@ -1,5 +1,5 @@
 #!/bin/sh
-//bin/true; exec /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@" >/dev/null
+//bin/true; exec /usr/bin/dotnet "$0" -- "$@" >/dev/null
 #:package Spectre.Console@0.57.2
 #:property Configuration=Release
 #:include utilities.cs

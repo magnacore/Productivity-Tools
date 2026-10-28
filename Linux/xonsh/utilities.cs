@@ -35,6 +35,7 @@ global using System.Globalization;
 global using System.Text;
 
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 // =============================================================================
@@ -886,7 +887,11 @@ internal static class Proc
     /// composes correctly straight out of the source directory, whether or not it
     /// has been installed onto PATH. Falls back to the bare name so an installed
     /// copy elsewhere on PATH still wins if there is no sibling.
-    private static string Sibling(string program)
+    /// The path of a program beside this one. Public because a program may need to
+    /// run *itself* under something else -- systemd-run, nice, a profiler -- and
+    /// relying on PATH to find it would break the moment it is called from a
+    /// directory that is not on one.
+    public static string Sibling(string program)
     {
         string candidate = Path.Combine(Paths.ScriptDir, program);
         return File.Exists(candidate) ? candidate : program;
@@ -1015,6 +1020,16 @@ internal static partial class Fs
             [".webm"] = "video/webm",     [".avi"]  = "video/x-msvideo",
             [".mov"] = "video/quicktime", [".wmv"]  = "video/x-ms-wmv",
             [".mpg"] = "video/mpeg",      [".mpeg"] = "video/mpeg",   [".flv"]  = "video/x-flv",
+            // Neither /etc/mime.types nor Python's mimetypes knows these, and an
+            // unrecognised extension reads as "not a video" -- which would quietly copy
+            // a whole RealMedia library instead of converting it. The archive script
+            // this replaces carried its own extension list for the same reason.
+            //
+            // ".rm" is left alone deliberately: it resolves to audio, and RealMedia
+            // files of that extension are usually audio. So is ".ts", which is a
+            // transport stream about as often as it is TypeScript.
+            [".rmvb"] = "video/vnd.rn-realmedia-vbr",
+            [".3gp"] = "video/3gpp",          [".3g2"]  = "video/3gpp2",
             [".jpg"] = "image/jpeg",      [".jpeg"] = "image/jpeg",   [".jpe"]  = "image/jpeg",
             [".png"] = "image/png",       [".gif"]  = "image/gif",    [".webp"] = "image/webp",
             [".bmp"] = "image/bmp",       [".tif"]  = "image/tiff",   [".tiff"] = "image/tiff",
@@ -1065,6 +1080,41 @@ internal static partial class Fs
     /// name. Here a leading dot run is part of the name, so ".bashrc" splits to
     /// (".bashrc", "") — which is what every caller needs when building an output
     /// name from an input one.
+    /// The path a file under one root would have under another, sub-directories kept.
+    ///
+    /// "in/A/B/clip.mp4" against roots "in" and "out" gives "out/A/B/clip.mp4". The
+    /// caller is responsible for creating the directory; this only computes the name.
+    ///
+    /// Both roots are resolved to full paths first, so a trailing slash, a relative
+    /// root, or a "." component cannot change the answer -- and so the containment
+    /// check below is comparing like with like.
+    public static string MirrorPath(string inputRoot, string outputRoot, string path)
+    {
+        string relative = Path.GetRelativePath(Path.GetFullPath(inputRoot), Path.GetFullPath(path));
+
+        // GetRelativePath returns the input unchanged when it shares no root, and an
+        // absolute path joined onto another silently discards the first.
+        if (Path.IsPathRooted(relative) || relative.StartsWith("..", StringComparison.Ordinal))
+            throw new ArgumentException($"{path} is not inside {inputRoot}", nameof(path));
+
+        return Path.Combine(Path.GetFullPath(outputRoot), relative);
+    }
+
+    /// True when one directory sits inside another, or is the same directory.
+    ///
+    /// Used to refuse an output folder nested in the input folder: a recursive walk
+    /// would then find its own output and convert it again, and again.
+    public static bool IsInside(string inner, string outer)
+    {
+        string innerFull = Path.TrimEndingDirectorySeparator(Path.GetFullPath(inner));
+        string outerFull = Path.TrimEndingDirectorySeparator(Path.GetFullPath(outer));
+
+        if (string.Equals(innerFull, outerFull, StringComparison.Ordinal)) return true;
+
+        // The separator matters: "/a/bc" starts with "/a/b" but is not inside it.
+        return innerFull.StartsWith(outerFull + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+    }
+
     public static (string Name, string Ext) SplitExt(string file)
     {
         string? directory = Path.GetDirectoryName(file);
@@ -1091,6 +1141,102 @@ internal static partial class Fs
 
     /// str(uuid.uuid4())
     public static string Uuid() => Guid.NewGuid().ToString();
+
+    /// A scratch directory that cleans itself up, even if the program is interrupted.
+    ///
+    /// Directory.CreateTempSubdirectory on its own is not enough. A `finally` covers a
+    /// normal exit and a crash, but not Ctrl-C: the runtime shuts the process down
+    /// without unwinding the stack, so the `finally` never runs and the directory is
+    /// left behind. That matters here because these directories are not small --
+    /// x264's two-pass statistics for a six-minute video come to 38 MB, nearly all of
+    /// it the mbtree file -- and on this system the temporary directory is tmpfs,
+    /// which is to say RAM.
+    ///
+    /// Registering the removal with ProcessExit as well closes that gap. SIGKILL still
+    /// cannot be caught by anything, but tmpfs is emptied at reboot, so the worst case
+    /// is bounded.
+    ///
+    /// Callers should still delete the directory themselves when they are done with
+    /// it: a long run would otherwise hold every job's scratch space until it exits.
+    /// Deleting twice is harmless.
+    public static DirectoryInfo TempDirectory(string prefix)
+    {
+        DirectoryInfo directory = Directory.CreateTempSubdirectory(prefix);
+
+        // One set of handlers over a shared list, not one per directory: a program that
+        // makes a scratch directory per file would otherwise register thousands of
+        // them, and they are never unregistered.
+        lock (_tempDirectories)
+        {
+            if (_signals.Count == 0) RegisterCleanup();
+
+            _tempDirectories.Add(directory);
+        }
+
+        return directory;
+    }
+
+    /// Arrange for the scratch directories to be removed however the program ends.
+    ///
+    /// ProcessExit alone is not enough, and the difference was measured rather than
+    /// assumed: interrupting a conversion with Ctrl-C ends it within a second and
+    /// still leaves the directory behind, because .NET does not raise ProcessExit when
+    /// a signal terminates the process. PosixSignalRegistration does run, and leaving
+    /// Cancel false lets the signal do its usual job afterwards, so the program still
+    /// stops when asked. SIGKILL remains uncatchable by anyone.
+    ///
+    /// The registrations are held in a field because disposing one unregisters it, and
+    /// a local would be collected.
+    private static void RegisterCleanup()
+    {
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => DeleteTempDirectories();
+
+        foreach (PosixSignal signal in (PosixSignal[])
+                 [PosixSignal.SIGINT, PosixSignal.SIGTERM, PosixSignal.SIGHUP, PosixSignal.SIGQUIT])
+        {
+            _signals.Add(PosixSignalRegistration.Create(signal, _ => DeleteTempDirectories()));
+        }
+    }
+
+    /// Kept alive for the life of the program; see RegisterCleanup.
+    private static readonly List<PosixSignalRegistration> _signals = [];
+
+    /// The scratch directories still to be removed at exit. Guarded by its own lock
+    /// because the programs that make these create them from several threads at once.
+    private static readonly List<DirectoryInfo> _tempDirectories = [];
+
+    /// Remove whatever scratch directories are still standing. Called once, at exit.
+    private static void DeleteTempDirectories()
+    {
+        DirectoryInfo[] remaining;
+
+        lock (_tempDirectories)
+        {
+            remaining = [.. _tempDirectories];
+            _tempDirectories.Clear();
+        }
+
+        foreach (DirectoryInfo directory in remaining) DeleteTempDirectory(directory);
+    }
+
+    /// Remove a scratch directory, saying so rather than throwing if it cannot be.
+    ///
+    /// A directory that has already gone is a success, not a failure -- this runs both
+    /// from the caller and again at exit, and the second call finding nothing is the
+    /// normal case.
+    public static void DeleteTempDirectory(DirectoryInfo directory)
+    {
+        lock (_tempDirectories) _tempDirectories.Remove(directory);
+
+        try
+        {
+            if (directory.Exists) directory.Delete(recursive: true);
+        }
+        catch (Exception ex) when (IsExpectedIoFailure(ex))
+        {
+            Ui.Line($"[yellow]Left temporary files in {Ui.Esc(directory.FullName)}: {ex.Message}[/]");
+        }
+    }
 
     /// Django's slugify: decompose, drop anything non-ASCII, lowercase, strip
     /// punctuation, collapse runs of dashes and whitespace to one dash, then trim.
@@ -1601,7 +1747,7 @@ internal static class Media
     /// The progress-reporting core of ConvertWithProgress, for a run that leaves
     /// nothing on disk to check.
     ///
-    /// video-convert-whatsapp's first pass is the case that needs this: it only
+    /// video-convert's first pass is the case that needs this: it only
     /// measures the video, sending its output to /dev/null and leaving a statistics
     /// log behind, so ConvertWithProgress's written-output test has nothing to look at
     /// and would call every such run a failure. The percentage means the same thing
@@ -1807,6 +1953,17 @@ internal static class Media
         int seconds = (int)Math.Round(value * multiplier);
         return seconds > 0 ? seconds : null;
     }
+
+    /// The name a converted file takes: the stem, a tagged marker, the new extension.
+    ///
+    /// "lecture.rmvb" with tag "archive" and ".mkv" gives "lecture #archive.mkv". The
+    /// "#tag" shape is the convention the rest of this collection already sorts and
+    /// searches by, and the tag says which settings produced the file -- which matters
+    /// once archive and fast output share a folder.
+    ///
+    /// Any directory part of the name is dropped: the caller decides where it goes.
+    public static string ConvertedName(string fileName, string tag, string extension)
+        => $"{Fs.SplitExt(Path.GetFileName(fileName)).Name} #{tag}{extension}";
 
     public static double Duration(string file)
     {

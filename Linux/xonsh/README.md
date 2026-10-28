@@ -21,7 +21,7 @@ Nothing is installed anywhere. These run in place, and find each other in place.
 
 ```sh
 #!/bin/sh
-//bin/true; /opt/anaconda3/envs/dotnet/lib/dotnet/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
 #:package Spectre.Console@0.57.2
 #:property Configuration=Release
 #:include utilities.cs
@@ -132,6 +132,7 @@ redirected. The wrappers are:
 | `mkv-extract-track-tui` | a track number **per file**, after showing `mkvinfo` | `mkv-extract-track` |
 | `otp-copy-tui` · `password-copy-tui` · `password-show-tui` | which store entry | the matching CLI |
 | `password-generate-tui` | password or seed phrase, and its length | `password-generate` |
+| `video-convert-tui` | one of three conversion profiles | `video-convert` |
 | `video-download-tui` | the download profile | `video-download` |
 
 `audio-process-tui` was `audio-process`: it already held no logic of its own, only a
@@ -337,11 +338,12 @@ for arbitrary ones, so `q` would need a hand-rolled prompt to replace it.
 
 ## Parallel conversion
 
-Eleven programs process their inputs concurrently and take `-j/--jobs`:
+Twelve programs process their inputs concurrently and take `-j/--jobs`:
 
 `audio-speed-change` · `audio-volume-change` · `audio-convert-foss` ·
-`video-convert-audio` · `image-convert` · `image-convert-text` · `pdf-convert-text` ·
-`document-convert` · `epub-convert-multiple` · `image-watermark-tui` · `pdf-split`
+`video-convert-audio` · `video-convert` · `image-convert` · `image-convert-text` ·
+`pdf-convert-text` · `document-convert` · `epub-convert-multiple` ·
+`image-watermark-tui` · `pdf-split`
 
 Measured on this machine:
 
@@ -420,9 +422,40 @@ no `-j`, and should not: `rename(2)` is tens of microseconds, so the program's o
 Several serial loops are serial because parallelism would be *wrong*, not slow.
 `file-number`, `file-number-deep`, `file-tag-percentage`, `file-timestamp-sync` and
 `directory-number` each mutate a counter that determines the output filename.
-`video-convert-whatsapp` shares one `-passlogfile` across iterations,
 `media-split-equal` finds its output by globbing the current directory, and
-`mkv-extract-track` prompts inside its loop.
+`mkv-extract-track` prompts inside its loop. `video-convert` used to belong on this
+list for the same reason as the first group — its predecessor shared one
+`-passlogfile` across iterations — until each encode was given its own, which is what
+lets all three of its modes run under `-j`.
+
+### Giving the machine back
+
+`video-convert --background` is the one place where `-j` is not the whole answer. A
+single ffmpeg was measured taking **8.7 of this machine's 16 cores** -- VP9 is given
+`-row-mt`, whose purpose is to spread one encode wider -- so the job count has a floor
+of roughly half the machine, and on a folder holding one video it does nothing at all.
+
+The flag therefore re-executes the program inside a transient systemd scope at
+`CPUWeight=10`, and ffmpeg inherits the cgroup. Not `nice`: the cpu cgroup controller
+is delegated down to the per-application scopes, so the kernel divides the processor
+between *scopes* first and only then ranks processes inside one by nice value. A niced
+ffmpeg started from a file manager yields to that file manager and to nothing else.
+
+One scope for the whole run, not one per encode. Wrapping each ffmpeg was measured and
+rejected: `-j 2` then meant two scopes of weight 10 against a competitor's 100, so
+asking for more jobs quietly bought more of the processor.
+
+Measured against sixteen competing spinners, over a five second window:
+
+| | competing work | conversion |
+|---|---|---|
+| without `--background` | 12.12 cores | 3.18 cores |
+| with `--background` | 14.28 cores | 0.95 cores |
+
+A weight, not a quota: with nothing else running the same conversion still took 9.01
+cores. `IOWeight=10` is asked for too and currently does nothing here -- the io
+controller is never delegated, and the NVMe queue is scheduled with `none`, so `ionice`
+would be equally inert.
 
 `-j` has no hardcoded default. It is computed at startup from the machine:
 
@@ -474,7 +507,7 @@ date across means a modified-time sort of the output reads in exactly the same o
 as the input.
 
 Splitters (`pdf-split`, `text-split`, `media-split-equal`,
-`video-convert-whatsapp`) give every part the source's date, so the group as a whole
+`video-convert`) give every part the source's date, so the group as a whole
 stays where the original was — and each part is offset **one millisecond** further
 than the last, via `CopyTimestamp`'s third argument.
 

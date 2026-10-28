@@ -1,0 +1,636 @@
+#!/bin/sh
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
+
+// Convert a folder of videos, mirroring its structure into a new folder.
+//
+// Three modes, differing only in what ffmpeg is asked to do:
+//
+//   archive   VP9, aggressively compressed, for keeping tutorials forever
+//   fast      VP9 at its quickest, when the wait matters more than the size
+//   whatsapp  H.264 sized for a status post, then cut into 80 second segments
+//
+// Everything else is shared, and is most of the program: walk the tree, recreate
+// it, convert the videos, copy everything else through untouched, skip what is
+// already done, and survive being killed half way.
+//
+// The input folder is never written to. A run that goes wrong costs an output
+// folder and nothing else.
+
+using System.Globalization;
+
+ArgVals a = Jobs.Add(new Args("video-convert", "Convert a folder of videos, keeping its structure")
+    .Opt("-m", "--mode", required: true, choices: ["archive", "fast", "whatsapp"],
+         help: "Which settings to convert with")
+    .Opt("-b", "--bitrate", @default: "1000",
+         help: "whatsapp mode only: video bitrate in kb/s")
+    .Opt("-c", "--cpu-used", @default: "2",
+         help: "archive mode only: libvpx speed, 0 slowest and smallest, 8 fastest")
+    .Flag("-f", "--fresh",
+          help: "Convert into a new timestamped folder instead of resuming the usual one")
+    .Flag("-B", "--background",
+          help: "Yield the machine to other work: low CPU and I/O priority, fewer jobs")
+    .Flag("-n", "--dry-run", help: "Show what would be converted, without converting")
+    .Rest("folders", min: 1, help: "Input folder, and optionally an output folder"))
+    .Parse(args);
+
+string mode = a.Str("mode");
+bool dryRun = a.Flag("dry-run");
+
+// Set in the copy of this program that is already inside a scope, so it converts
+// rather than re-executing itself forever.
+const string ScopeMarker = "VIDEO_CONVERT_SCOPED";
+
+// ── background conversions run as a second copy of this program ──────────────
+//
+// Done here, before any work, and by re-executing rather than by wrapping each
+// ffmpeg call. One scope holds the whole conversion, so its share of the machine is
+// a fixed tenth however many jobs run inside it. Wrapping each encode separately was
+// measured and rejected: -j 2 then meant two scopes of weight 10 against a
+// competitor's 100, so asking for more jobs quietly bought more of the processor --
+// exactly backwards for a flag whose purpose is to take less of it.
+//
+// ffmpeg inherits the cgroup from its parent, so nothing below needs to know.
+if (a.Flag("background") && !dryRun
+    && Environment.GetEnvironmentVariable(ScopeMarker) is null)
+{
+    if (BackgroundAvailable()) return RunInBackgroundScope(args);
+
+    Ui.Warn("systemd-run --user is not available here, so --background cannot lower "
+            + "the priority. Converting with fewer jobs instead.");
+}
+
+if (a.Rest.Count > 2)
+{
+    Console.Error.WriteLine("error: expected an input folder and at most one output folder");
+    return 2;
+}
+
+string input = Path.TrimEndingDirectorySeparator(Path.GetFullPath(a.Rest[0]));
+
+if (!Directory.Exists(input))
+{
+    Console.Error.WriteLine($"error: {a.Rest[0]} is not a folder");
+    return 2;
+}
+
+// Beside the input, not inside it: "demo" becomes "demo_converted".
+//
+// The same name every time, deliberately. Repeating the command is how a conversion
+// is resumed -- the finished videos are skipped and the one that was interrupted is
+// done again -- and a name that changed between runs put that out of reach, since
+// resuming would have meant reading the previous folder's name off the disk first.
+// Through the dialog wrapper it was unreachable altogether.
+//
+// Modes can share one folder safely: the tag is in each file's name, so #archive and
+// #whatsapp copies of the same video sit side by side rather than overwriting.
+//
+// --fresh is the way back to a folder of its own, for when the settings have changed
+// and the existing copies should not be kept. Without it a changed --cpu-used would
+// be ignored for every video already converted -- visibly, since each one is reported
+// as already done, but ignored all the same.
+if (a.Flag("fresh") && a.Rest.Count > 1)
+{
+    Console.Error.WriteLine("error: --fresh names the output folder itself, "
+                            + "so an output folder cannot also be given");
+    return 2;
+}
+
+string output = a.Rest.Count > 1
+    ? Path.TrimEndingDirectorySeparator(Path.GetFullPath(a.Rest[1]))
+    : Path.Combine(Path.GetDirectoryName(input) ?? ".",
+                   $"{Path.GetFileName(input)}_converted"
+                   + (a.Flag("fresh") ? $"_{Fs.Timestamp()}" : string.Empty));
+
+// An output folder inside the input folder would be found by the walk below and
+// converted again, and the conversion of that converted again, until the disk fills.
+// Cheap to check, and the failure is otherwise slow and confusing.
+if (Fs.IsInside(output, input))
+{
+    Console.Error.WriteLine($"error: the output folder must not be inside the input folder");
+    Console.Error.WriteLine($"       input:  {input}");
+    Console.Error.WriteLine($"       output: {output}");
+    return 2;
+}
+
+Ui.Begin($"Converting {Path.GetFileName(input)} ({mode})");
+
+// Listed in full before anything is written. Enumerating lazily would let the walk
+// see files this run creates -- and even with the containment check above, a lazy
+// enumeration over a tree being modified is not something to rely on.
+List<string> everything = Directory
+    .EnumerateFiles(input, "*", SearchOption.AllDirectories)
+    .OrderBy(path => path, StringComparer.Ordinal)
+    .ToList();
+
+if (everything.Count == 0) return Ui.NoFiles($"Nothing in {Path.GetFileName(input)}");
+
+List<string> videos = everything.Where(Fs.IsVideo).ToList();
+List<string> others = everything.Where(path => !Fs.IsVideo(path)).ToList();
+
+Ui.Info($"{videos.Count} video(s) to convert, {others.Count} other file(s) to copy, " +
+        $"into {Path.GetFileName(output)}");
+
+// What each mode produces, and what to call it.
+(string Tag, string Extension) naming = mode switch
+{
+    "archive" => ("archive", ".mkv"),
+    "fast" => ("fast", ".mkv"),
+    _ => ("whatsapp", ".mp4"),
+};
+
+// ── dry run ──────────────────────────────────────────────────────────────────
+//
+// The whole plan, before a byte is written. This is how you check the mapping on a
+// tree you care about, and it is how the conversion modes were tested without
+// waiting for VP9.
+if (dryRun)
+{
+    foreach (string source in everything)
+    {
+        bool isVideo = Fs.IsVideo(source);
+        string destination = isVideo
+            ? Path.Combine(Path.GetDirectoryName(Fs.MirrorPath(input, output, source))!,
+                           Media.ConvertedName(source, naming.Tag, naming.Extension))
+            : Fs.MirrorPath(input, output, source);
+
+        string what = !isVideo ? "copy   "
+            : File.Exists(destination) ? "skip   "
+            : "convert";
+
+        Ui.Line($"[dim]{what}[/] {Ui.Esc(Path.GetRelativePath(input, source))}" +
+                $" [dim]->[/] {Ui.Esc(Path.GetRelativePath(output, destination))}");
+    }
+
+    Ui.End();
+    return 0;
+}
+
+// How many files to encode at once when the machine is wanted for other work. Two
+// rather than one: a single encode leaves cores idle while ffmpeg reads and writes,
+// and the scope weight already governs what happens under contention.
+const int BackgroundJobs = 2;
+
+// ── how hard to push the machine ─────────────────────────────────────────────
+//
+// Two levers, and both are needed. A single ffmpeg was measured taking 8.7 of this
+// machine's 16 cores -- VP9 is given -row-mt, whose whole purpose is to spread one
+// encode wider -- so the job count alone cannot get near a quiet machine, and on a
+// folder holding one video it does nothing at all. The scope weight is what actually
+// yields, and it yields on a single file as well as on a hundred.
+int jobs = Jobs.From(a);
+
+// Lowered even when the scope could not be had: if priority cannot be lowered, the
+// job count is the only lever left, and it is better than nothing.
+if (a.Flag("background") && !a.Has("jobs")) jobs = Math.Min(jobs, BackgroundJobs);
+
+// ── copy everything that is not a video ──────────────────────────────────────
+//
+// Done first and serially: it is quick, and it means the output tree already looks
+// right while the long encodes are still running.
+int failures = 0;
+
+foreach (string source in others)
+{
+    string destination = Fs.MirrorPath(input, output, source);
+
+    try
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+
+        // Already there from an earlier run: leave it. Copying again would be
+        // harmless but slow on a tree full of images.
+        if (File.Exists(destination)) continue;
+
+        // Copied through a temporary name for the same reason the conversions are:
+        // an interrupted copy must not be mistaken for a complete one next time.
+        string partial = destination + ".partial";
+        File.Copy(source, partial, overwrite: true);
+        File.Move(partial, destination);
+
+        Fs.CopyTimestamp(source, destination);
+    }
+    catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+    {
+        Ui.Line($"[bold red]Could not copy {Ui.Esc(Path.GetRelativePath(input, source))}: {ex.Message}[/]");
+        failures++;
+    }
+}
+
+if (videos.Count == 0)
+{
+    Ui.Ok($"Copied {others.Count} file(s). No videos to convert.");
+    return Ui.Done(failures);
+}
+
+// Each file's two-pass statistics log lives in here, named after the file, so the
+// encodes do not share one and can therefore run in parallel. The predecessor used a
+// single "temp_log" in the working directory, which is the only reason it was serial.
+DirectoryInfo passLogs = Fs.TempDirectory("video-convert-");
+
+try
+{
+    Ui.Track2(videos,
+              $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Converting {videos.Count} video(s):"))}[/]",
+              (source, addBar) =>
+    {
+        try
+        {
+            if (!ConvertOne(source, input, output, mode, naming, a, passLogs.FullName, addBar))
+                Interlocked.Increment(ref failures);
+        }
+        catch (Exception ex)
+        {
+            Ui.Line($"[bold red]Could not convert {Ui.Esc(Path.GetFileName(source))}: {ex.Message}[/]");
+            Interlocked.Increment(ref failures);
+        }
+    }, jobs);
+}
+finally
+{
+    Fs.DeleteTempDirectory(passLogs);
+}
+
+return Ui.Done(failures);
+
+/// Convert one video into the mirrored tree. Returns false if anything went wrong.
+///
+/// Every output is written under a ".partial" name and moved into place only once
+/// ffmpeg has succeeded. That is what makes the program safe to interrupt: a killed
+/// encode leaves a .partial, which is never mistaken for finished work, and the next
+/// run re-encodes that one file. Resume is per file, not within a file -- ffmpeg
+/// cannot pick up a half-finished encode, and pretending otherwise would be a lie
+/// that costs you a corrupt archive.
+static bool ConvertOne(string source, string input, string output, string mode,
+                       (string Tag, string Extension) naming, ArgVals a,
+                       string passLogDirectory, Func<string, int, Action<double>> addBar)
+{
+    string destinationDirectory = Path.GetDirectoryName(Fs.MirrorPath(input, output, source))!;
+    Directory.CreateDirectory(destinationDirectory);
+
+    string converted = Path.Combine(destinationDirectory,
+                                    Media.ConvertedName(source, naming.Tag, naming.Extension));
+    string relative = Path.GetRelativePath(input, source);
+
+    // Already converted by an earlier run. A zero byte file is not a conversion, so it
+    // is treated as absent and done again.
+    if (File.Exists(converted) && new FileInfo(converted).Length > 0
+        && (mode != "whatsapp" || SegmentsExist(converted)))
+    {
+        Ui.Line($"[dim]Already converted: {Ui.Esc(relative)}[/]");
+        return true;
+    }
+
+    // ".partial" goes before the extension, not after. ffmpeg picks its muxer from the
+    // final extension, so "clip #fast.mkv.partial" is a format it has never heard of
+    // and it refuses to write anything at all.
+    string partial = Path.Combine(destinationDirectory,
+        $"{Fs.SplitExt(Path.GetFileName(converted)).Name}.partial{naming.Extension}");
+
+    SafeDelete(partial);
+
+    bool ok = mode switch
+    {
+        "archive" => TwoPass(source, partial, ArchiveArgs(a.Int("cpu-used")), passLogDirectory,
+                             relative, addBar),
+        "fast" => OnePass(source, partial, FastArgs(), relative, addBar),
+        _ => TwoPass(source, partial, WhatsAppArgs(WhatsAppBitrate(source, a, relative)),
+                     passLogDirectory,
+                     relative, addBar),
+    };
+
+    if (!ok)
+    {
+        SafeDelete(partial);
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(relative)}[/]");
+        return false;
+    }
+
+    // The encode succeeded, so the file earns its real name.
+    File.Move(partial, converted, overwrite: true);
+    Fs.CopyTimestamp(source, converted);
+
+    // WhatsApp wants pieces short enough for a status post. The full file is kept too:
+    // sometimes the whole thing is what you want to send.
+    if (mode == "whatsapp" && !Segment(converted, source, relative))
+    {
+        Ui.Line($"[bold red]Converted but could not segment {Ui.Esc(relative)}[/]");
+        return false;
+    }
+
+    Ui.Line($"[green]{Ui.Esc(relative)}[/]");
+    return true;
+}
+
+/// Archive: VP9, tuned for screen-recorded tutorials kept forever.
+///
+/// -b:v 0 is what switches libvpx into true constant quality; without it -crf acts
+/// only as a ceiling on an average-bitrate encode and the files come out larger than
+/// asked for. CRF 45 is well past the usual archive range of 30-35, deliberately: the
+/// material is lecture slides and hands on a table, where the loss does not show, and
+/// the point is to keep the whole library.
+///
+/// The height cap is downscale-only -- min(720, ih) leaves a 480p source at 480p
+/// rather than wasting bits upscaling it. -2 for width keeps the aspect ratio and
+/// rounds to an even number, which chroma subsampling requires.
+///
+/// -cpu-used is the flag the original settings never set, so libvpx ran at 0, its
+/// slowest. Measured on a 15 second clip: 20.8s at 0 against 7.1s at 2, for 6% more
+/// bytes. Across a library that is the difference between an afternoon and a week.
+///
+/// No -ar: libopus always codes at 48 kHz internally whatever it is told, so the
+/// 24000 the original passed did nothing.
+static string[] ArchiveArgs(int cpuUsed) =>
+[
+    "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "45",
+    "-deadline", "good", "-cpu-used", cpuUsed.ToString(CultureInfo.InvariantCulture),
+    "-vf", "scale=-2:'min(720,ih)'", "-row-mt", "1",
+];
+
+/// Audio for archive, added to the second pass only. Mono at 32k is plainly enough
+/// for a person talking, and it is a fifth of the stereo default.
+static string[] ArchiveAudio() => ["-c:a", "libopus", "-ac", "1", "-b:a", "32k"];
+
+/// Fast: the same codec asked to stop thinking. One pass, realtime deadline, and
+/// libvpx's quickest setting. Size is whatever it turns out to be.
+static string[] FastArgs() =>
+[
+    "-c:v", "libvpx-vp9", "-row-mt", "1", "-deadline", "realtime", "-cpu-used", "8",
+    "-c:a", "libopus",
+];
+
+/// What goes in front of ffmpeg for a background conversion.
+///
+/// A transient systemd scope with a low CPU and I/O weight, rather than nice. On this
+/// machine the cpu cgroup controller is delegated all the way down to the per
+/// application scopes, which means the kernel splits the processor between *scopes*
+/// first and only then ranks processes inside one by their nice value. A niced ffmpeg
+/// launched from a file manager would therefore yield to that file manager and to
+/// nothing else -- not to the browser or the editor, which live in scopes of their
+/// own. Giving the conversion its own scope at a tenth of the usual weight is the
+/// same intent, applied where the kernel is actually making the decision.
+///
+/// A weight, not a quota: under contention the conversion takes roughly a tenth of
+/// the machine, and when nothing else wants the processor it still takes all of it.
+/// A hard cap would be slower at three in the morning too.
+///
+/// IOWeight is asked for and, on this machine, does nothing: the io controller is
+/// available at the cgroup root but never delegated downwards, so the scope has no
+/// io.weight file to write. It is left in because it costs nothing, it is correct
+/// wherever io *is* delegated, and the alternative -- ionice -- would be equally
+/// inert here, the NVMe queue being scheduled with "none". Converting a folder of
+/// large videos is heavy on disk as well as processor, so if the machine still feels
+/// slow while a conversion runs, this is the reason and not something to tune.
+static string[] BackgroundLauncher() =>
+[
+    "systemd-run", "--user", "--scope", "--quiet",
+    "-p", "CPUWeight=10", "-p", "IOWeight=10",
+];
+
+/// Run this same command again inside a low priority scope, and return its result.
+///
+/// The program is found beside this one rather than on PATH: a conversion started
+/// with ./video-convert from a directory nobody has on their PATH must still work.
+static int RunInBackgroundScope(string[] originalArgs)
+{
+    string[] launcher = BackgroundLauncher();
+
+    List<string> call =
+    [
+        .. launcher.Skip(1),
+        $"--setenv={ScopeMarker}=1",
+        Proc.Sibling("video-convert"),
+        .. originalArgs,
+    ];
+
+    return Proc.Run(launcher[0], call);
+}
+
+/// Whether this machine can actually put a command in a scope.
+///
+/// Probed rather than assumed, because the cost of being wrong is total: if
+/// systemd-run is missing or there is no user instance to talk to, every single
+/// ffmpeg invocation would fail instead of the conversion merely running fast.
+/// /bin/true is the cheapest thing to put in a scope that proves the whole path
+/// works -- the binary, the user bus, and the properties being accepted.
+static bool BackgroundAvailable()
+{
+    try
+    {
+        string[] launcher = BackgroundLauncher();
+
+        return Proc.Ok(launcher[0], [.. launcher.Skip(1), "/bin/true"]);
+    }
+    catch (Exception ex) when (Fs.IsExpectedIoFailure(ex) || ex is System.ComponentModel.Win32Exception)
+    {
+        return false;
+    }
+}
+
+/// WhatsApp: H.264 in MP4, which is what the app will actually play, held to a
+/// bitrate that keeps a status post small.
+///
+/// The frame rate is fixed here rather than on the second pass alone, because libx264
+/// records the timebase in its statistics file and refuses a second pass that disagrees
+/// with it ("timebase mismatch with 1st pass"). A 30 fps source hides that -- its
+/// timebase is 1/30 either way -- but anything filmed at 29.97 fails outright.
+static string[] WhatsAppArgs(int bitrate) =>
+[
+    "-c:v", "libx264", "-b:v", $"{bitrate}k", "-crf", "23",
+    "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
+    "-r", "30", "-fps_mode", "cfr",
+];
+
+/// Audio for WhatsApp, second pass only.
+static string[] WhatsAppAudio() =>
+    ["-c:a", "aac", "-b:a", $"{WhatsAppAudioKbps()}k", "-ac", "1"];
+
+/// What the audio above costs, in kb/s. Named because the bitrate cap has to subtract
+/// it, and a cap computed against the wrong figure would quietly stop guaranteeing
+/// anything.
+static int WhatsAppAudioKbps() => 32;
+
+/// The video bitrate to ask for, which is never more than the source already spends.
+///
+/// -b:v is an absolute target, not a ratio, so a source thinner than the target comes
+/// out *larger* than it went in: a 762k lecture became a 1003k mp4, a third bigger and
+/// -- being a second generation of lossy encoding in a less efficient codec -- visibly
+/// worse. Spending those bits is wasted twice over, because WhatsApp re-compresses
+/// whatever it is sent anyway.
+///
+/// The source's rate is computed from size and duration rather than read from its
+/// metadata. Matroska and webm, which are exactly what gets fed to this mode, carry no
+/// per-stream bitrate at all and report N/A; size over duration is available for every
+/// container and agrees with the metadata wherever there is metadata to agree with.
+static int WhatsAppBitrate(string source, ArgVals a, string relative)
+{
+    // Below this a cap has stopped doing anything useful, and ffmpeg must never be
+    // handed zero or a negative number.
+    const int Floor = 64;
+
+    int requested = a.Int("bitrate");
+
+    // An explicit --bitrate is an instruction and not a suggestion. Same rule as -j
+    // under --background: a computed default may adapt, a stated one is obeyed.
+    if (a.Has("bitrate")) return requested;
+
+    double seconds = Media.Duration(source);
+
+    // Nothing measurable to compare against, so leave the default alone rather than
+    // guess at a number that decides how the file will look.
+    if (seconds <= 0) return requested;
+
+    long bytes = new FileInfo(source).Length;
+    int sourceKbps = (int)(bytes * 8 / seconds / 1000);
+
+    // The source's figure covers its audio too, and this encode adds its own on top,
+    // so that much comes off before the comparison means anything.
+    int wanted = sourceKbps - WhatsAppAudioKbps();
+    int capped = Math.Max(wanted, Floor);
+
+    if (capped >= requested) return requested;
+
+    // Said differently when the floor is what decided it, because then the copy may
+    // well be larger than the source and promising otherwise would be a lie.
+    Ui.Line(wanted >= Floor
+        ? $"[dim]{Ui.Esc(relative)}: {capped}k rather than {requested}k, so the copy "
+          + $"is no larger than its {sourceKbps}k source[/]"
+        : $"[dim]{Ui.Esc(relative)}: {capped}k rather than {requested}k, the lowest "
+          + $"this mode goes; the {sourceKbps}k source is thinner still[/]");
+
+    return capped;
+}
+
+/// A single-pass encode with one progress bar.
+static bool OnePass(string source, string destination, string[] encoder,
+                    string relative, Func<string, int, Action<double>> addBar)
+{
+    Action<double> bar = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription(relative + ":"))}[/]", 100);
+
+    List<string> arguments = ["-i", source, .. encoder, "-y", destination];
+
+    return Media.ConvertWithProgress(source, destination, arguments, bar);
+}
+
+/// A two-pass encode with a bar for each pass.
+///
+/// The first pass only measures the video and throws its output away, so there is no
+/// file for ConvertWithProgress to check and RunWithProgress is the half to call. The
+/// second writes the real thing, where the written-output check matters: ffmpeg can
+/// refuse to overwrite and still exit zero, and only looking at the file catches it.
+///
+/// The statistics log is named after the file and kept in its own directory, so two
+/// encodes running at once cannot read each other's numbers and size a video against
+/// the wrong film.
+static bool TwoPass(string source, string destination, string[] encoder,
+                    string passLogDirectory, string relative,
+                    Func<string, int, Action<double>> addBar)
+{
+    string passLog = Path.Combine(passLogDirectory, Fs.Slug(relative));
+
+    Action<double> firstBar =
+        addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{relative} (pass 1 of 2):"))}[/]", 100);
+
+    List<string> firstArguments =
+    [
+        "-i", source, .. encoder,
+        "-pass", "1", "-passlogfile", passLog, "-an",
+        "-f", "null", "/dev/null",
+    ];
+
+    (bool first, double reported) = Media.RunWithProgress(source, firstArguments, firstBar);
+    if (!first) return false;
+
+    // Topped up only now the pass has succeeded, so a failure above leaves the bar
+    // visibly short rather than claiming to have finished.
+    if (reported < 100) firstBar(100 - reported);
+
+    Action<double> secondBar =
+        addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{relative} (pass 2 of 2):"))}[/]", 100);
+
+    // Which audio settings go with which encoder is decided by the encoder itself.
+    string[] audio = encoder.Contains("libx264") ? WhatsAppAudio() : ArchiveAudio();
+
+    List<string> secondArguments =
+    [
+        "-i", source, .. encoder,
+        "-pass", "2", "-passlogfile", passLog,
+        .. audio,
+        "-y", destination,
+    ];
+
+    return Media.ConvertWithProgress(source, destination, secondArguments, secondBar);
+}
+
+/// Cut a converted file into pieces short enough for a WhatsApp status post.
+///
+/// A stream copy, not another encode, so it is quick and loses nothing. The pieces are
+/// written to a temporary directory and moved in together: a segmentation killed half
+/// way would otherwise leave a numbered run that looks complete.
+///
+/// Each piece takes the source's date, a millisecond apart. Identical stamps would
+/// leave a date sorted listing nothing to order by, and a file manager's tie-break can
+/// then show 003 before 001.
+static bool Segment(string converted, string source, string relative)
+{
+    string directory = Path.GetDirectoryName(converted)!;
+    string stem = Fs.SplitExt(Path.GetFileName(converted)).Name;
+
+    DirectoryInfo staging = Fs.TempDirectory("video-convert-segments-");
+
+    try
+    {
+        bool ok = Proc.Ok("ffmpeg", "-i", converted, "-c", "copy", "-f", "segment",
+                          "-segment_time", "80", "-reset_timestamps", "1", "-map", "0",
+                          "-y", Path.Combine(staging.FullName, $"{stem}-%03d.mp4"));
+
+        if (!ok) return false;
+
+        string[] pieces = Directory.GetFiles(staging.FullName);
+        Array.Sort(pieces, StringComparer.Ordinal);
+
+        if (pieces.Length == 0) return false;
+
+        for (int i = 0; i < pieces.Length; i++)
+        {
+            string landed = Path.Combine(directory, Path.GetFileName(pieces[i]));
+
+            File.Move(pieces[i], landed, overwrite: true);
+            Fs.CopyTimestamp(source, landed, i);
+        }
+
+        return true;
+    }
+    finally
+    {
+        Fs.DeleteTempDirectory(staging);
+    }
+}
+
+/// Whether a WhatsApp conversion already produced its segments.
+///
+/// Checked as well as the converted file, because the two are written in separate
+/// steps: a run killed between them leaves the full file finished and no pieces, and
+/// that should be finished off rather than reported as done.
+static bool SegmentsExist(string converted)
+{
+    string directory = Path.GetDirectoryName(converted)!;
+    string stem = Fs.SplitExt(Path.GetFileName(converted)).Name;
+
+    return Directory.EnumerateFiles(directory, $"{stem}-*.mp4").Any();
+}
+
+/// Remove a file if it is there, and say so rather than throwing if it will not go.
+static void SafeDelete(string path)
+{
+    try
+    {
+        if (File.Exists(path)) File.Delete(path);
+    }
+    catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+    {
+        Ui.Line($"[yellow]Could not remove {Ui.Esc(path)}: {ex.Message}[/]");
+    }
+}
