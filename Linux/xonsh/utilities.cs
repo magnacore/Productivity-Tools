@@ -1008,9 +1008,10 @@ internal static partial class Fs
 
     private static Dictionary<string, string> LoadMimeMap()
     {
-        // Start from the extensions the suite actually cares about, so it keeps
-        // working even where /etc/mime.types is absent or minimal.
-        Dictionary<string, string> map = new(StringComparer.OrdinalIgnoreCase)
+        // The extensions the suite actually cares about. These are authoritative: the
+        // system database fills in everything else, but where this table has an
+        // opinion it wins. See the note below the loop for why.
+        Dictionary<string, string> known = new(StringComparer.OrdinalIgnoreCase)
         {
             [".mka"] = "audio/matroska",  [".mp3"]  = "audio/mpeg",   [".opus"] = "audio/ogg",
             [".ogg"] = "audio/ogg",       [".oga"]  = "audio/ogg",    [".flac"] = "audio/flac",
@@ -1030,6 +1031,20 @@ internal static partial class Fs
             // transport stream about as often as it is TypeScript.
             [".rmvb"] = "video/vnd.rn-realmedia-vbr",
             [".3gp"] = "video/3gpp",          [".3g2"]  = "video/3gpp2",
+
+            // Camcorder and DVD formats. Absent from the system table, and absent here
+            // too until a folder of them was fed to video-convert: the walk decided
+            // they were not video and copied them through untouched. The same way
+            // .rmvb was found. .mts and .m2ts are AVCHD, what a Sony or Panasonic
+            // camera writes; .vob and .m2v come off a DVD; .tod is JVC's.
+            //
+            // .mod, the other JVC extension, is deliberately left out: it is also the
+            // Amiga tracker format, and guessing wrong there would feed a music file
+            // to ffmpeg as though it were video.
+            [".mts"] = "video/mp2t",          [".m2ts"] = "video/mp2t",
+            [".vob"] = "video/mpeg",          [".m2v"]  = "video/mpeg",
+            [".tod"] = "video/mp2t",          [".ogv"]  = "video/ogg",
+            [".divx"] = "video/x-msvideo",
             [".jpg"] = "image/jpeg",      [".jpeg"] = "image/jpeg",   [".jpe"]  = "image/jpeg",
             [".png"] = "image/png",       [".gif"]  = "image/gif",    [".webp"] = "image/webp",
             [".bmp"] = "image/bmp",       [".tif"]  = "image/tiff",   [".tiff"] = "image/tiff",
@@ -1041,8 +1056,20 @@ internal static partial class Fs
             [".tar"] = "application/x-tar", [".zip"] = "application/zip",
         };
 
-        // /etc/mime.types wins where it has an opinion, matching Python's init(),
-        // which lets the system database override the built-in table.
+        Dictionary<string, string> map = new(StringComparer.OrdinalIgnoreCase);
+
+        // The system database goes in first and the table above lands on top of it.
+        //
+        // This is deliberately the opposite of Python's mimetypes.init(), which the
+        // xonsh originals used and which lets /etc/mime.types override the built-in
+        // table. Replicating that produced a wrong answer: Debian maps "mts" to
+        // model/vnd.mts, a CAD format, so a folder of AVCHD camera footage was not
+        // seen as video at all -- and declaring .mts here did not help, because the
+        // system entry was applied afterwards and overwrote it.
+        //
+        // Every entry above is a format this suite handles, so its own opinion is the
+        // one that should count; /etc/mime.types remains the source for everything
+        // else, and for machines whose database is absent nothing is lost.
         foreach (string? file in new[] { "/etc/mime.types", Path.Combine(Paths.Home, ".mime.types") })
         {
             if (!File.Exists(file)) continue;
@@ -1066,6 +1093,8 @@ internal static partial class Fs
                 // place; every extension the suite cares about is already there.
             }
         }
+
+        foreach (KeyValuePair<string, string> entry in known) map[entry.Key] = entry.Value;
 
         return map;
     }
@@ -1691,6 +1720,39 @@ internal static class Media
     /// discovers it cannot encode, which otherwise leaves a nought-byte file sitting
     /// where a converted one should be — indistinguishable from a success at a
     /// glance, and with no inherited timestamp to give it away.
+    /// Whether the file's video is flagged interlaced, and so needs deinterlacing
+    /// before it can be encoded to a progressive codec.
+    ///
+    /// Asked per file rather than handled with a filter that decides for itself.
+    /// bwdif's deint=interlaced option governs whether a frame is *filtered*, but in
+    /// send_field mode it still emits one frame per field whatever it is given, so a
+    /// progressive 30 fps source came out at 60 -- twice the frames, twice the
+    /// encoding, and not one extra thing to see.
+    ///
+    /// Only the container's own flag is trusted. A file marked progressive that is
+    /// really interlaced will keep its combing; detecting that properly means decoding
+    /// the video twice, and guessing wrong in the other direction would mangle footage
+    /// that was never interlaced at all.
+    public static bool IsInterlaced(string file)
+    {
+        string output = Proc.Capture("ffprobe", "-v", "error", "-select_streams", "v:0",
+                                     "-show_entries", "stream=field_order",
+                                     "-of", "csv=p=0", file);
+
+        // The first value, not the whole reply, and separators are not just newlines.
+        // Two real files broke two different assumptions here: an AVCHD file off a
+        // camcorder carries the same programme twice, so ffprobe prints the field
+        // order once per copy ("tt\n\ntt"), and a VOB off a DVD comes back with a
+        // trailing comma ("tt,"). Either one compared against "tt" came out false,
+        // and a plainly interlaced file was quietly called progressive.
+        string order = output
+            .Split(['\n', '\r', ','], StringSplitOptions.RemoveEmptyEntries
+                                      | StringSplitOptions.TrimEntries)
+            .FirstOrDefault() ?? string.Empty;
+
+        return order is "tt" or "bb" or "tb" or "bt";
+    }
+
     public static bool ConvertWithProgress(string source, string destination,
                                            IReadOnlyList<string> args,
                                            Action<double> advance)

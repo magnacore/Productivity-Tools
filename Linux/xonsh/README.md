@@ -132,7 +132,7 @@ redirected. The wrappers are:
 | `mkv-extract-track-tui` | a track number **per file**, after showing `mkvinfo` | `mkv-extract-track` |
 | `otp-copy-tui` · `password-copy-tui` · `password-show-tui` | which store entry | the matching CLI |
 | `password-generate-tui` | password or seed phrase, and its length | `password-generate` |
-| `video-convert-tui` | one of three conversion profiles | `video-convert` |
+| `video-convert-tui` | one of four conversion profiles | `video-convert` |
 | `video-download-tui` | the download profile | `video-download` |
 
 `audio-process-tui` was `audio-process`: it already held no logic of its own, only a
@@ -427,6 +427,62 @@ Several serial loops are serial because parallelism would be *wrong*, not slow.
 list for the same reason as the first group — its predecessor shared one
 `-passlogfile` across iterations — until each encode was given its own, which is what
 lets all three of its modes run under `-j`.
+
+### Four conversion profiles
+
+`video-convert --mode` picks between them. All but WhatsApp write Matroska; the tag in
+each filename keeps them apart, so one output folder can hold several.
+
+| mode | codec | for |
+|---|---|---|
+| `whatsapp` | H.264 / AAC, mp4 | sharing, plus 80-second segments |
+| `archive` | VP9 / Opus, 720p, crf 45 | keeping tutorials small enough to hoard |
+| `quality` | VP9 / Opus, 1080p, crf 31 | bringing old originals forward |
+| `fast` | VP9 / Opus, realtime | when size does not matter |
+
+`quality` exists for camcorder and DVD material -- AVCHD `.mts`, `.vob` off a disc --
+and is modelled on what YouTube serves. Two of its decisions were measured rather than
+chosen. CRF 31 is Google's published figure for 1080p VP9 and it reproduces the
+reference files: they carry 2347 and 2909 kb/s of video at 24 and 25 fps, and this
+setting on 1080i50 camcorder footage came to 4041 kb/s, the same picture once the
+doubled frame rate is allowed for. Either side of it, on eight seconds of that footage:
+
+| crf | kb/s | SSIM (Y) |
+|---|---|---|
+| 24 | 8784 | 0.9808 |
+| 28 | 5564 | 0.9766 |
+| **31** | **4041** | **0.9737** |
+| 34 | 2937 | 0.9703 |
+
+**All four modes deinterlace**, decided per file from the container's flag rather than
+left to a filter. `bwdif`'s `deint=interlaced` governs whether a frame is *filtered*,
+not whether one is emitted per field, so leaving the filter always on turned a
+progressive 30 fps source into 60 fps -- twice the frames for nothing.
+
+Which deinterlacer depends on the mode. `quality` uses `send_field`, making 1080i50
+into 1080p50 and keeping the motion the camera recorded. The other three use
+`send_frame`, one frame out per frame in: combing gone, frame count untouched, because
+doubling the frame rate works against modes that exist to be small or quick.
+
+Leaving the combing in was never the cheaper option, which is what settled it for
+archive mode. On an interlaced 576-line source: **500 KB with the combing encoded into
+it, 416 KB once deinterlaced.** Combing is high-frequency detail and the encoder pays
+for it like anything else.
+
+A progressive source is handed byte-for-byte the arguments it was handed before any of
+this existed. Verified rather than assumed: the video stream of an archive conversion
+of a progressive file has the same MD5 either way.
+
+Inverse telecine is deliberately *not* attempted. NTSC film DVDs carry 23.976 fps as
+29.97 interlaced, and the right answer there is `fieldmatch` + `decimate` rather than
+deinterlacing. But guessing wrong in that direction throws away one frame in five of
+genuinely interlaced video, permanently, whereas guessing wrong the other way costs
+only some softness -- so it waits for a disc that actually needs it. `ffmpeg -i X -vf
+idet -f null -` names one: a large repeated-field count is the signature.
+
+Nothing is ever upscaled, and anamorphic sources keep their pixel aspect: a 1440x1080
+AVCHD file stays 1440x1080 with 16:9 recorded in the container, rather than being
+stretched to square pixels for a third more pixels and no more detail.
 
 ### Giving the machine back
 

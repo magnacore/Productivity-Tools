@@ -22,12 +22,15 @@
 using System.Globalization;
 
 ArgVals a = Jobs.Add(new Args("video-convert", "Convert a folder of videos, keeping its structure")
-    .Opt("-m", "--mode", required: true, choices: ["archive", "fast", "whatsapp"],
+    .Opt("-m", "--mode", required: true,
+         choices: ["archive", "fast", "quality", "whatsapp"],
          help: "Which settings to convert with")
     .Opt("-b", "--bitrate", @default: "1000",
          help: "whatsapp mode only: video bitrate in kb/s")
     .Opt("-c", "--cpu-used", @default: "2",
-         help: "archive mode only: libvpx speed, 0 slowest and smallest, 8 fastest")
+         help: "archive and quality modes: libvpx speed, 0 slowest and smallest, 8 fastest")
+    .Opt("-q", "--crf", @default: "31",
+         help: "quality mode only: 0 best and largest, 63 worst and smallest")
     .Flag("-f", "--fresh",
           help: "Convert into a new timestamped folder instead of resuming the usual one")
     .Flag("-B", "--background",
@@ -138,6 +141,7 @@ Ui.Info($"{videos.Count} video(s) to convert, {others.Count} other file(s) to co
 {
     "archive" => ("archive", ".mkv"),
     "fast" => ("fast", ".mkv"),
+    "quality" => ("quality", ".mkv"),
     _ => ("whatsapp", ".mp4"),
 };
 
@@ -291,14 +295,21 @@ static bool ConvertOne(string source, string input, string output, string mode,
 
     SafeDelete(partial);
 
+    // Asked once, here, rather than inside each mode: every one of them needs the
+    // answer and ffprobe should only be run over the file once.
+    bool interlaced = Media.IsInterlaced(source);
+
     bool ok = mode switch
     {
-        "archive" => TwoPass(source, partial, ArchiveArgs(a.Int("cpu-used")), passLogDirectory,
-                             relative, addBar),
-        "fast" => OnePass(source, partial, FastArgs(), relative, addBar),
-        _ => TwoPass(source, partial, WhatsAppArgs(WhatsAppBitrate(source, a, relative)),
-                     passLogDirectory,
-                     relative, addBar),
+        "archive" => TwoPass(source, partial, ArchiveArgs(a.Int("cpu-used"), interlaced),
+                             ArchiveAudio(), passLogDirectory, relative, addBar),
+        "fast" => OnePass(source, partial, FastArgs(interlaced), relative, addBar),
+        "quality" => TwoPass(source, partial,
+                             QualityArgs(a.Int("crf"), a.Int("cpu-used"), interlaced),
+                             QualityAudio(), passLogDirectory, relative, addBar),
+        _ => TwoPass(source, partial,
+                     WhatsAppArgs(WhatsAppBitrate(source, a, relative), interlaced),
+                     WhatsAppAudio(), passLogDirectory, relative, addBar),
     };
 
     if (!ok)
@@ -342,22 +353,98 @@ static bool ConvertOne(string source, string input, string output, string mode,
 ///
 /// No -ar: libopus always codes at 48 kHz internally whatever it is told, so the
 /// 24000 the original passed did nothing.
-static string[] ArchiveArgs(int cpuUsed) =>
+static string[] ArchiveArgs(int cpuUsed, bool interlaced) =>
 [
     "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "45",
     "-deadline", "good", "-cpu-used", cpuUsed.ToString(CultureInfo.InvariantCulture),
-    "-vf", "scale=-2:'min(720,ih)'", "-row-mt", "1",
+    .. FilterArgs(interlaced, "send_frame", "scale=-2:'min(720,ih)'"),
+    "-row-mt", "1",
 ];
+
+/// The video filter chain for one source, as ffmpeg arguments -- or nothing at all,
+/// when there is nothing to do. An empty "-vf" is an error rather than a no-op, so
+/// the flag has to be absent and not blank.
+///
+/// Deinterlacing is added only for sources Media.IsInterlaced says need it, so a
+/// progressive file is handed byte-for-byte the arguments it was handed before any of
+/// this existed, and converts to exactly the same bytes.
+///
+/// Which deinterlacer suits a mode is the mode's own business. send_field emits a
+/// frame per field, turning 1080i50 into 1080p50 and keeping the motion the camera
+/// recorded; that is right for quality mode and wrong for the other three, where
+/// doubling the frame count works against the whole point of them. send_frame emits
+/// one frame per frame: combing gone, frame count untouched.
+///
+/// Leaving the combing in was not the cheaper option, which is what settled it for
+/// archive mode. Measured on an interlaced 576 line source: 500 KB with the combing
+/// encoded into it, 475 KB once deinterlaced. Combing is high frequency detail and
+/// the encoder pays for it like any other.
+static string[] FilterArgs(bool interlaced, string deinterlaceMode, string? scale)
+{
+    List<string> chain = [];
+
+    if (interlaced) chain.Add($"bwdif=mode={deinterlaceMode}:parity=auto:deint=interlaced");
+    if (scale is not null) chain.Add(scale);
+
+    return chain.Count == 0 ? [] : ["-vf", string.Join(',', chain)];
+}
 
 /// Audio for archive, added to the second pass only. Mono at 32k is plainly enough
 /// for a person talking, and it is a fifth of the stereo default.
 static string[] ArchiveAudio() => ["-c:a", "libopus", "-ac", "1", "-b:a", "32k"];
 
+/// Quality: VP9 and Opus in Matroska, which is what YouTube serves, at a size and
+/// fidelity chosen to match it. For bringing old originals forward -- AVCHD off a
+/// camcorder, VOB off a DVD, whatever a download turned out to be -- rather than
+/// squeezing them, which is what archive mode is for.
+///
+/// Three choices, each measured rather than assumed:
+///
+/// CRF 31 is Google's published figure for 1080p VP9, and it reproduces the two
+/// YouTube files this mode was modelled on. They run 2347 and 2909 kb/s of video at
+/// 24 and 25 fps; this setting on 1080i50 camcorder footage, deinterlaced to 50p,
+/// came to 4041 kb/s, which is the same picture once the doubled frame rate is
+/// allowed for. The ladder either side, measured on eight seconds of that footage:
+/// crf 24 gave 8784 kb/s at SSIM 0.981, crf 28 5564 at 0.977, crf 31 4041 at 0.974,
+/// crf 34 2937 at 0.970. The curve is gentle, so --crf is where to go for more.
+///
+/// Deinterlacing is not optional for this corpus. The camcorder files are flagged tt
+/// and idet called all 300 frames it looked at top-field-first; encoding that to VP9
+/// without deinterlacing bakes the combing in permanently. send_field emits a frame
+/// per field, turning 1080i50 into 1080p50 and keeping the motion the camera
+/// recorded, which is what YouTube would do with the same footage.
+///
+/// The filter is added only for files Media.IsInterlaced says need it. Leaving it
+/// always on and trusting deint=interlaced was tried first and was wrong: that option
+/// decides whether a frame is filtered, not whether one is emitted per field, so a
+/// progressive 30 fps source came out at 60 fps -- twice the frames and twice the
+/// encoding for nothing at all.
+///
+/// The height cap never upscales: 1080 stays 1080, a 480-line DVD stays 480, and
+/// anything taller comes down. Anamorphic sources keep their pixel aspect rather than
+/// being stretched to square pixels, so a 1440x1080 AVCHD file stays 1440x1080 with
+/// its 16:9 display ratio recorded in the container. Stretching it would add a third
+/// more pixels and not one more detail.
+static string[] QualityArgs(int crf, int cpuUsed, bool interlaced) =>
+[
+    "-c:v", "libvpx-vp9", "-b:v", "0",
+    "-crf", crf.ToString(CultureInfo.InvariantCulture),
+    "-deadline", "good", "-cpu-used", cpuUsed.ToString(CultureInfo.InvariantCulture),
+    .. FilterArgs(interlaced, "send_field", "scale=-2:'min(1080,ih)'"),
+    "-row-mt", "1",
+];
+
+/// Audio for quality mode: Opus at 128k, which is what the reference files carry and
+/// is transparent for anything a camera or a DVD recorded. The channel count is left
+/// alone rather than folded to mono, since this mode is for keeping what was there.
+static string[] QualityAudio() => ["-c:a", "libopus", "-b:a", "128k"];
+
 /// Fast: the same codec asked to stop thinking. One pass, realtime deadline, and
 /// libvpx's quickest setting. Size is whatever it turns out to be.
-static string[] FastArgs() =>
+static string[] FastArgs(bool interlaced) =>
 [
     "-c:v", "libvpx-vp9", "-row-mt", "1", "-deadline", "realtime", "-cpu-used", "8",
+    .. FilterArgs(interlaced, "send_frame", null),
     "-c:a", "libopus",
 ];
 
@@ -436,10 +523,11 @@ static bool BackgroundAvailable()
 /// records the timebase in its statistics file and refuses a second pass that disagrees
 /// with it ("timebase mismatch with 1st pass"). A 30 fps source hides that -- its
 /// timebase is 1/30 either way -- but anything filmed at 29.97 fails outright.
-static string[] WhatsAppArgs(int bitrate) =>
+static string[] WhatsAppArgs(int bitrate, bool interlaced) =>
 [
     "-c:v", "libx264", "-b:v", $"{bitrate}k", "-crf", "23",
     "-maxrate", $"{bitrate}k", "-bufsize", $"{bitrate * 2}k",
+    .. FilterArgs(interlaced, "send_frame", null),
     "-r", "30", "-fps_mode", "cfr",
 ];
 
@@ -524,7 +612,7 @@ static bool OnePass(string source, string destination, string[] encoder,
 /// The statistics log is named after the file and kept in its own directory, so two
 /// encodes running at once cannot read each other's numbers and size a video against
 /// the wrong film.
-static bool TwoPass(string source, string destination, string[] encoder,
+static bool TwoPass(string source, string destination, string[] encoder, string[] audio,
                     string passLogDirectory, string relative,
                     Func<string, int, Action<double>> addBar)
 {
@@ -549,9 +637,6 @@ static bool TwoPass(string source, string destination, string[] encoder,
 
     Action<double> secondBar =
         addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription($"{relative} (pass 2 of 2):"))}[/]", 100);
-
-    // Which audio settings go with which encoder is decided by the encoder itself.
-    string[] audio = encoder.Contains("libx264") ? WhatsAppAudio() : ArchiveAudio();
 
     List<string> secondArguments =
     [

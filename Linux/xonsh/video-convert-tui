@@ -20,6 +20,7 @@ int? chosen = Dlg.Choose(
     "How should the videos be converted?",
     "WhatsApp  -  sized to share, cut into 80 second posts",
     "Archive   -  as small as will stay readable, for keeping",
+    "Quality   -  1080p VP9 like YouTube, for old camera and DVD files",
     "Fast      -  quickest conversion, size unimportant");
 
 if (chosen is null)
@@ -32,6 +33,7 @@ string mode = chosen.Value switch
 {
     0 => "whatsapp",
     1 => "archive",
+    2 => "quality",
     _ => "fast",
 };
 
