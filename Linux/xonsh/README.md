@@ -440,6 +440,15 @@ each filename keeps them apart, so one output folder can hold several.
 | `quality` | VP9 / Opus, 1080p, crf 31 | bringing old originals forward |
 | `fast` | VP9 / Opus, realtime | when size does not matter |
 
+Surround audio needs two things before Opus will take it, and neither is obvious
+from the failure. libopus rejects anything above stereo under mapping family 0, its
+default, and ffmpeg labels most broadcast surround as `5.1(side)`, which Opus does not
+recognise even under family 1 -- so asking for the family alone still fails. The fix
+is the family plus a layout list that lets ffmpeg convert to the spelling Opus knows.
+Nothing is downmixed: 5.1 stays 5.1 and 7.1 stays 7.1. It applies only above two
+channels, so mono and stereo sources encode to the same bytes as before, and `archive`
+and `whatsapp` never needed it because both fold to mono first.
+
 `quality` exists for camcorder and DVD material -- AVCHD `.mts`, `.vob` off a disc --
 and is modelled on what YouTube serves. Two of its decisions were measured rather than
 chosen. CRF 31 is Google's published figure for 1080p VP9 and it reproduces the

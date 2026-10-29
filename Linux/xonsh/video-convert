@@ -299,14 +299,18 @@ static bool ConvertOne(string source, string input, string output, string mode,
     // answer and ffprobe should only be run over the file once.
     bool interlaced = Media.IsInterlaced(source);
 
+    // Only the two modes that keep the source's channels care, but asking once here
+    // keeps both probes in one place and off the encoding path.
+    int channels = mode is "fast" or "quality" ? Media.AudioChannels(source) : 0;
+
     bool ok = mode switch
     {
         "archive" => TwoPass(source, partial, ArchiveArgs(a.Int("cpu-used"), interlaced),
                              ArchiveAudio(), passLogDirectory, relative, addBar),
-        "fast" => OnePass(source, partial, FastArgs(interlaced), relative, addBar),
+        "fast" => OnePass(source, partial, FastArgs(interlaced, channels), relative, addBar),
         "quality" => TwoPass(source, partial,
                              QualityArgs(a.Int("crf"), a.Int("cpu-used"), interlaced),
-                             QualityAudio(), passLogDirectory, relative, addBar),
+                             QualityAudio(channels), passLogDirectory, relative, addBar),
         _ => TwoPass(source, partial,
                      WhatsAppArgs(WhatsAppBitrate(source, a, relative), interlaced),
                      WhatsAppAudio(), passLogDirectory, relative, addBar),
@@ -379,6 +383,30 @@ static string[] ArchiveArgs(int cpuUsed, bool interlaced) =>
 /// archive mode. Measured on an interlaced 576 line source: 500 KB with the combing
 /// encoded into it, 475 KB once deinterlaced. Combing is high frequency detail and
 /// the encoder pays for it like any other.
+/// What Opus needs before it will accept more than two channels.
+///
+/// libopus refuses a surround source outright, and the message names the real
+/// problem: "Invalid channel layout 5.1(side) for specified mapping family -1". Two
+/// separate things are wrong. Mapping family 0, the default, handles only mono and
+/// stereo, so family 1 has to be asked for; and ffmpeg labels most broadcast surround
+/// as 5.1(side), which Opus does not recognise even under family 1, because it wants
+/// the back-channel spelling. Setting the family alone still fails.
+///
+/// The filter lists the layouts ffmpeg's libopus will take and lets it convert to the
+/// nearest, which for 5.1(side) is the same six channels under the name Opus knows.
+/// Nothing is downmixed: a 5.1 source stays 5.1 and a 7.1 source stays 7.1, both
+/// verified.
+///
+/// Added only above two channels, so mono and stereo sources are handed exactly the
+/// arguments they were handed before this existed and encode to the same bytes.
+/// archive and whatsapp never need it -- both fold to mono long before Opus sees the
+/// layout -- which is why a 5.1 download failed in fast and quality alone.
+static string[] SurroundArgs(int channels) =>
+    channels > 2
+        ? ["-af", "aformat=channel_layouts=mono|stereo|3.0|quad|5.0|5.1|6.1|7.1",
+           "-mapping_family", "1"]
+        : [];
+
 static string[] FilterArgs(bool interlaced, string deinterlaceMode, string? scale)
 {
     List<string> chain = [];
@@ -437,15 +465,17 @@ static string[] QualityArgs(int crf, int cpuUsed, bool interlaced) =>
 /// Audio for quality mode: Opus at 128k, which is what the reference files carry and
 /// is transparent for anything a camera or a DVD recorded. The channel count is left
 /// alone rather than folded to mono, since this mode is for keeping what was there.
-static string[] QualityAudio() => ["-c:a", "libopus", "-b:a", "128k"];
+static string[] QualityAudio(int channels) =>
+    ["-c:a", "libopus", "-b:a", "128k", .. SurroundArgs(channels)];
 
 /// Fast: the same codec asked to stop thinking. One pass, realtime deadline, and
 /// libvpx's quickest setting. Size is whatever it turns out to be.
-static string[] FastArgs(bool interlaced) =>
+static string[] FastArgs(bool interlaced, int channels) =>
 [
     "-c:v", "libvpx-vp9", "-row-mt", "1", "-deadline", "realtime", "-cpu-used", "8",
     .. FilterArgs(interlaced, "send_frame", null),
     "-c:a", "libopus",
+    .. SurroundArgs(channels),
 ];
 
 /// What goes in front of ffmpeg for a background conversion.

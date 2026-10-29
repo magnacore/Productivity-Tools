@@ -1753,6 +1753,36 @@ internal static class Media
         return order is "tt" or "bb" or "tb" or "bt";
     }
 
+    /// The largest number of channels any of the file's audio streams carries, or 0
+    /// if it has none.
+    ///
+    /// The largest rather than the first, because ffmpeg's own default stream
+    /// selection picks the audio track with the most channels, and this has to agree
+    /// with whatever it is going to choose.
+    public static int AudioChannels(string file)
+    {
+        string output = Proc.Capture("ffprobe", "-v", "error", "-select_streams", "a",
+                                     "-show_entries", "stream=channels",
+                                     "-of", "csv=p=0", file);
+
+        int most = 0;
+
+        // Split on commas as well as newlines, for the same reason IsInterlaced does:
+        // ffprobe's csv output is not reliably one clean value per line.
+        foreach (string piece in output.Split(['\n', '\r', ','],
+                                              StringSplitOptions.RemoveEmptyEntries
+                                            | StringSplitOptions.TrimEntries))
+        {
+            if (int.TryParse(piece, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                             out int channels) && channels > most)
+            {
+                most = channels;
+            }
+        }
+
+        return most;
+    }
+
     public static bool ConvertWithProgress(string source, string destination,
                                            IReadOnlyList<string> args,
                                            Action<double> advance)
