@@ -14,6 +14,8 @@
 ArgVals a = new Args("image-watermark", "Tile a rotated text watermark across an image")
     .Opt("-r", "--rotation", @default: "45", help: "Rotation angle of the watermark text")
     .Opt("-c", "--colour", @default: "255,0,0", help: "Watermark colour as R,G,B")
+    .Opt("-s", "--screen-height", @default: "1080",
+         help: "Screen height the font size and spacing are meant to look right at")
     .Rest("arguments", min: 3,
           help: "input_image output_image watermark_text [font_size] [spacing] [opacity]")
     .Parse(args);
@@ -33,9 +35,115 @@ if (!File.Exists(inputImage))
     return 1;
 }
 
+// ── size the text against the image, not against nothing ─────────────────────
+//
+// -pointsize is absolute pixels, so a fixed font size means the watermark shrinks
+// as the image grows. Measured with the defaults: a 72pt stamp is 14.7% of an
+// 800x600 image's height and 1.5% of an 8000x6000 one, which on a 1080p screen is
+// 158px of text against 16px -- a tenfold spread from the same command. Spacing is
+// absolute too, so the tiling got denser at exactly the moment the text got
+// smaller: big images came out with a rash of illegible marks rather than a
+// watermark.
+//
+// So font size and spacing are read as "how this should look on a screen of
+// --screen-height", and scaled by however much the image exceeds that screen.
+//
+// Media.ScaleForScreen has the arithmetic and the reasoning behind it. An image
+// smaller than the screen is left alone; nothing is ever scaled down.
+(int imageWidth, int imageHeight) = Media.ImageSize(inputImage);
+
+double scale = Media.ScaleForScreen(imageWidth, imageHeight, a.Int("screen-height"));
+
+fontSize = (int)Math.Round(fontSize * scale);
+spacing = (int)Math.Round(spacing * scale);
+
 // Prefer the font the original hardcoded, but fall back to whatever fontconfig
 // offers rather than failing outright.
 string font = ResolveFont("Cantarell");
+
+// ── then make sure the stamp actually fits on the image ──────────────────────
+//
+// A watermark nobody can read in full is not a watermark. Rotating is what makes
+// this bite: "Not For Sale. Only for review by manuj chandra sharma" sets to
+// 1760x88 at 72pt, which fits a 1920x1080 image easily -- until it is turned 45
+// degrees, when it needs 1307x1307 and runs off the bottom. What runs out is the
+// diagonal, not the width, so no amount of extra image width helps.
+//
+// Scaling for the screen made this worse rather than causing it. The sentence was
+// already clipped at 1920x1080, where the scale is 1 and nothing changed; but on a
+// 4608x3456 photo the old fixed 72pt stamp fitted inside 3456 with room to spare,
+// and enlarging it to 230pt pushed it to 4156 and over the edge. Growing the text
+// in proportion to the image keeps a too-long sentence too long at every size.
+//
+// So the fit is checked against the real rendered width, not guessed from the
+// character count: fonts are proportional and the rotation makes the arithmetic
+// worth doing properly. The border goes on before the rotation in the command
+// below, so it belongs inside the measurement too.
+//
+// A margin, because landing exactly on the boundary leaves the text touching two
+// edges, and rounding can put it a pixel over.
+const double FitMargin = 0.95;
+
+// Fold a long watermark onto several lines first, because a rotated stamp is as big
+// as the sum of its sides. One line of this sentence is 1760x88, which at 45 degrees
+// wants 1307x1307 -- more than a 1080 high image has, so a single clipped copy was
+// all that fitted. The same words on four lines measure about 394x528, rotate into
+// 652x652, and tile three across at the same point size. Shrinking the type would
+// have bought the same room by making the watermark harder to read.
+//
+// The number of lines is the one that makes the label squarest, since for a fixed
+// amount of text the rotated box is smallest when width and height are equal: that
+// is the square root of the single line's aspect ratio. Never more lines than there
+// are words -- Media.BalanceLines breaks only at spaces, so DRAFT stays DRAFT.
+(int oneLine, int lineHeight) = Media.LabelSize(font, fontSize, watermarkText);
+
+string stampText = watermarkText;
+(int labelWidth, int labelHeight) = (oneLine, lineHeight);
+
+// Only when a single line will not do. Text that already fits is left on one line,
+// because folding it would be a change nobody asked for: "(c) 2026 Manuj Sharma"
+// wants three lines of six characters by the squareness rule, and reads worse for
+// it. The sentence this came from does not fit, and folding it is the difference
+// between one clipped copy and three legible ones.
+(double oneWidth, double oneHeight) =
+    Media.RotatedSize(oneLine + spacing, lineHeight + spacing, a.Dbl("rotation"));
+
+bool tooBigForOneLine = oneLine > 0 && lineHeight > 0 && imageWidth > 0 && imageHeight > 0
+    && Media.ShrinkToFit(oneWidth, oneHeight,
+                         imageWidth * FitMargin, imageHeight * FitMargin) < 1.0;
+
+if (tooBigForOneLine)
+{
+    int wordCount =
+        watermarkText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+
+    // The squarest shape, since a rotated box costs the sum of the sides and is
+    // therefore smallest when the sides are equal: the square root of the single
+    // line's aspect ratio. Never more lines than words.
+    int lines = Math.Clamp((int)Math.Round(Math.Sqrt((double)oneLine / lineHeight)),
+                           1, Math.Max(1, wordCount));
+
+    stampText = Media.BalanceLines(watermarkText, lines);
+
+    if (lines > 1) (labelWidth, labelHeight) = Media.LabelSize(font, fontSize, stampText);
+}
+
+if (labelWidth > 0 && labelHeight > 0 && imageWidth > 0 && imageHeight > 0)
+{
+    (double stampWidth, double stampHeight) =
+        Media.RotatedSize(labelWidth + spacing, labelHeight + spacing, a.Dbl("rotation"));
+
+    double fit = Media.ShrinkToFit(stampWidth, stampHeight,
+                                   imageWidth * FitMargin, imageHeight * FitMargin);
+
+    if (fit < 1.0)
+    {
+        // At least 1, so a sentence far too long for a thumbnail still renders
+        // something rather than collapsing to nothing.
+        fontSize = Math.Max(1, (int)Math.Round(fontSize * fit));
+        spacing = Math.Max(0, (int)Math.Round(spacing * fit));
+    }
+}
 
 // ImageMagick wants the alpha channel as a fraction; the CLI takes 0-255.
 string alpha = (Math.Clamp(opacity, 0, 255) / 255.0).ToString("0.###", CultureInfo.InvariantCulture);
@@ -53,7 +161,7 @@ int code = Proc.Run("magick",
             "-fill", fill,
             "-font", font,
             "-pointsize", fontSize.ToString(),
-            $"label:{watermarkText}",
+            $"label:{stampText}",
             "-bordercolor", "none", "-border", (spacing / 2).ToString(),
             "-rotate", a.Str("rotation"),
             "-write", "mpr:wm", "+delete",

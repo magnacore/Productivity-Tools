@@ -336,6 +336,62 @@ byte as a bare Escape. Pressing it twice is instant.
 `q` is not a cancel key. Spectre's prompt reads its own keys and exposes no hook
 for arbitrary ones, so `q` would need a hand-rolled prompt to replace it.
 
+### Watermarks sized against the screen, not the file
+
+`image-watermark` passed `-pointsize` a fixed number, which is absolute pixels, so the
+watermark shrank as the image grew. With the defaults a 72pt stamp was 14.7% of an
+800x600 image's height and 1.5% of an 8000x6000 one -- on a 1080p screen, **158px of
+text against 16px**, from the same command. Spacing was absolute too, so the tiling got
+denser exactly as the text got smaller: a large photo came out with a rash of
+illegible marks rather than a watermark.
+
+Font size and spacing are now read as how they should look on a screen of
+`--screen-height` (1080 by default) and multiplied by `Media.ScaleForScreen`. Measured
+after, with the same `72 50 150` the wrapper passes:
+
+| source | scale | pointsize | apparent at 1080p |
+|---|---|---|---|
+| 800x600 | 1.00 | 72 | 158 px |
+| 1920x1080 | 1.00 | 72 | 88 px |
+| 3000x2000 | 1.85 | 133 | 87 px |
+| 6000x4000 | 3.70 | 267 | 87 px |
+| 8000x6000 | 5.56 | 400 | 87 px |
+| 6000x1000 | 3.12 | 225 | 87 px |
+
+The scale is the larger of the two ratios, because fitting an image to a screen is
+limited by whichever dimension is proportionally bigger -- height for a photo, width
+for the panorama on the last row, which a height-only rule would have left too small.
+
+Then the stamp is capped so it actually fits. Rotation is what makes this bite: "Not
+For Sale. Only for review by manuj chandra sharma" sets to 1760x88 at 72pt, comfortable
+on a 1920x1080 image -- until it is turned 45 degrees and needs **1307x1307**, running
+off the bottom. The diagonal runs out, not the width, so a wider image does not help.
+
+Scaling for the screen made that worse rather than causing it: the sentence was already
+clipped at 1920x1080, where the scale is 1, but on a 4608x3456 photo the old fixed 72pt
+fitted inside 3456 and enlarging it to 230pt pushed it to 4156 and over the edge.
+Growing text in proportion to the image keeps a too-long sentence too long at every
+size, so `Media.RotatedSize` and `Media.ShrinkToFit` measure the real rendered label --
+fonts being proportional, a character count would not do.
+
+Shrinking it to fit is the last resort, not the first, because a stamp that only just
+fits tiles once and the point of a watermark is that it repeats. A rotated box costs
+the sum of its sides, so the cure is a squarer label: folded onto four lines, the same
+sentence at the same point size measures 514x349, rotates into 610x610, and tiles
+three across instead of once clipped. `Media.BalanceLines` picks the breaks, choosing
+the fewest characters the longest line can have -- filling each line to a target
+instead leaves the remainder stranded, giving "Only for" above "manuj chandra sharma".
+
+It breaks only at spaces, which is why ImageMagick's `caption:` is not used: that wraps
+on width alone and renders `DRAFT` as "DR" above "AFT". And it only folds text that
+does not fit on one line, so a short line stays a short line -- by the squareness rule
+alone `(c) 2026 Manuj Sharma` would become three lines of six characters and read worse
+for it.
+
+It never goes below 1. An image smaller than the screen keeps the size it was given;
+shrinking it would assume the viewer scales small images up to fill the window, which
+is the viewer's business. That is why the 800x600 row is unchanged.
+
 ## Parallel conversion
 
 Twelve programs process their inputs concurrently and take `-j/--jobs`:

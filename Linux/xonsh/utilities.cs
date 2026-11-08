@@ -1720,6 +1720,196 @@ internal static class Media
     /// discovers it cannot encode, which otherwise leaves a nought-byte file sitting
     /// where a converted one should be — indistinguishable from a success at a
     /// glance, and with no inherited timestamp to give it away.
+    /// How much larger an image is than the screen it will be looked at on, and so how
+    /// much to multiply a font size or a spacing by for it to look the same there.
+    ///
+    /// The larger of the two ratios, because fitting an image to a screen is limited
+    /// by whichever dimension is proportionally bigger: height for an ordinary photo,
+    /// width for a panorama. The screen's width is taken as 16:9 of its height, that
+    /// being what "1080p" or "4K" describes.
+    ///
+    /// Never less than 1. An image smaller than the screen keeps whatever size it was
+    /// given, since shrinking it would assume the viewer scales small images up to
+    /// fill the window, which is the viewer's business and not knowable from here.
+    /// Dimensions that could not be read come back as 1 for the same reason: the
+    /// sensible answer to not knowing is to change nothing.
+    ///
+    /// Pure, and tested, because it decides what the output looks like.
+    public static double ScaleForScreen(int imageWidth, int imageHeight, int screenHeight)
+    {
+        if (imageWidth <= 0 || imageHeight <= 0 || screenHeight <= 0) return 1.0;
+
+        double screenWidth = screenHeight * 16.0 / 9.0;
+
+        return Math.Max(1.0, Math.Max(imageWidth / screenWidth,
+                                      imageHeight / (double)screenHeight));
+    }
+
+    /// Break text across roughly equal lines, only ever at a space.
+    ///
+    /// A watermark is rotated, and a long single line rotated 45 degrees needs a
+    /// bounding box of (width + height) / root 2 -- so the sentence that set to
+    /// 1760x88 needed 1307x1307, more than a 1080 high image has, and only one clipped
+    /// copy could be tiled. Folded onto four lines the same words at the same point
+    /// size measure about 394x528, which rotates into 652x652 and tiles three across.
+    /// Shorter stamp, same size type, several copies instead of one.
+    ///
+    /// Never splits a word, which is the whole reason this exists rather than
+    /// ImageMagick's caption: that wraps on width alone and turned DRAFT into "DR"
+    /// above "AFT". Asking for more lines than there are words gives one word per
+    /// line and no more.
+    ///
+    /// Pure, and tested.
+    public static string BalanceLines(string text, int lines)
+    {
+        string[] words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+
+        if (words.Length == 0) return text;
+
+        int count = Math.Clamp(lines, 1, words.Length);
+        if (count == 1) return string.Join(' ', words);
+
+        // The narrowest the lines can be and still fit in count of them. The longest
+        // line is what sets the label's width, so minimising it is what shrinks the
+        // rotated box -- filling each line to a target instead leaves the remainder
+        // on the last one, which came out as "Only for" above "manuj chandra sharma".
+        //
+        // Characters, not pixels: this only has to group the words sensibly, and the
+        // result is measured properly afterwards.
+        int low = words.Max(word => word.Length);
+        int high = words.Sum(word => word.Length) + words.Length - 1;
+
+        while (low < high)
+        {
+            int middle = low + ((high - low) / 2);
+
+            if (LinesNeeded(words, middle) <= count) high = middle;
+            else low = middle + 1;
+        }
+
+        List<string> result = [];
+        List<string> current = [];
+        int length = 0;
+
+        foreach (string word in words)
+        {
+            int withWord = current.Count == 0 ? word.Length : length + 1 + word.Length;
+
+            if (current.Count > 0 && withWord > low)
+            {
+                result.Add(string.Join(' ', current));
+                current.Clear();
+                withWord = word.Length;
+            }
+
+            current.Add(word);
+            length = withWord;
+        }
+
+        if (current.Count > 0) result.Add(string.Join(' ', current));
+
+        return string.Join('\n', result);
+    }
+
+    /// How many lines of at most `width` characters these words need, packing greedily
+    /// and never splitting one. Greedy is optimal for this: with the width fixed,
+    /// taking every word that still fits can never need more lines than holding one
+    /// back would.
+    private static int LinesNeeded(string[] words, int width)
+    {
+        int lines = 1;
+        int length = 0;
+
+        foreach (string word in words)
+        {
+            int withWord = length == 0 ? word.Length : length + 1 + word.Length;
+
+            if (length > 0 && withWord > width)
+            {
+                lines++;
+                length = word.Length;
+            }
+            else
+            {
+                length = withWord;
+            }
+        }
+
+        return lines;
+    }
+
+    /// The bounding box a rectangle occupies once rotated, which is bigger than the
+    /// rectangle and much bigger at 45 degrees.
+    ///
+    /// A long sentence is the case that matters. At 45 degrees a 1760x88 label needs
+    /// 1307x1307, so it no longer fits a 1920x1080 image however wide that image is:
+    /// the diagonal is what runs out, not the width.
+    ///
+    /// Pure, and tested, because it decides whether the watermark is readable.
+    public static (double Width, double Height) RotatedSize(double width, double height,
+                                                            double degrees)
+    {
+        double radians = degrees * Math.PI / 180.0;
+        double cos = Math.Abs(Math.Cos(radians));
+        double sin = Math.Abs(Math.Sin(radians));
+
+        return (width * cos + height * sin, width * sin + height * cos);
+    }
+
+    /// How much to shrink something of this size so it fits inside those bounds, or 1
+    /// when it already does. Never enlarges: this caps, it does not fill.
+    ///
+    /// Pure, and tested.
+    public static double ShrinkToFit(double width, double height,
+                                     double boundsWidth, double boundsHeight)
+    {
+        if (width <= 0 || height <= 0 || boundsWidth <= 0 || boundsHeight <= 0) return 1.0;
+
+        return Math.Min(1.0, Math.Min(boundsWidth / width, boundsHeight / height));
+    }
+
+    /// What a line of text renders to at this font and size, before any rotation.
+    public static (int Width, int Height) LabelSize(string font, int pointSize, string text)
+    {
+        string output = Proc.Capture("magick", "-background", "none", "-font", font,
+                                     "-pointsize", pointSize.ToString(CultureInfo.InvariantCulture),
+                                     $"label:{text}", "-format", "%w %h", "info:");
+
+        string[] parts = output.Split([' ', '\n', '\r', '\t'],
+                                      StringSplitOptions.RemoveEmptyEntries
+                                    | StringSplitOptions.TrimEntries);
+
+        return parts.Length >= 2
+            && int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int w)
+            && int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int h)
+            ? (w, h)
+            : (0, 0);
+    }
+
+    /// The pixel dimensions of an image, or (0, 0) if they cannot be read.
+    ///
+    /// Only the first frame is asked for. Without the [0] a multi-frame file -- an
+    /// animated GIF, a layered TIFF -- prints one line per frame, and a caller reading
+    /// the whole reply gets nonsense.
+    ///
+    /// (0, 0) rather than an exception for an unreadable file: the callers here use
+    /// the size to scale something, and the sensible response to not knowing is to
+    /// leave that something alone.
+    public static (int Width, int Height) ImageSize(string file)
+    {
+        string output = Proc.Capture("magick", "identify", "-format", "%w %h", $"{file}[0]");
+
+        string[] parts = output.Split([' ', '\n', '\r', '\t'],
+                                      StringSplitOptions.RemoveEmptyEntries
+                                    | StringSplitOptions.TrimEntries);
+
+        return parts.Length >= 2
+            && int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int w)
+            && int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int h)
+            ? (w, h)
+            : (0, 0);
+    }
+
     /// Whether the file's video is flagged interlaced, and so needs deinterlacing
     /// before it can be encoded to a progressive codec.
     ///
