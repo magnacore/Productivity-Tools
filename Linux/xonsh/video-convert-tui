@@ -37,24 +37,17 @@ string mode = chosen.Value switch
     _ => "fast",
 };
 
-// Two choices rather than a percentage. A number invites tuning something there is
-// no way to evaluate from here, and the honest answer is only ever "all of it" or
-// "whatever is going spare".
-int? speed = Dlg.Choose(
-    "Conversion speed",
-    "How much of the machine should the conversion use?",
-    "Full speed   -  finish as soon as possible",
-    "Background   -  give way to whatever else you are doing");
-
-if (speed is null)
-{
-    Ui.Warn("Operation cancelled by user.");
-    return 0;
-}
-
+// There used to be a second dialog here, asking whether to run at full speed or in
+// the background. It is gone because the honest answer was always the same.
+//
+// video-convert now runs in a low priority scope by default, and a scope's weight
+// only decides who wins when two of them want the processor at once. Measured alone
+// on the machine: 15.28 of 16 cores at the low weight against 15.26 at the usual one.
+// So the conversion finished at the same time either way unless something else was
+// running, and when something else is running, giving way is what you wanted.
+//
+// A question whose answer never changes is not a choice, it is a keystroke.
 List<string> callArgs = ["--mode", mode];
-
-if (speed.Value == 1) callArgs.Add("--background");
 
 callArgs.AddRange(a.Rest);
 

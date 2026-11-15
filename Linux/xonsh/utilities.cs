@@ -1886,6 +1886,41 @@ internal static class Media
             : (0, 0);
     }
 
+    /// The frames at which to cut a video into equal pieces, none of them longer than
+    /// maxSeconds. Empty when it is already short enough to leave alone.
+    ///
+    /// Equal rather than "fill each piece and leave a remainder", because the
+    /// remainder is the problem: cutting a 120 second video every 59 seconds gives 59,
+    /// 59 and a two second stub nobody wants to post. The same video in three equal
+    /// pieces is 40 seconds each.
+    ///
+    /// ceil(duration / maxSeconds) pieces, which makes every piece at most maxSeconds
+    /// long by construction -- there is no arithmetic left over to go wrong, and no
+    /// floor to argue about as media-split-equal needed.
+    ///
+    /// Frames rather than seconds because the cut has to be exact. ffmpeg's segmenter
+    /// aims at a time and takes the first keyframe at or after it, and a keyframe at
+    /// exactly 59.000 rounds a hair under 59 in mp4's timebase -- it was passed over,
+    /// and a piece came out at 67 seconds against a limit of 60. A frame number has no
+    /// such edge.
+    ///
+    /// Pure, and tested, because it decides whether a video can be posted at all.
+    public static IReadOnlyList<int> EqualCuts(double duration, int maxSeconds, int frameRate)
+    {
+        if (duration <= 0 || maxSeconds <= 0 || frameRate <= 0) return [];
+        if (duration <= maxSeconds) return [];
+
+        int pieces = (int)Math.Ceiling(duration / maxSeconds);
+        double frames = duration * frameRate;
+
+        List<int> cuts = [];
+
+        for (int piece = 1; piece < pieces; piece++)
+            cuts.Add((int)Math.Round(frames * piece / pieces));
+
+        return cuts;
+    }
+
     /// The pixel dimensions of an image, or (0, 0) if they cannot be read.
     ///
     /// Only the first frame is asked for. Without the [0] a multi-frame file -- an
@@ -2289,6 +2324,234 @@ internal static class Media
 // =============================================================================
 //  Crypto — the Vigenère and ROT helpers behind the clipboard scripts.
 //  These are toys for casual obfuscation, not security primitives.
+// =============================================================================
+//  Power — whether the machine is on mains, and holding work while it is not.
+//
+//  A long encode on battery flattens a laptop. HandBrake pauses for this, and
+//  the same thing is worth having here: a folder of video can take hours.
+//
+//  Suspending is genuinely free rather than a throttle. Measured on a real VP9
+//  encode stopped and resumed twice: zero CPU ticks while stopped, and output
+//  byte-identical to the uninterrupted run, same size and same md5.
+// =============================================================================
+internal static class Power
+{
+    /// Send a signal to a process. .NET cannot: Process.Kill is SIGKILL and nothing
+    /// else, and stopping an encoder needs SIGSTOP.
+    [System.Runtime.InteropServices.DllImport("libc", SetLastError = true)]
+    private static extern int kill(int pid, int sig);
+
+    private const int Sigstop = 19;
+    private const int Sigcont = 18;
+
+    /// Whether the machine is running on mains.
+    ///
+    /// Read straight from sysfs rather than through upower or a bus call: it is one
+    /// small file, it needs nothing installed, and it is readable in every context
+    /// this runs in, including from a file manager with no session bus.
+    ///
+    /// True when there is no mains supply at all, which is a desktop. Nothing should
+    /// pause on a machine that has no battery to flatten.
+    ///
+    /// `root` exists so this can be tested against a directory of fixtures.
+    public static bool OnMains(string root = "/sys/class/power_supply")
+    {
+        // Only a supply that positively says it is unplugged counts against mains.
+        // Everything else -- no mains entry, an entry that will not say, a tree that
+        // cannot be read -- comes out as mains, because the two mistakes are not the
+        // same size. Pausing when the machine is really plugged in stalls a job the
+        // user asked for and never resumes it; carrying on when it is really unplugged
+        // costs some battery and is what the program did before any of this existed.
+        bool sawUnplugged = false;
+
+        try
+        {
+            foreach (string supply in Directory.EnumerateDirectories(root))
+            {
+                string type = ReadLine(Path.Combine(supply, "type"));
+                if (!string.Equals(type, "Mains", StringComparison.Ordinal)) continue;
+
+                string online = ReadLine(Path.Combine(supply, "online"));
+
+                if (online == "1") return true;
+                if (online == "0") sawUnplugged = true;
+            }
+        }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+        {
+            return true;
+        }
+
+        return !sawUnplugged;
+    }
+
+    private static string ReadLine(string file)
+    {
+        try
+        {
+            return File.Exists(file) ? File.ReadAllText(file).Trim() : string.Empty;
+        }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+        {
+            return string.Empty;
+        }
+    }
+
+    /// Every descendant of this process whose name matches, found by walking the
+    /// children lists the kernel already keeps.
+    ///
+    /// Descendants and not the process group: signalling the group would stop this
+    /// program too, and then nothing would be left running to start it again.
+    public static List<int> Descendants(string name)
+    {
+        List<int> found = [];
+        Queue<int> pending = new();
+
+        pending.Enqueue(Environment.ProcessId);
+
+        while (pending.Count > 0)
+        {
+            int pid = pending.Dequeue();
+
+            foreach (int child in ChildrenOf(pid))
+            {
+                pending.Enqueue(child);
+
+                if (string.Equals(ReadLine($"/proc/{child}/comm"), name, StringComparison.Ordinal))
+                    found.Add(child);
+            }
+        }
+
+        return found;
+    }
+
+    private static IEnumerable<int> ChildrenOf(int pid)
+    {
+        string tasks = $"/proc/{pid}/task";
+
+        if (!Directory.Exists(tasks)) yield break;
+
+        foreach (string task in Directory.EnumerateDirectories(tasks))
+        {
+            string listing = ReadLine(Path.Combine(task, "children"));
+
+            foreach (string piece in listing.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (int.TryParse(piece, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                                 out int child))
+                {
+                    yield return child;
+                }
+            }
+        }
+    }
+
+    /// Stop or resume every matching descendant. Returns how many were signalled.
+    public static int Signal(string name, bool stop)
+    {
+        int signalled = 0;
+
+        foreach (int pid in Descendants(name))
+        {
+            if (kill(pid, stop ? Sigstop : Sigcont) == 0) signalled++;
+        }
+
+        return signalled;
+    }
+}
+
+/// Holds a long job while the machine is on battery, and lets it go again on mains.
+///
+/// The encoders are suspended rather than killed, so nothing is lost and nothing is
+/// repeated: a stopped encode resumes exactly where it was, which was measured to
+/// produce a byte-identical file.
+///
+/// Resuming on the way out is the part that matters, and it covers signals as well as
+/// a normal exit, because .NET does not raise ProcessExit when one terminates the
+/// process. The kernel does rescue a suspended orphan on its own -- an orphaned
+/// process group with a stopped member is sent SIGHUP then SIGCONT, which was
+/// confirmed -- but that only applies while the group stays in its session, and
+/// leaving a 400 MB encoder suspended on a rule nobody reads is not a plan.
+internal sealed class BatteryGuard : IDisposable
+{
+    private readonly string _name;
+    private readonly Timer _timer;
+    private readonly List<PosixSignalRegistration> _signals = [];
+    private bool _held;
+
+    private BatteryGuard(string name, TimeSpan every)
+    {
+        _name = name;
+
+        // Checked on a timer rather than watched for an event: sysfs gives no usable
+        // notification without a bus connection, and a file read every few seconds
+        // costs nothing beside a video encode.
+        _timer = new Timer(_ => Check(), null, every, every);
+
+        foreach (PosixSignal signal in (PosixSignal[])
+                 [PosixSignal.SIGINT, PosixSignal.SIGTERM, PosixSignal.SIGHUP, PosixSignal.SIGQUIT])
+        {
+            _signals.Add(PosixSignalRegistration.Create(signal, _ => Release()));
+        }
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => Release();
+    }
+
+    /// Start watching. Returns null when there is nothing to watch for, so the caller
+    /// can say so once rather than checking forever on a desktop.
+    public static BatteryGuard? Start(string processName, TimeSpan every)
+        => Power.OnMains() && !HasBattery() ? null : new BatteryGuard(processName, every);
+
+    private static bool HasBattery()
+    {
+        try
+        {
+            return Directory.EnumerateDirectories("/sys/class/power_supply")
+                            .Any(supply => File.Exists(Path.Combine(supply, "capacity")));
+        }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+        {
+            return false;
+        }
+    }
+
+    private void Check()
+    {
+        bool shouldHold = !Power.OnMains();
+
+        if (shouldHold == _held) return;
+
+        // Set before signalling, so a release racing in from a signal handler cannot
+        // decide there is nothing to release.
+        _held = shouldHold;
+
+        int count = Power.Signal(_name, stop: shouldHold);
+
+        Ui.Line(shouldHold
+            ? $"[yellow]On battery: paused {count} encode(s). They resume on mains.[/]"
+            : $"[green]Back on mains: resumed {count} encode(s).[/]");
+    }
+
+    /// Let everything go, whatever state it was in. Safe to call more than once, and
+    /// safe to call when nothing was ever held.
+    private void Release()
+    {
+        if (!_held) return;
+
+        _held = false;
+        Power.Signal(_name, stop: false);
+    }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+
+        foreach (PosixSignalRegistration registration in _signals) registration.Dispose();
+
+        Release();
+    }
+}
+
 // =============================================================================
 internal static class Crypto
 {

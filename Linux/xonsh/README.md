@@ -549,7 +549,121 @@ Nothing is ever upscaled, and anamorphic sources keep their pixel aspect: a 1440
 AVCHD file stays 1440x1080 with 16:9 recorded in the container, rather than being
 stretched to square pixels for a third more pixels and no more detail.
 
+### WhatsApp output, sorted into two folders
+
+A status post takes 60 seconds on WhatsApp, Instagram and Facebook alike, so pieces are
+cut at 59. The output is sorted rather than piled into one folder:
+
+```
+in_converted/
+    Parts/   Holiday/beach #whatsapp-000.mp4 ...   videos that had to be cut up
+    Whole/   short_clip #whatsapp.mp4               videos short enough to post as they are
+    readme.txt                                      everything that is not a video
+```
+
+Each folder keeps the input's own structure inside it, which costs nothing on a flat
+folder and stops two videos of the same name in different subfolders landing on each
+other. A video is cut up **only if it is actually longer than 59 seconds**. Cutting a
+short one produced a single piece that was the whole video again under another name, so
+every short video appeared in the folder twice -- which was what made the output
+confusing, more than where the files went.
+
+**Pieces are equal, not filled to the brim.** Cutting every 59 seconds leaves a
+remainder, and the remainder is the problem: a 120 second video came out as 59, 59 and
+a two second stub. `Media.EqualCuts` asks for `ceil(duration / 59)` pieces instead, so
+every piece is at most 59 seconds by construction and there is nothing left over.
+
+| source | filled to 59 | equal |
+|---|---|---|
+| 95 s | 59 + 36 | 2 x 47.5 |
+| 120 s | 59 + 59 + **2** | 3 x 40 |
+| 200 s | 59 + 59 + 59 + 23 | 4 x 50 |
+
+**Cuts are specified as frame numbers, not times.** `-segment_time` aims at "start plus
+59 seconds" and takes the first keyframe at or after it; the keyframe forced at exactly
+59.000 rounds a hair under 59 in mp4's timebase, so it was passed over and the next one
+taken -- **a first piece of 67.36 seconds against a limit of 60.** The encode is pinned
+to 30 fps constant, so second 59 is frame 1770 and `-segment_frames` has no edge to fall
+off. Absolute frame numbers also stop the cuts drifting: `-segment_time` measures from
+wherever the last cut landed, so one early cut drags every later one along.
+
+Keyframes are forced onto the cut points in both passes, since the segmenter can only
+cut where one exists. Left to x264's own spacing of 250 frames, a piece runs on to the
+next keyframe after the mark -- asking for 80 produced 83.35, measured.
+
+Measured pieces land within 20 milliseconds of their nominal length -- 40.02 against
+40.00 -- which is AAC's last frame padding the container rather than a cut going astray.
+
+### Waiting for mains
+
+A folder of video takes hours, which is long enough to flatten a laptop, so
+`video-convert` suspends its encoders while the machine is on battery and lets them go
+again when the cable goes back in. `--ignore-battery` turns it off, for converting on a
+train on purpose.
+
+Suspending is free rather than throttled, which is what makes this worth doing instead
+of just stopping. A VP9 encode stopped and resumed twice used **zero CPU ticks** while
+stopped and produced a file **byte-identical** to the uninterrupted run, same size and
+same md5.
+
+`SIGSTOP` goes to the ffmpeg descendants, never the process group: signalling the group
+would stop `video-convert` itself, and nothing would be left running to start it again.
+.NET cannot send that signal -- `Process.Kill` is `SIGKILL` and nothing else -- so
+`Power.Signal` reaches `kill(2)` directly.
+
+A suspended encoder cannot damage anything. It only ever writes to a `.partial` file;
+the final name appears from a `File.Move` after ffmpeg exits cleanly, so nothing
+half-finished can look finished, and the next run deletes the stale partial and redoes
+that one file.
+
+Left to itself the kernel already rescues a suspended orphan -- an orphaned process
+group with a stopped member is sent `SIGHUP` then `SIGCONT`, which holds for every way
+this is launched, `--background` included, since a systemd scope keeps the session and
+changes only the process group. Verified both ways: in-session the encoder died with
+its parent, and only under an explicit `setsid` did it survive as `state=T, ppid=1`
+holding 397 MB. Resuming on the way out is done deliberately anyway, signals included,
+rather than relying on a rule nobody reads.
+
+The check runs every 30 seconds. Its cost is not the issue -- 113 microseconds a
+time, 41 ms spread over a three hour conversion -- but waking a machine that is sitting
+paused on battery twice a minute is kinder than twelve times, and nobody plugs a cable
+in and expects an answer inside a second. The price is up to half a minute of encoding
+after the cable comes out, which is not what flattens a battery.
+
+Unknown reads as mains. No mains entry is a desktop, an entry that will not say is a
+machine that cannot be asked, and an unreadable tree is neither -- pausing on any of
+them would stall a job that never resumes, which is a worse mistake than running on
+battery.
+
 ### Giving the machine back
+
+Every conversion runs in a low-priority systemd scope by default, and `video-convert-tui`
+no longer asks. The dialog went because its answer never changed: a scope's weight only
+decides who wins when two of them want the processor at once, so with nothing competing
+it takes the whole machine. Measured alone: **15.28 of 16 cores at `CPUWeight=10`
+against 15.26 at the usual 100.**
+
+That leaves nothing for a foreground mode to buy. It could only let the conversion
+*win* contests against your own work, and the measurement runs the other way -- a small
+task took 0.32 s on an idle machine and 0.94 s beside a full-speed conversion.
+`--full-speed` survives as a way out of the machinery, not a way to be quicker: it skips
+the re-execution, the environment marker and the sibling lookup, which is worth having
+if any of those misbehave.
+
+The `-j` clamp moved with it. It belongs to the fallback, where no scope can be had and
+the job count is the only lever left. Against sixteen competing threads, holding the
+scope to two workers rather than eight left the competitor 13.45 cores instead of 12.65
+-- five per cent of the machine -- while costing roughly half the throughput on an idle
+one, where two VP9 encodes reached 9 of 16 cores. Worth paying only when it is all there
+is.
+
+| | scope | jobs |
+|---|---|---|
+| default | `CPUWeight=10` | full |
+| `--full-speed` | none | full |
+| no `systemd-run` | none possible | 2 |
+
+
 
 `video-convert --background` is the one place where `-j` is not the whole answer. A
 single ffmpeg was measured taking **8.7 of this machine's 16 cores** -- VP9 is given
