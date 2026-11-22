@@ -1,0 +1,191 @@
+#!/bin/sh
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
+
+// Read the text out of images with a vision model running on this machine.
+//
+// The third way of doing this. image-convert-text runs tesseract, which is instant
+// and very good on clean print; ocr-genai sends the page to Gemini, which handles
+// anything but costs money and leaves the machine. This sits between them: as good
+// as the cloud on the awkward cases, free, private, and slow.
+//
+// Measured against the other two on two images. On a meme with coloured text over a
+// photograph: this 100%, tesseract 97.6% -- tesseract read "Many Friends" as "/Viany
+// Friends" and "will help" as "will he ot". On a clean monospaced invoice: both 100%,
+// but tesseract took 0.3 seconds against this one's 10.
+//
+// So it is worth reaching for when tesseract has visibly struggled, and not otherwise.
+
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+
+// Where ollama listens. A constant rather than a flag: a local service on a fixed
+// port, and a wrong value fails immediately and says so.
+const string Endpoint = "http://localhost:11434/api/generate";
+
+// What the model is told to do, and the reason this program has a measured prompt
+// rather than an obvious one.
+//
+// Asked to "transcribe all text, preserving the wording, numbers and layout" -- which
+// reads like a careful instruction -- it dropped "VAT 20%" out of an invoice's totals
+// line. Not randomly: three runs gave the same 88.2% and the same omission. "Perform
+// OCR. Extract the text only. Do not change the text in any way." did no better.
+//
+// Being told plainly what it is, and that omitting is not allowed, took both test
+// images to 100%. The difference between a prompt that works and one that does not is
+// entirely in saying "omit nothing", and the failure it prevents is the dangerous
+// kind: a missing line in an invoice reads as plausible, where a garbled character
+// does not.
+const string Prompt =
+    "You are an OCR engine. Output only the exact text visible in the image, "
+    + "verbatim, character for character. Do not summarise, reformat, translate or "
+    + "omit anything. Do not add commentary. Output nothing but the text itself.";
+
+ArgVals a = new Args("ocr-ollama", "OCR images into .txt files with a local vision model")
+    .Opt("-m", "--model", @default: "lfm3-omni", help: "Which ollama model to read with")
+    .Rest("files", min: 1, help: "Image files to read")
+    .Parse(args);
+
+IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+
+List<string> images = allFiles.Where(Fs.IsImage).ToList();
+
+foreach (string skipped in allFiles.Where(file => !Fs.IsImage(file)))
+{
+    // PDFs are the ones worth naming, because the obvious thing to try next is the
+    // program that does take them.
+    Ui.Warn(Fs.IsPdf(skipped)
+        ? $"Skipping {skipped}: this reads images only, and ocr-genai takes PDFs."
+        : $"Skipping {skipped}");
+}
+
+if (images.Count == 0) return Ui.NoFiles("No images selected!");
+
+Ui.Begin($"Reading {images.Count} image(s) with {a.Str("model")}...");
+
+using HttpClient http = new()
+{
+    // Generous because it has to be. A page takes ten to twenty seconds here, and the
+    // default hundred would abandon a large one that was going perfectly well.
+    Timeout = TimeSpan.FromMinutes(15),
+};
+
+int failures = 0;
+
+// One at a time. The model has the whole machine either way, so asking for two makes
+// each slower without finishing sooner -- the same reason text-to-speech-local does
+// not take a -j either.
+Ui.Track2(images, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Reading {images.Count} image(s):"))}[/]",
+          (string image, Func<string, int, Action<double>> addBar) =>
+{
+    // One step, because there is no progress to be had out of a single request: the
+    // bar shows the file is in flight, and a failure leaves it visibly unfilled.
+    Action<double> advance = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription(image + ":"))}[/]", 1);
+
+    string outputFilename = Fs.SplitExt(image).Name + ".txt";
+
+    try
+    {
+        string text = Read(http, a.Str("model"), image);
+
+        if (text.Trim().Length == 0)
+        {
+            Ui.Line($"[yellow]No text found in {Ui.Esc(image)}[/]");
+            advance(1);
+            return;
+        }
+
+        File.WriteAllText(outputFilename, text.TrimEnd() + Environment.NewLine);
+
+        // The text keeps the image's date, so a listing sorted by date still pairs
+        // them up.
+        Fs.CopyTimestamp(image, outputFilename);
+
+        advance(1);
+        Ui.Line($"[bold green]{Ui.Esc(outputFilename)} created.[/]");
+    }
+    catch (Exception ex)
+    {
+        Ui.Line($"[bold red]Could not read {Ui.Esc(image)}: {ex.Message}[/]");
+        Snd.Error();
+        Interlocked.Increment(ref failures);
+    }
+}, maxParallel: 1);
+
+return Ui.Done(failures);
+
+/// Ask the local model to read one image, and hand back what it says.
+static string Read(HttpClient http, string model, string image)
+{
+    string encoded = Convert.ToBase64String(File.ReadAllBytes(image));
+
+    // Written out field by field rather than serialised from an object: reflection
+    // based serialisation raises trimming warnings, and this is exactly what goes
+    // over the wire.
+    using MemoryStream buffer = new();
+
+    using (Utf8JsonWriter json = new(buffer))
+    {
+        json.WriteStartObject();
+        json.WriteString("model", model);
+        json.WriteString("prompt", Prompt);
+        json.WriteStartArray("images");
+        json.WriteStringValue(encoded);
+        json.WriteEndArray();
+        json.WriteBoolean("stream", false);
+
+        // Temperature zero, because this is transcription and not writing. The same
+        // page should read the same way twice, and anything the model would rather
+        // have said is wrong by definition here.
+        json.WriteStartObject("options");
+        json.WriteNumber("temperature", 0);
+        json.WriteEndObject();
+
+        json.WriteEndObject();
+    }
+
+    using ByteArrayContent payload = new(buffer.ToArray());
+    payload.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+    using HttpResponseMessage response =
+        http.PostAsync(Endpoint, payload).GetAwaiter().GetResult();
+
+    string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+    if (!response.IsSuccessStatusCode)
+        throw new InvalidOperationException($"the model refused this: {Message(body)}");
+
+    using JsonDocument document = JsonDocument.Parse(body);
+
+    // A 200 carrying an "error" is a real shape here, not a hypothetical: ollama
+    // answers an unknown model that way.
+    if (document.RootElement.TryGetProperty("error", out JsonElement error))
+        throw new InvalidOperationException(error.GetString() ?? "unknown error");
+
+    return document.RootElement.TryGetProperty("response", out JsonElement text)
+        ? text.GetString() ?? string.Empty
+        : throw new InvalidOperationException($"no text in the reply: {Message(body)}");
+}
+
+/// Pull the message out of an error reply, or show the start of whatever arrived.
+static string Message(string body)
+{
+    try
+    {
+        using JsonDocument document = JsonDocument.Parse(body);
+
+        if (document.RootElement.TryGetProperty("error", out JsonElement error))
+            return error.ValueKind == JsonValueKind.String
+                ? error.GetString() ?? body
+                : error.ToString();
+    }
+    catch (JsonException)
+    {
+        // Not JSON, so the raw start of it is the most useful thing to show.
+    }
+
+    return body.Length > 200 ? body[..200] + "..." : body;
+}

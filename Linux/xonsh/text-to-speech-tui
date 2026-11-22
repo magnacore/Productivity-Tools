@@ -1,0 +1,59 @@
+#!/bin/sh
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for the two text-to-speech programs.
+//
+// Picks which one, then hands over. Both take the same files and produce the same
+// thing -- an .mka beside the text -- so the choice is only ever where the speaking
+// happens.
+
+ArgVals a = new Args("text-to-speech-tui", "Choose a speech engine in a dialog, then run it")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Text files to convert")
+    .Parse(args);
+
+// Cloud first, because it is the one that has always been here and the one that
+// sounds better. Local is the one to pick when the text should not leave the machine,
+// or when it is long enough that being billed by the character matters.
+int? chosen = Dlg.Choose(
+    "Text to speech",
+    "Where should the speaking happen?",
+    "Cloud  -  Google Wavenet, better voices, billed per character",
+    "Local  -  a model on this machine, private and free, much slower");
+
+if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+int? voice = Dlg.Choose(
+    "Voice",
+    "Which voice should read it?",
+    "Female",
+    "Male");
+
+if (voice is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+string program = chosen.Value == 0 ? "text-to-speech" : "text-to-speech-local";
+
+List<string> callArgs = ["--voice", voice.Value == 1 ? "Male" : "Female"];
+
+callArgs.AddRange(a.Rest);
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]{program} {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call(program, callArgs);

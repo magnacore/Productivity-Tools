@@ -97,7 +97,7 @@ foreach (string file in textFiles)
     string cleaned;
     try
     {
-        cleaned = Clean(File.ReadAllText(file));
+        cleaned = Speech.Clean(File.ReadAllText(file));
     }
     catch (Exception ex)
     {
@@ -121,7 +121,7 @@ foreach (string file in textFiles)
         continue;
     }
 
-    jobs.Add(new Job(file, Chunk(cleaned, MaxChunkBytes)));
+    jobs.Add(new Job(file, Speech.Chunk(cleaned, MaxChunkBytes)));
 }
 
 if (jobs.Count == 0)
@@ -255,123 +255,6 @@ static byte[] Synthesize(TextToSpeechClient client, string voiceName, string tex
     });
 
     return response.AudioContent.ToByteArray();
-}
-
-/// Split cleaned text into pieces small enough for one request.
-///
-/// Where the cut falls is audible, so the boundaries are chosen rather than counted
-/// to: a sentence end first, a word break if one sentence is somehow too long for a
-/// whole request, and only as a last resort a cut mid-word. Cutting mid-sentence
-/// would put a hard stop and a fresh breath in the middle of a clause.
-///
-/// Measured in UTF-8 bytes because that is what the request carries.
-static List<string> Chunk(string text, int maxBytes)
-{
-    // Trim first. Text ending in whitespace otherwise produces a final chunk holding
-    // nothing but that whitespace, whenever the chunk before it happened to fill up
-    // exactly: a billable request that synthesises silence, an extra near-empty
-    // segment in the joined audio, and input Google may reject as empty. Leading and
-    // trailing whitespace is inaudible, so nothing is lost by dropping it.
-    text = text.Trim();
-
-    List<string> chunks = [];
-    StringBuilder current = new();
-    int currentBytes = 0;
-
-    foreach (string piece in SentencePieces(text))
-    {
-        foreach (string unit in FitToLimit(piece, maxBytes))
-        {
-            int unitBytes = Encoding.UTF8.GetByteCount(unit);
-
-            if (currentBytes > 0 && currentBytes + unitBytes > maxBytes)
-            {
-                chunks.Add(current.ToString());
-                current.Clear();
-                currentBytes = 0;
-            }
-
-            current.Append(unit);
-            currentBytes += unitBytes;
-        }
-    }
-
-    if (current.Length > 0) chunks.Add(current.ToString());
-
-    // The trim above handles the common case, but an interior run of whitespace long
-    // enough to be split on its own would produce the same useless request. Both are
-    // silent either way, so neither is worth paying for.
-    chunks.RemoveAll(c => c.Trim().Length == 0);
-
-    // A file that cleaned down to whitespace is filtered out before this is called,
-    // so an empty result would mean the splitting itself dropped the text.
-    return chunks.Count > 0 ? chunks : [text];
-}
-
-/// Break text at sentence ends and line breaks.
-///
-/// The pattern matches positions, not characters -- a lookbehind and a lookahead with
-/// nothing in between -- so concatenating everything back together reproduces the
-/// input exactly. Nothing is dropped and no spacing is invented.
-static string[] SentencePieces(string text)
-    => Regex.Split(text, @"(?<=[.!?])(?=\s)|(?<=\n)");
-
-/// Cut one piece down until every part fits a single request.
-///
-/// Only reached when a piece is already too big on its own: a sentence running to
-/// thousands of characters, or a run with no spaces at all, such as a long URL.
-static IEnumerable<string> FitToLimit(string piece, int maxBytes)
-{
-    if (Encoding.UTF8.GetByteCount(piece) <= maxBytes)
-    {
-        yield return piece;
-        yield break;
-    }
-
-    // Split after each run of whitespace, again as a zero-width match so the words
-    // keep the spacing that separated them.
-    foreach (string word in Regex.Split(piece, @"(?<=\s)(?=\S)"))
-    {
-        if (Encoding.UTF8.GetByteCount(word) <= maxBytes)
-        {
-            yield return word;
-            continue;
-        }
-
-        // Nothing left to break on. Cut by character count, stepping back off a
-        // surrogate pair so a cut never lands inside one astral character and
-        // produces a lone surrogate that encodes as replacement bytes.
-        int start = 0;
-        while (start < word.Length)
-        {
-            int take = Math.Min(word.Length - start, maxBytes);
-
-            while (take > 1 && Encoding.UTF8.GetByteCount(word.AsSpan(start, take)) > maxBytes)
-                take--;
-
-            if (take > 1 && char.IsHighSurrogate(word[start + take - 1])) take--;
-
-            yield return word.Substring(start, take);
-            start += take;
-        }
-    }
-}
-
-/// Rewrite the things that read badly when spoken aloud.
-static string Clean(string text)
-{
-    // "C#" is otherwise read as "C hash".
-    text = Regex.Replace(text, "C#", "CSharp");
-    // Markdown and bullet decoration carries no meaning in audio.
-    text = Regex.Replace(text, "[#*`^<>▪►]", string.Empty);
-    // Underscores in identifiers should become word breaks, not "underscore".
-    text = Regex.Replace(text, "[_]", " ");
-    text = Regex.Replace(text, "[Gg]en [Aa][Ii]", "Generative AI");
-    // Copyright footers repeat on every page and are pure noise.
-    text = Regex.Replace(text, @"©.*?reserved\.", string.Empty);
-    // Rules drawn out of = or - characters.
-    text = Regex.Replace(text, "(={2,}|-{2,})", string.Empty);
-    return text;
 }
 
 /// One file's worth of work: the source, and the requests it was split into.

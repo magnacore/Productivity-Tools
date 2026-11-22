@@ -1,0 +1,58 @@
+#!/bin/sh
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:package Terminal.Gui@2.4.17
+#:property Configuration=Release
+#:include utilities.cs
+#:include tui.cs
+
+// Dialog front end for the three ways of reading text out of a page.
+//
+// All three write a .txt beside the original, so the choice is only ever about what
+// does the reading. The order below is the order to try them in: tesseract first
+// because it is instant and usually right, the local model when tesseract has
+// visibly struggled, and Gemini when neither will do or the file is a PDF.
+
+ArgVals a = new Args("ocr-tui", "Choose an OCR engine in a dialog, then run it")
+    .Flag("-n", "--dry-run", help: "Show the composed command without running it")
+    .Rest("files", min: 1, help: "Images or PDFs to read")
+    .Parse(args);
+
+// Measured on two images rather than described from memory. On a meme with coloured
+// text over a photograph, the local model read it perfectly and tesseract made two
+// mistakes; on a clean monospaced invoice both were perfect and tesseract was thirty
+// times quicker.
+int? chosen = Dlg.Choose(
+    "Read text from a page",
+    "Which engine should read it?",
+    "Tesseract  -  instant, excellent on clean print, local",
+    "Local model  -  better on awkward pages, free and private, slow",
+    "Gemini  -  handles anything including PDFs, costs money, leaves the machine");
+
+if (chosen is null)
+{
+    Ui.Warn("Operation cancelled by user.");
+    return 0;
+}
+
+string program = chosen.Value switch
+{
+    0 => "image-convert-text",
+    1 => "ocr-ollama",
+    _ => "ocr-genai",
+};
+
+// Said here rather than left to the program to refuse one file at a time, because the
+// dialog is where the choice was made and where it can still be changed.
+if (chosen.Value != 2 && a.Rest.Any(Fs.IsPdf))
+    Ui.Warn("PDFs will be skipped: only Gemini reads those. The images will still be done.");
+
+List<string> callArgs = [.. a.Rest];
+
+if (a.Flag("dry-run"))
+{
+    Ui.Line($"[dim]{program} {string.Join(' ', callArgs)}[/]");
+    return 0;
+}
+
+return Proc.Call(program, callArgs);

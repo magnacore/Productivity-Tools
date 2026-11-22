@@ -392,6 +392,63 @@ It never goes below 1. An image smaller than the screen keeps the size it was gi
 shrinking it would assume the viewer scales small images up to fill the window, which
 is the viewer's business. That is why the 800x600 row is unchanged.
 
+### Two ways to be read aloud
+
+`text-to-speech` sends text to Google's Wavenet voices. `text-to-speech-local` sends
+it to a model running here through ollama's OpenAI-shaped endpoint: nothing leaves the
+machine and nothing is billed. `text-to-speech-tui` asks which, and which voice.
+
+They share `Speech.Clean` and `Speech.Chunk`, because markup reads badly out loud
+whoever voices it and a chunk boundary is audible whoever speaks it. That code was
+private to the cloud program and so untestable; it is now covered.
+
+What they do not share is why they split. Google refuses a request over 5,000
+characters, so the cloud program has no choice. The local model takes 32,000 tokens and
+would swallow most files whole -- splitting there buys a bar that moves and a failure
+costing one chunk rather than an hour.
+
+The local one is slow, and says so before it starts. Measured at 200, 600 and 1500
+characters: 62 ms of audio per character, produced at about **1.7x realtime**, so ten
+thousand characters is ten minutes of audio and twenty minutes of waiting.
+
+| | cloud | local |
+|---|---|---|
+| voices | Wavenet, better | `female`/`male-american-english` |
+| cost | per character | none |
+| privacy | leaves the machine | stays |
+| speed | faster than realtime | 1.7x slower |
+| output | Opus in `.mka` | Opus in `.mka` |
+
+The local audio is slowed and brought up to the cloud's loudness in that same pass.
+The cloud program asks Google for `SpeakingRate 0.8`, deliberately slow because this
+gets listened to at 1.5x; the local model refuses any such request outright -- *"only
+speed 1 is supported"* -- so `atempo=0.82` does it afterwards. That figure is the same
+file measured through both: **118.7 seconds locally against 145.4 from the cloud.**
+
+Loudness needed more care than it looks. The gap measured 5.3 LU, -23.9 LUFS against
+-18.6, which is why local sounded quiet. Plain gain is the obvious fix and the wrong
+one: local already peaks at **+0.2 dBFS**, above full scale, so adding 5.3 dB distorts
+-- measured at +0.5 dBFS. `loudnorm` reaches the same loudness holding the true peak
+under the line. Its target is set a decibel high because single-pass loudnorm lands
+consistently below what it is asked for, by 0.7 LU on one file and 1.3 on another.
+
+| | duration | loudness | true peak |
+|---|---|---|---|
+| cloud | 145.4 s | -18.6 LUFS | -0.4 dBFS |
+| local, before | 118.7 s | -23.9 LUFS | **+0.2 dBFS** |
+| local, now | matched | **-18.8 LUFS** | -1.1 dBFS |
+
+The service only returns wav, so the parts are concatenated, filtered and encoded to
+Opus in one ffmpeg pass -- the single lossy step. A reply that is a refusal arrives as perfectly
+valid JSON with a 400, so the status and the leading `RIFF` are both checked: writing
+that to a `.wav` would leave a file that is not audio and says so only when something
+tries to play it.
+
+`--clipboard` speaks the clipboard instead of files, saving to
+`clipboard_<timestamp>.mka` since there is no source file to be named after or dated
+from. Naming files *and* passing `--clipboard` is refused rather than one quietly
+winning.
+
 ## Parallel conversion
 
 Twelve programs process their inputs concurrently and take `-j/--jobs`:

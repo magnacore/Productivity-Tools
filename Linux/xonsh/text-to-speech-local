@@ -1,0 +1,373 @@
+#!/bin/sh
+//bin/true; /usr/bin/dotnet "$0" -- "$@"; __rc=$?; [ -t 1 ] && printf '\033[?1l\033>'; exit $__rc
+#:package Spectre.Console@0.57.2
+#:property Configuration=Release
+#:include utilities.cs
+
+// Read text aloud using a speech model running on this machine, and save the result
+// as Opus audio in a Matroska container -- .mka, the audio-only Matroska extension,
+// since there is no video track here.
+//
+// The same job as text-to-speech, without the service. Ollama exposes an endpoint
+// shaped like OpenAI's, so this posts the text and gets audio back; nothing leaves
+// the machine and nothing is billed. The text is cleaned and split by the same
+// shared code, because markup reads badly out loud whoever is voicing it and a chunk
+// boundary is audible whoever speaks it.
+//
+// What the two programs do not share is why they split. Google refuses a request over
+// 5,000 characters, so the cloud program has no choice. This model takes 32,000 tokens
+// and would swallow most files whole -- the splitting here buys a progress bar that
+// moves and a failure that costs one chunk instead of an hour, which matters because
+// generating is slow. Measured on this machine at 200, 600 and 1500 characters: 62 ms
+// of audio per character, produced at about 1.7 times realtime, which works out at
+// 0.11 seconds of waiting per character. Ten thousand characters is therefore about
+// ten minutes of audio and twenty minutes of waiting for it.
+
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+
+// Where ollama listens. A constant rather than a flag: this is a local service on a
+// fixed port, and a wrong value here fails immediately and says so.
+const string Endpoint = "http://localhost:11434/v1/audio/speech";
+
+// Characters per request, which is a choice about progress rather than a limit.
+// Bigger chunks mean fewer joins and so fewer places where the voice resets; smaller
+// ones mean a bar that moves more often. Two thousand characters is about two minutes
+// of speech, so a long file reports in every few minutes rather than going quiet for
+// a quarter of an hour.
+const int MaxChunkBytes = 2_000;
+
+// One at a time. The model has the machine's full attention either way, so asking for
+// two at once makes each slower without finishing sooner, and it is a local service
+// with no quota to fill.
+const int MaxParallel = 1;
+
+ArgVals a = new Args("text-to-speech-local",
+                     "Convert text to speech with a model running on this machine")
+    .Opt("-v", "--voice", @default: "Female", choices: ["Female", "Male"],
+         help: "Which voice to use")
+    .Opt("-m", "--model", @default: "lfm3-omni", help: "Which ollama model to speak with")
+    .Flag("-c", "--clipboard", help: "Speak the clipboard instead of files")
+    .Rest("files", min: 0, help: "Text files to convert")
+    .Parse(args);
+
+bool fromClipboard = a.Flag("clipboard");
+
+if (!fromClipboard && a.Rest.Count == 0)
+{
+    Console.Error.WriteLine("error: name some text files, or pass --clipboard");
+    return 2;
+}
+
+if (fromClipboard && a.Rest.Count > 0)
+{
+    // Refused rather than one quietly winning. Naming files and asking for the
+    // clipboard says two different things, and guessing which was meant would send
+    // the wrong text to a quarter of an hour of work.
+    Console.Error.WriteLine("error: --clipboard speaks the clipboard, so files cannot also be given");
+    return 2;
+}
+
+Ui.Begin(fromClipboard ? "Speaking the clipboard..." : "Converting text to speech...");
+
+// "Female" and "Male" rather than the model's own names, to read the same way as
+// text-to-speech does. The service wants a voice and a language joined by a dash, and
+// rejects anything it does not know rather than picking something -- which is how the
+// supported set was found.
+string voiceName = a.Str("voice") == "Male" ? "male-american-english" : "female-american-english";
+string model = a.Str("model");
+
+List<Job> jobs = [];
+int failures = 0;
+
+if (fromClipboard)
+{
+    string clipboard = Speech.Clean(Clip.Paste());
+
+    if (clipboard.Trim().Length == 0)
+    {
+        Ui.Err("Nothing in the clipboard to say.");
+        Snd.Error();
+        Ui.End();
+        return 1;
+    }
+
+    // No source file to be named after or dated from, so it is stamped with the time
+    // it was spoken. Two clipboards read a minute apart stay apart on disk.
+    jobs.Add(new Job("the clipboard", $"clipboard_{Fs.Timestamp()}.mka", null,
+                     Speech.Chunk(clipboard, MaxChunkBytes)));
+}
+else
+{
+    IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+
+    List<string> textFiles = allFiles.Where(Fs.IsText).ToList();
+    foreach (string skipped in allFiles.Where(file => !Fs.IsText(file)))
+        Ui.Warn($"Skipping {skipped}");
+
+    if (textFiles.Count == 0) return Ui.NoFiles("No text files selected!");
+
+    // Read, clean and split everything before a single request is sent, so a file that
+    // cannot be read is reported plainly rather than smeared across a live display.
+    foreach (string file in textFiles)
+    {
+        string cleaned;
+
+        try
+        {
+            cleaned = Speech.Clean(File.ReadAllText(file));
+        }
+        catch (Exception ex) when (Fs.IsExpectedIoFailure(ex))
+        {
+            Ui.Err($"Could not read {file}: {ex.Message}");
+            failures++;
+            continue;
+        }
+
+        if (cleaned.Trim().Length == 0)
+        {
+            Ui.Warn($"Nothing to say in {file} once cleaned. Skipping.");
+            continue;
+        }
+
+        jobs.Add(new Job(file, Fs.SplitExt(file).Name + ".mka", file,
+                         Speech.Chunk(cleaned, MaxChunkBytes)));
+    }
+}
+
+if (jobs.Count == 0)
+{
+    Snd.Error();
+    return Ui.Done(failures);
+}
+
+// Said before the waiting starts rather than after. Generating is slow enough that a
+// silent program looks stuck, and a quarter of an hour is worth knowing about in
+// advance rather than discovering.
+int characters = jobs.Sum(job => job.Chunks.Sum(chunk => chunk.Length));
+
+Ui.Info($"{jobs.Count} item(s), {jobs.Sum(job => job.Chunks.Count)} request(s), " +
+        $"{characters:N0} characters. Expect roughly {Estimate(characters)}.");
+
+using HttpClient http = new()
+{
+    // Generous, because it has to be. A chunk of two thousand characters takes a few
+    // minutes on this machine, and the default hundred seconds would abandon work
+    // that was going perfectly well.
+    Timeout = TimeSpan.FromMinutes(30),
+};
+
+Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} item(s):"))}[/]",
+          (Job job, Func<string, int, Action<double>> addBar) =>
+{
+    // One step per request plus one for joining them, so the bar only fills once the
+    // audio is actually on disk.
+    Action<double> advance = addBar(
+        $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{job.Name} ({job.Chunks.Count} req):"))}[/]",
+        job.Chunks.Count + 1);
+
+    // Each item's parts get their own directory, and it is removed however this ends
+    // -- including on Ctrl-C, which does not raise ProcessExit.
+    DirectoryInfo work = Fs.TempDirectory("text-to-speech-local-");
+
+    try
+    {
+        List<string> parts = [];
+
+        for (int index = 0; index < job.Chunks.Count; index++)
+        {
+            byte[] audio = Speak(http, model, voiceName, job.Chunks[index]);
+
+            // Wav, because that is all the service offers; the join below is where it
+            // becomes Opus, and that is the only lossy step.
+            string part = Path.Combine(work.FullName, $"part-{index:D4}.wav");
+            File.WriteAllBytes(part, audio);
+            parts.Add(part);
+            advance(1);
+        }
+
+        if (!Join(parts, job.Output))
+        {
+            Ui.Line($"[bold red]Could not join the audio for {Ui.Esc(job.Name)}[/]");
+            Snd.Error();
+            Interlocked.Increment(ref failures);
+            return;
+        }
+
+        advance(1);
+
+        // The audio keeps the text's date, so a listing sorted by date still reads in
+        // the order the text was written. The clipboard has no date to keep.
+        if (job.Source is not null) Fs.CopyTimestamp(job.Source, job.Output);
+
+        Ui.Line($"[bold green]{Ui.Esc(job.Output)} created.[/]");
+    }
+    catch (Exception ex)
+    {
+        Ui.Line($"[bold red]Could not speak {Ui.Esc(job.Name)}: {ex.Message}[/]");
+        Snd.Error();
+        Interlocked.Increment(ref failures);
+    }
+    finally
+    {
+        Fs.DeleteTempDirectory(work);
+    }
+}, maxParallel: MaxParallel);
+
+return Ui.Done(failures);
+
+/// Roughly how long this much text will take, in words rather than a false precision.
+///
+/// 0.12 seconds per character, from three runs on this machine: 200 characters in
+/// 19.8 seconds, 600 in 63.3, 1500 in 170.9, which is 0.099, 0.105 and 0.114 seconds
+/// each and rising gently with length.
+///
+/// The first guess here was 0.08, reasoned out as 62 ms of audio per character times
+/// 1.3 for realtime rather than taken from the clock. The real factor is about 1.7, so
+/// a two file run billed as 13 seconds took 25. Rounded up to 0.12 rather than down to
+/// the measured 0.11: an estimate that runs over is a worse surprise than one that
+/// comes in early, and short runs carry the model's own startup on top.
+static string Estimate(int characters)
+{
+    TimeSpan time = TimeSpan.FromSeconds(characters * 0.12);
+
+    // The audio is stretched after generating, which costs nothing to produce but
+    // does make the finished file longer than the raw speech. Generating is what the
+    // waiting is, so the stretch does not enter into it.
+
+    return time.TotalMinutes < 1
+        ? $"{time.TotalSeconds:F0} seconds"
+        : $"{time.TotalMinutes:F0} minutes";
+}
+
+/// Ask the local service to speak one chunk, and hand back the audio it returns.
+///
+/// The failure worth catching is a refusal, because the service answers one with a
+/// perfectly valid JSON body and a 400 rather than anything that looks like audio.
+/// Writing that to a .wav would leave a file that is not audio at all and says so
+/// only when something tries to play it.
+static byte[] Speak(HttpClient http, string model, string voice, string text)
+{
+    // Written out field by field rather than serialised from an object. Reflection
+    // based serialisation raises two trimming warnings for a payload of three strings,
+    // and this is both warning free and exactly what goes over the wire.
+    using MemoryStream buffer = new();
+
+    using (Utf8JsonWriter json = new(buffer))
+    {
+        json.WriteStartObject();
+        json.WriteString("model", model);
+        json.WriteString("input", text);
+        json.WriteString("voice", voice);
+        json.WriteEndObject();
+    }
+
+    using ByteArrayContent payload = new(buffer.ToArray());
+    payload.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+    using HttpResponseMessage response =
+        http.PostAsync(Endpoint, payload).GetAwaiter().GetResult();
+
+    byte[] body = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+
+    if (!response.IsSuccessStatusCode)
+        throw new InvalidOperationException($"the speech service refused this: {Reason(body)}");
+
+    // A success that is not audio is still not audio. Checked rather than assumed,
+    // because the shape of the reply is the only thing distinguishing a voice the
+    // model does not have from one it does.
+    if (body.Length < 12 || body[0] != (byte)'R' || body[1] != (byte)'I'
+        || body[2] != (byte)'F' || body[3] != (byte)'F')
+    {
+        throw new InvalidOperationException($"the speech service sent something that is not audio: {Reason(body)}");
+    }
+
+    return body;
+}
+
+/// Pull the message out of an error reply, or show the start of whatever arrived.
+static string Reason(byte[] body)
+{
+    string text = Encoding.UTF8.GetString(body);
+
+    try
+    {
+        using JsonDocument document = JsonDocument.Parse(text);
+
+        if (document.RootElement.TryGetProperty("error", out JsonElement error)
+            && error.TryGetProperty("message", out JsonElement message))
+        {
+            return message.GetString() ?? text;
+        }
+    }
+    catch (JsonException)
+    {
+        // Not JSON, so the raw start of it is the most useful thing to show.
+    }
+
+    return text.Length > 200 ? text[..200] + "..." : text;
+}
+
+/// Slow the speech to the pace the cloud voice reads at.
+///
+/// A function and not a const, like everything else down here. These sit after the
+/// program's own return, so a const among them is unreachable code and a warning --
+/// and a static local function cannot read an enclosing local in any case.
+///
+/// The cloud program asks Google for SpeakingRate 0.8, deliberately slow because this
+/// audio gets listened to at 1.5x or more. This model has no such setting -- asking
+/// for one is refused outright, "only speed 1 is supported" -- so the pace has to be
+/// changed after the fact.
+///
+/// 0.82 from measuring the same file through both: 118.7 seconds locally against
+/// 145.4 from the cloud, a ratio of 0.816. That it lands so near the 0.8 the cloud is
+/// asked for is not a coincidence; the two models read at a similar base pace.
+///
+/// atempo rather than resampling, so the voice slows without dropping in pitch. One
+/// instance handles anything from 0.5 to 2.0, so no chain is needed here.
+static string Tempo() => "atempo=0.82";
+
+/// Bring the loudness up to the cloud's, without clipping.
+///
+/// Measured on the same file through both: -23.9 LUFS locally against -18.6 from the
+/// cloud, a gap of 5.3 -- which is why the local audio sounds quiet beside it.
+///
+/// Plain gain is the obvious fix and the wrong one. The local audio already peaks at
+/// +0.2 dBFS, above full scale, so adding 5.3 dB on top distorts; measured, it came
+/// out at +0.5 dBFS. loudnorm reaches the same loudness while holding the true peak
+/// under the line, at -0.6 dBFS.
+///
+/// The target is set a decibel above the figure being matched because single-pass
+/// loudnorm lands consistently below what it is asked for -- 0.7 LU low on one file
+/// and 1.3 on another. Aiming at -17.5 therefore arrives at about -18.6, which is the
+/// cloud's level. A two-pass measurement would be exact rather than approximate, at
+/// the cost of reading numbers back out of ffmpeg's output; a decibel either way is
+/// not audible, and the gap this exists to close was five.
+static string Loudness() => "loudnorm=I=-17.5:TP=-1.0:LRA=7";
+
+/// Join the spoken parts into one Matroska file, matching the cloud's pace and
+/// loudness and encoding to Opus, all in the one pass.
+///
+/// ffmpeg's concat demuxer rather than mkvmerge, which the cloud program uses: that
+/// one receives Opus already encoded and only has to lay the pieces end to end, while
+/// these arrive as raw wav and have to be encoded once anyway. Doing the filtering in
+/// the same pass means the audio is written once rather than three times.
+///
+/// The part names are this program's own -- part-0000.wav and so on -- so the list
+/// file needs no quoting beyond the quotes themselves.
+static bool Join(IReadOnlyList<string> parts, string output)
+{
+    string list = Path.Combine(Path.GetDirectoryName(parts[0])!, "parts.txt");
+
+    File.WriteAllLines(list, parts.Select(part => $"file '{part}'"));
+
+    return Proc.Ok("ffmpeg", "-v", "error", "-f", "concat", "-safe", "0", "-i", list,
+                   "-af", $"{Tempo()},{Loudness()}",
+                   "-c:a", "libopus", "-b:a", "32k", "-ac", "1", "-y", output);
+}
+
+/// One item of work: what to call it, where its audio goes, the text it came from if
+/// it came from a file at all, and the requests it was split into.
+internal sealed record Job(string Name, string Output, string? Source,
+                           IReadOnlyList<string> Chunks);
