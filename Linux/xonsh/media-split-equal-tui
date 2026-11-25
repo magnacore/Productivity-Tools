@@ -107,7 +107,7 @@ return Proc.Call("media-split-equal", callArgs);
 /// the files have already been chosen by this point.
 static int? AskDuration()
 {
-    string message = "How long should each part be?\n\nGive a unit: 5m, 90s, 1.5h.";
+    string message = "How long should each part be?\n\nGive a unit: 5m, 90s, 1.5h, 1h25m.";
 
     while (true)
     {
@@ -117,6 +117,6 @@ static int? AskDuration()
         int? seconds = Media.ParseDuration(typed);
         if (seconds is not null) return seconds;
 
-        message = $"\"{typed}\" is not a length.\n\nGive a number and a unit: 5m, 90s, 1.5h.";
+        message = $"\"{typed}\" is not a length.\n\nGive a number and a unit: 5m, 90s, 1h25m.";
     }
 }

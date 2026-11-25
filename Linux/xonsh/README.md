@@ -444,10 +444,52 @@ valid JSON with a 400, so the status and the leading `RIFF` are both checked: wr
 that to a `.wav` would leave a file that is not audio and says so only when something
 tries to play it.
 
-`--clipboard` speaks the clipboard instead of files, saving to
-`clipboard_<timestamp>.mka` since there is no source file to be named after or dated
-from. Naming files *and* passing `--clipboard` is refused rather than one quietly
-winning.
+`--clipboard` speaks the clipboard instead of files, on either program -- `-C` on the
+cloud one, where `-c` is already `--max-characters`. It **plays the audio and does not
+report a filename**, because the keystroke that starts it has no terminal to print one
+to: copy some text, press the key, hear it.
+
+The file goes to `Path.GetTempPath()`, which honours `TMPDIR` as the rest of the suite
+does and is tmpfs here -- so it costs no disk and is gone at the next reboot. Playback
+is detached, so the program finishes while the audio carries on.
+
+Speech plays through **mpv**, not ffplay, because mpv reads the listener's own
+configuration and ffplay has none to read. Measured on six seconds of speech: ffplay
+6.18 s, mpv told to ignore the config 6.35 s, mpv with it **4.12 s** -- the `speed=1.5`
+set there. Nothing about the rate is decided in the program; the point is to stop
+overriding a preference that already exists.
+
+`Snd.Speak` is only for audio meant to be listened to. The notification beeps stay on
+`Snd.Play` and ffplay at 1x, as they were -- 46 programs use those and none of them
+wants a rate meant for speech. `--no-video` keeps mpv windowless even against a config
+saying `fullscreen=yes`, checked rather than assumed, and it falls back to ffplay where
+mpv is absent: played at the wrong speed beats not played. Naming files *and*
+passing `--clipboard` is refused rather than one quietly winning, which on the cloud
+program would be a billable guess.
+
+For a window-manager binding:
+
+```python
+Key([mod], "r", lazy.spawn("text-to-speech --clipboard"), desc="Speak the clipboard"),
+```
+
+`--voice` already defaults to `Female`, so there is nothing else to pass.
+
+### Durations people actually type
+
+`Media.ParseDuration` takes `90s`, `39m`, `1.5h`, and now compounds: `1h25m`,
+`1h 25m`, `2h30m15s`. The listening-time prompt is where that matters -- a commute is
+an hour and twenty-five minutes, not 85 minutes.
+
+The unit stays mandatory **on every part**, which is the whole reason the function
+exists rather than an `int.TryParse`. Callers work in different units, so a bare number
+means whatever the program downstream happens to use: `1` meaning one second where one
+minute was intended turns an hour of audio into three and a half thousand files. So
+`1h25` is refused -- the 25 could be anything.
+
+Parts must descend and no unit may repeat, so `25m1h` and `1h1h` are refused rather
+than interpreted. Both are likelier slips than intentions, and both dialogs simply ask
+again -- a refusal costs one retype where a guess costs a wrong split.
 
 ## Parallel conversion
 
@@ -541,6 +583,37 @@ list for the same reason as the first group — its predecessor shared one
 `-passlogfile` across iterations — until each encode was given its own, which is what
 lets all three of its modes run under `-j`.
 
+### Keeping every track
+
+The Matroska modes carry across every audio and subtitle track. Left to itself ffmpeg
+selects one video, one audio and one subtitle and discards the rest, silently: measured
+on a file with three subtitle tracks, archive mode kept one and said nothing. For the
+copy you keep instead of the original that is a real loss, and quality mode's own
+description promises the opposite.
+
+The default has a sharper edge too. ffmpeg picks audio by **channel count**, so a 5.1
+director's commentary beats 2.0 main audio and nothing reports it.
+
+| | before | now |
+|---|---|---|
+| 3 subtitle tracks | 1, converted to `ass` | **3**, copied as `subrip`, languages kept |
+| 2 audio tracks | 1 | **2**, languages kept |
+| single-track source | — | **byte-identical** to before |
+
+The video stream is named (`0:v:0`) rather than taken wholesale, because `-map 0` would
+also take a second video stream -- an AVCHD file off a camcorder carries its programme
+twice, which in a two-pass encode means two videos sharing one statistics file.
+Verified on a two-video source: one video out, as intended. Audio and subtitles use `?`
+so a file without either is not an error.
+
+`-c:s copy`, because subtitles must not be re-encoded. Text to text would work, but a
+bitmap track -- PGS off a disc, VOB off a DVD -- can only be copied, and ffmpeg refuses
+the conversion outright. Copying is right for both, though the bitmap case is still
+untested for want of a sample.
+
+WhatsApp mode is unchanged: it writes mp4, which cannot hold ASS or PGS at all, and it
+sends one clip to a phone rather than keeping anything.
+
 ### Four conversion profiles
 
 `video-convert --mode` picks between them. All but WhatsApp write Matroska; the tag in
@@ -613,10 +686,38 @@ cut at 59. The output is sorted rather than piled into one folder:
 
 ```
 in_converted/
-    Parts/   Holiday/beach #whatsapp-000.mp4 ...   videos that had to be cut up
-    Whole/   short_clip #whatsapp.mp4               videos short enough to post as they are
-    readme.txt                                      everything that is not a video
+    Parts/     long_A #whatsapp/                  a folder per video that was cut up
+                   long_A #whatsapp-000.mp4
+                   long_A #whatsapp-001.mp4
+               Holiday/beach_C #whatsapp/         keeping the input's own structure
+                   beach_C #whatsapp-000.mp4
+    Unsplit/   long_A #whatsapp.mp4               the whole copy of those same videos
+               Holiday/beach_C #whatsapp.mp4
+    Whole/     short_B #whatsapp.mp4              short enough to post as it is
+    readme.txt                                    everything that is not a video
 ```
+
+Three folders rather than two. **Whole** is what never needed cutting; **Parts** holds
+the pieces of everything that did, a folder per video; **Unsplit** keeps the whole copy
+of those same videos, for when the pieces turn out not to be what was wanted. Keeping
+that copy loose among the pieces was what made the output confusing before, not keeping
+it at all.
+
+The pieces of one video go in a folder of their own rather than loose among every other
+video's, and **`files-group-move` is what puts them there** -- the same program you would
+run in the folder by hand, called quietly so it does not scribble over the progress
+display. Writing a second copy of that grouping inside `video-convert` was the first
+attempt and the wrong one: these programs are meant to compose, not to each carry their
+own version of the same idea.
+
+It works the folder's name out from what the piece names have in common, which comes to
+`long_A #whatsapp` whether there are four pieces or twelve -- `CleanPrefix` strips the
+numbering tail either way. `SegmentsExist` therefore searches for the pieces rather than
+looking in a folder whose name it would have to predict.
+
+A cut-up video now produces two things, so a run is only finished when **both** exist.
+Killed between them it redoes that video; verified from each half in turn, with the
+other removed.
 
 Each folder keeps the input's own structure inside it, which costs nothing on a flat
 folder and stops two videos of the same name in different subfolders landing on each

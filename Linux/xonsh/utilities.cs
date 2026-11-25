@@ -2239,35 +2239,62 @@ internal static class Media
         return lengths;
     }
 
-    /// Seconds from a typed duration: "90s", "39m", "1h", "1.5h". Null if it is not one.
+    /// Seconds from a typed duration: "90s", "39m", "1h", "1.5h", "1h25m", "2h30m15s".
+    /// Null if it is not one.
     ///
-    /// The unit is required, and that is the whole reason this exists rather than an
-    /// int.TryParse. Every caller works in a different unit -- media-split-equal takes
-    /// seconds, media-length-move takes minutes -- so a bare number means whatever that
-    /// program happens to use, which the person typing it has no reason to know. "1"
-    /// meaning one second where one minute was intended turns an hour of audio into
-    /// three and a half thousand files. Demanding the unit makes the magnitude something
-    /// the user stated rather than something the program assumed.
+    /// The unit is required on every part, and that is the whole reason this exists
+    /// rather than an int.TryParse. Every caller works in a different unit --
+    /// media-split-equal takes seconds, media-length-move takes minutes -- so a bare
+    /// number means whatever that program happens to use, which the person typing it
+    /// has no reason to know. "1" meaning one second where one minute was intended
+    /// turns an hour of audio into three and a half thousand files. Demanding the unit
+    /// makes the magnitude something the user stated rather than something the program
+    /// assumed, and that holds for a compound just as much: "1h25" is refused, because
+    /// the 25 could be anything.
     ///
-    /// Case insensitive, and a space before the unit is allowed, because "90 m" is what
-    /// people type.
+    /// Parts must descend -- hours, then minutes, then seconds -- and no unit may
+    /// appear twice. "25m1h" and "1h1h" are refused rather than interpreted. Both are
+    /// far likelier to be a slip than an intention, and both callers simply ask again,
+    /// so a refusal costs one retype where a guess costs a wrong split.
+    ///
+    /// Case insensitive, and spaces are allowed around the parts, because "90 m" and
+    /// "1h 25m" are what people type.
     public static int? ParseDuration(string text)
     {
-        Match m = Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([smh])$",
+        Match m = Regex.Match(text.Trim(), @"^(?:(\d+(?:\.\d+)?)\s*([smh])\s*)+$",
                               RegexOptions.IgnoreCase);
         if (!m.Success) return null;
 
-        if (!double.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture,
-                             out double value)) return null;
+        CaptureCollection numbers = m.Groups[1].Captures;
+        CaptureCollection units = m.Groups[2].Captures;
 
-        int multiplier = char.ToLowerInvariant(m.Groups[2].Value[0]) switch
+        double total = 0;
+        int previous = int.MaxValue;
+
+        for (int part = 0; part < numbers.Count; part++)
         {
-            's' => 1,
-            'm' => 60,
-            _ => 3600,
-        };
+            if (!double.TryParse(numbers[part].Value, NumberStyles.Float,
+                                 CultureInfo.InvariantCulture, out double value))
+            {
+                return null;
+            }
 
-        int seconds = (int)Math.Round(value * multiplier);
+            int multiplier = char.ToLowerInvariant(units[part].Value[0]) switch
+            {
+                's' => 1,
+                'm' => 60,
+                _ => 3600,
+            };
+
+            // Strictly smaller each time, which rejects a repeat and a wrong order in
+            // the one comparison.
+            if (multiplier >= previous) return null;
+
+            previous = multiplier;
+            total += value * multiplier;
+        }
+
+        int seconds = (int)Math.Round(total);
         return seconds > 0 ? seconds : null;
     }
 
@@ -2795,6 +2822,26 @@ internal static class Snd
 {
     public static void Play(string oggPath)
         => Proc.Spawn("ffplay", "-loglevel", "quiet", "-autoexit", "-nodisp", oggPath);
+
+    /// Play something meant to be listened to, rather than a notification beep.
+    ///
+    /// mpv rather than ffplay, because mpv reads the listener's own configuration --
+    /// speed, volume -- and ffplay has none to read. Measured on six seconds of
+    /// speech: ffplay 6.18s, mpv told to ignore the config 6.35s, mpv with it 4.12s,
+    /// which is the speed=1.5 set there. Nothing about the rate is decided here; the
+    /// point is to stop overriding a preference that already exists.
+    ///
+    /// --no-video keeps it windowless even where that configuration says
+    /// fullscreen=yes, checked rather than assumed. --no-terminal because what
+    /// started this was a keystroke, not a shell.
+    ///
+    /// Falls back to the beep player when mpv is absent: played at the wrong speed
+    /// beats not played at all.
+    public static void Speak(string path)
+    {
+        if (Proc.Exists("mpv")) Proc.Spawn("mpv", "--no-video", "--no-terminal", path);
+        else Play(path);
+    }
 
     public static void Success() => Play(Path.Combine(Paths.SoundTheme, "Oxygen-K3B-Finish-Success.ogg"));
     public static void Error()   => Play(Path.Combine(Paths.SoundTheme, "Oxygen-K3B-Finish-Error.ogg"));

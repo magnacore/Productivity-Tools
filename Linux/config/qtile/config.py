@@ -79,6 +79,7 @@ keys = [
     # Key([mod, "shift"], "m", lazy.spawn(f"bash {myhome}/Software/CMapTools/bin/CmapTools"), desc="Launch Cmap"),
     Key([mod], "g", lazy.spawn("thunar"), desc="Launch Thunar"),
     Key([mod], "Return", lazy.spawn(myTerm+f" --disable-server --initial-title 'Canger' -e '/usr/local/bin/canger'"), desc="Launch Canger"),
+    Key([mod], "s", lazy.spawn(f"{myhome}/.local/bin/text-to-speech --clipboard"), desc="Speak the clipboard"),
 
 
     ## Rofi

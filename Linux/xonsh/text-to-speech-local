@@ -93,9 +93,15 @@ if (fromClipboard)
         return 1;
     }
 
-    // No source file to be named after or dated from, so it is stamped with the time
-    // it was spoken. Two clipboards read a minute apart stay apart on disk.
-    jobs.Add(new Job("the clipboard", $"clipboard_{Fs.Timestamp()}.mka", null,
+    // Into the temporary directory, because this audio is listened to once and never
+    // looked for again. It is tmpfs here, so it costs no disk and is gone at the next
+    // reboot; Path.GetTempPath honours TMPDIR, which the rest of the suite does too.
+    //
+    // No source file to take a name or a date from, so it is stamped with the time it
+    // was spoken -- two clipboards read a minute apart stay apart.
+    jobs.Add(new Job("the clipboard",
+                     Path.Combine(Path.GetTempPath(), $"clipboard_{Fs.Timestamp()}.mka"),
+                     null,
                      Speech.Chunk(clipboard, MaxChunkBytes)));
 }
 else
@@ -199,9 +205,20 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} i
 
         // The audio keeps the text's date, so a listing sorted by date still reads in
         // the order the text was written. The clipboard has no date to keep.
-        if (job.Source is not null) Fs.CopyTimestamp(job.Source, job.Output);
-
-        Ui.Line($"[bold green]{Ui.Esc(job.Output)} created.[/]");
+        if (job.Source is not null)
+        {
+            Fs.CopyTimestamp(job.Source, job.Output);
+            Ui.Line($"[bold green]{Ui.Esc(job.Output)} created.[/]");
+        }
+        else
+        {
+            // Played rather than reported, because the whole point of speaking the
+            // clipboard is to hear it: the keystroke that started this had no terminal
+            // to print a filename to. Detached, so this program can finish while the
+            // audio carries on -- the file outlives it in tmpfs until the next reboot.
+            Snd.Speak(job.Output);
+            Ui.Line($"[bold green]Speaking the clipboard.[/]");
+        }
     }
     catch (Exception ex)
     {

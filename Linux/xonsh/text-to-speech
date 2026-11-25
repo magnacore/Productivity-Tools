@@ -38,10 +38,25 @@ ArgVals a = new Args("text-to-speech", "Convert text files to speech with Google
     .Opt("-v", "--voice", @default: "Female", choices: ["Female", "Male"], help: "Which voice to use")
     .Opt("-c", "--max-characters", @default: "11000",
          help: "Refuse any file longer than this once cleaned")
-    .Rest("files", min: 1, help: "Text files to convert")
+    .Flag("-C", "--clipboard", help: "Speak the clipboard and play it, instead of files")
+    .Rest("files", min: 0, help: "Text files to convert")
     .Parse(args);
 
-IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+bool fromClipboard = a.Flag("clipboard");
+
+if (!fromClipboard && a.Rest.Count == 0)
+{
+    Console.Error.WriteLine("error: name some text files, or pass --clipboard");
+    return 2;
+}
+
+if (fromClipboard && a.Rest.Count > 0)
+{
+    // Refused rather than one quietly winning. Naming files and asking for the
+    // clipboard says two different things, and guessing wrong here is billable.
+    Console.Error.WriteLine("error: --clipboard speaks the clipboard, so files cannot also be given");
+    return 2;
+}
 
 // The spending guard, measured on the cleaned text because that is what actually
 // leaves this machine. Requests are billed by the character, so a stray large file is
@@ -79,19 +94,59 @@ Ui.Begin("Converting text to speech...");
 // https://cloud.google.com/text-to-speech/docs/voices
 string voiceName = a.Str("voice") == "Male" ? "en-US-Wavenet-D" : "en-US-Wavenet-C";
 
-List<string> textFiles = allFiles.Where(Fs.IsText).ToList();
-foreach (string skipped in allFiles.Where(f => !Fs.IsText(f)))
-    Ui.Warn($"Skipping {skipped}");
-
-if (textFiles.Count == 0) return Ui.NoFiles("No text files selected!");
-
 int failures = 0;
+List<string> textFiles = [];
+
+if (!fromClipboard)
+{
+    IReadOnlyList<string> allFiles = Fs.SortedFiles(a.Rest);
+
+    textFiles = allFiles.Where(Fs.IsText).ToList();
+    foreach (string skipped in allFiles.Where(f => !Fs.IsText(f)))
+        Ui.Warn($"Skipping {skipped}");
+
+    if (textFiles.Count == 0) return Ui.NoFiles("No text files selected!");
+}
 
 // Read, clean, measure and chunk every file before a single request is sent. Doing
 // this up front means an over-cap file is refused without ever reaching Google, and
 // that the refusal is printed plainly rather than smeared across a live progress
 // display.
 List<Job> jobs = [];
+
+if (fromClipboard)
+{
+    string clipboard = Speech.Clean(Clip.Paste());
+
+    if (clipboard.Trim().Length == 0)
+    {
+        Ui.Err("Nothing in the clipboard to say.");
+        Snd.Error();
+        Ui.End();
+        return 1;
+    }
+
+    if (clipboard.Length > maxCharacters)
+    {
+        Ui.Err($"Refusing the clipboard: {clipboard.Length:N0} characters after cleaning, " +
+               $"over the {maxCharacters:N0} cap.");
+        Snd.Error();
+        Ui.End();
+        return 1;
+    }
+
+    // Into the temporary directory, because this audio is listened to once and never
+    // looked for again. It is tmpfs here, so it costs no disk and is gone at the next
+    // reboot; Path.GetTempPath honours TMPDIR, which the rest of the suite does too.
+    //
+    // No source file to take a name or a date from, so it is stamped with the time it
+    // was spoken -- two clipboards read a minute apart stay apart.
+    jobs.Add(new Job("the clipboard",
+                     Path.Combine(Path.GetTempPath(), $"clipboard_{Fs.Timestamp()}.mka"),
+                     null,
+                     Speech.Chunk(clipboard, MaxChunkBytes)));
+}
+
 foreach (string file in textFiles)
 {
     string cleaned;
@@ -121,7 +176,8 @@ foreach (string file in textFiles)
         continue;
     }
 
-    jobs.Add(new Job(file, Speech.Chunk(cleaned, MaxChunkBytes)));
+    jobs.Add(new Job(file, Fs.SplitExt(file).Name + ".mka", file,
+                     Speech.Chunk(cleaned, MaxChunkBytes)));
 }
 
 if (jobs.Count == 0)
@@ -156,10 +212,10 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} f
     // Chunks plus one step for joining them, so the bar only completes once the
     // audio is actually on disk.
     Action<double> advance = addBar(
-        $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{job.File} ({job.Chunks.Count} req):"))}[/]",
+        $"[bold cyan]{Ui.Esc(Ui.FitDescription($"{job.Name} ({job.Chunks.Count} req):"))}[/]",
         job.Chunks.Count + 1);
 
-    string outputFilename = Fs.SplitExt(job.File).Name + ".mka";
+    string outputFilename = job.Output;
 
     // Every chunk of every file gets its own directory, so three files in flight
     // cannot tread on each other's parts.
@@ -181,7 +237,7 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} f
 
         if (!Join(parts, outputFilename))
         {
-            Ui.Line($"[bold red]Could not join the audio for {Ui.Esc(job.File)}[/]");
+            Ui.Line($"[bold red]Could not join the audio for {Ui.Esc(job.Name)}[/]");
             Snd.Error();
             Interlocked.Increment(ref failures);
             return;
@@ -192,13 +248,26 @@ Ui.Track2(jobs, $"[bold cyan]{Ui.Esc(Ui.FitDescription($"Speaking {jobs.Count} f
         // Keep the source's date so the audiobook sorts with its text. This matters
         // more now than it did serially: three files finish in whatever order the
         // service returns them, so without this a date-sorted listing is a jumble.
-        Fs.CopyTimestamp(job.File, outputFilename);
+        // The clipboard has no date of its own to keep.
+        if (job.Source is not null) Fs.CopyTimestamp(job.Source, outputFilename);
 
-        Ui.Line($"[bold green]{Ui.Esc(outputFilename)} created.[/]");
+        if (job.Source is null)
+        {
+            // Played rather than reported, because the whole point of speaking the
+            // clipboard is to hear it: the keystroke that started this had no terminal
+            // to print a filename to. Detached, so this program can finish while the
+            // audio carries on -- the file outlives it in tmpfs until the next reboot.
+            Snd.Speak(outputFilename);
+            Ui.Line($"[bold green]Speaking the clipboard.[/]");
+        }
+        else
+        {
+            Ui.Line($"[bold green]{Ui.Esc(outputFilename)} created.[/]");
+        }
     }
     catch (Exception ex)
     {
-        Ui.Line($"[bold red]Could not convert {Ui.Esc(job.File)}: {ex.Message}[/]");
+        Ui.Line($"[bold red]Could not convert {Ui.Esc(job.Name)}: {ex.Message}[/]");
         Snd.Error();
         Interlocked.Increment(ref failures);
     }
@@ -258,4 +327,7 @@ static byte[] Synthesize(TextToSpeechClient client, string voiceName, string tex
 }
 
 /// One file's worth of work: the source, and the requests it was split into.
-internal sealed record Job(string File, IReadOnlyList<string> Chunks);
+/// One item of work: what to call it, where its audio goes, the text it came from if
+/// it came from a file at all, and the requests it was split into.
+internal sealed record Job(string Name, string Output, string? Source,
+                           IReadOnlyList<string> Chunks);

@@ -176,21 +176,30 @@ if (dryRun)
     {
         bool isVideo = Fs.IsVideo(source);
 
-        (string directory, string stem, bool split) = isVideo
+        (string directory, string partsDirectory, string stem, bool split) = isVideo
             ? Placement(source, input, output, mode, naming)
-            : (string.Empty, string.Empty, false);
+            : (string.Empty, string.Empty, string.Empty, false);
 
-        string destination = isVideo
-            ? Path.Combine(directory, split ? $"{stem}-000{naming.Extension}"
-                                            : stem + naming.Extension)
+        string whole = isVideo
+            ? Path.Combine(directory, stem + naming.Extension)
             : Fs.MirrorPath(input, output, source);
 
+        // A cut-up video produces two things, so it says so. Showing only the pieces
+        // would leave the whole copy appearing from nowhere. Both relative to the
+        // output folder, which is what every other line here shows.
+        string destination = split
+            ? Path.GetRelativePath(output,
+                  Path.Combine(partsDirectory, $"{stem}-000{naming.Extension}"))
+              + $" (+ {Path.GetRelativePath(output, whole)})"
+            : Path.GetRelativePath(output, whole);
+
         string what = !isVideo ? "copy   "
-            : split ? (SegmentsExist(directory, stem) ? "skip   " : "cut up ")
-            : File.Exists(destination) ? "skip   " : "convert";
+            : split ? (SegmentsExist(partsDirectory, stem) && File.Exists(whole)
+                        ? "skip   " : "cut up ")
+            : File.Exists(whole) ? "skip   " : "convert";
 
         Ui.Line($"[dim]{what}[/] {Ui.Esc(Path.GetRelativePath(input, source))}" +
-                $" [dim]->[/] {Ui.Esc(Path.GetRelativePath(output, destination))}");
+                $" [dim]->[/] {Ui.Esc(destination)}");
     }
 
     Ui.End();
@@ -335,31 +344,50 @@ static int FrameRate() => 30;
 /// printed one destination while the conversion used another would be worse than no
 /// dry run at all.
 ///
-/// WhatsApp mode sorts its output into two folders, which the others do not need.
-/// Everything that had to be cut up goes under "Parts" and everything short enough to
-/// post as it is goes under "Whole", so a folder of pieces can be selected and moved
-/// in one go. Each keeps the input's own structure inside it, which costs nothing on a
-/// flat folder and stops two videos of the same name in different subfolders landing
-/// on each other.
+/// WhatsApp mode sorts its output into three folders, which the other modes do not
+/// need. Each keeps the input's own structure inside it, which costs nothing on a flat
+/// folder and stops two videos of the same name in different subfolders landing on
+/// each other.
+///
+///   Whole    short enough to post as it is, and never cut up
+///   Parts    the pieces of everything that was too long, a folder per video
+///   Unsplit  the whole copy of those same videos, for when the pieces are not what
+///            is wanted after all
 ///
 /// A video is only cut up if it is actually too long. Cutting a short one produced a
 /// single piece that was simply the whole video again under another name, so every
-/// short video appeared twice in the same folder -- which is what made the output
-/// confusing rather than anything about where the files went.
-static (string Directory, string Stem, bool Split) Placement(
+/// short video appeared twice -- which is what made the output confusing. The whole
+/// copy of a long video is a different matter: it is worth keeping, and keeping it in
+/// its own folder is what stops it being confusing.
+///
+/// The pieces of one video go in a folder of their own rather than loose among every
+/// other video's, and files-group-move is what puts them there -- the same program you
+/// would run in the folder by hand. It works the folder's name out from what the piece
+/// names have in common, which for "long_A #whatsapp-000.mp4" and its siblings comes to
+/// "long_A #whatsapp" whether there are four pieces or forty.
+static (string WholeDirectory, string PartsDirectory, string Stem, bool Split) Placement(
     string source, string input, string output, string mode,
     (string Tag, string Extension) naming)
 {
     string stem = Fs.SplitExt(Media.ConvertedName(source, naming.Tag, naming.Extension)).Name;
 
     if (mode != "whatsapp")
-        return (Path.GetDirectoryName(Fs.MirrorPath(input, output, source))!, stem, false);
+    {
+        return (Path.GetDirectoryName(Fs.MirrorPath(input, output, source))!,
+                string.Empty, stem, false);
+    }
 
     bool split = Media.Duration(source) > SegmentSeconds();
-    string root = Path.Combine(output, split ? "Parts" : "Whole");
 
-    return (Path.GetDirectoryName(Fs.MirrorPath(input, root, source))!, stem, split);
+    string wholeRoot = Path.Combine(output, split ? "Unsplit" : "Whole");
+    string wholeDirectory = Path.GetDirectoryName(Fs.MirrorPath(input, wholeRoot, source))!;
 
+    if (!split) return (wholeDirectory, string.Empty, stem, false);
+
+    string partsDirectory =
+        Path.GetDirectoryName(Fs.MirrorPath(input, Path.Combine(output, "Parts"), source))!;
+
+    return (wholeDirectory, partsDirectory, stem, true);
 }
 
 /// Convert one video into the mirrored tree. Returns false if anything went wrong.
@@ -374,20 +402,24 @@ static bool ConvertOne(string source, string input, string output, string mode,
                        (string Tag, string Extension) naming, ArgVals a,
                        string passLogDirectory, Func<string, int, Action<double>> addBar)
 {
-    (string destinationDirectory, string stem, bool split) =
+    (string destinationDirectory, string partsDirectory, string stem, bool split) =
         Placement(source, input, output, mode, naming);
 
     Directory.CreateDirectory(destinationDirectory);
+
+    // The mirrored folder the pieces land in, before files-group-move gathers them
+    // into one of their own inside it.
+    if (split) Directory.CreateDirectory(partsDirectory);
 
     string converted = Path.Combine(destinationDirectory, stem + naming.Extension);
     string relative = Path.GetRelativePath(input, source);
 
     // Already converted by an earlier run. A zero byte file is not a conversion, so it
-    // is treated as absent and done again. A video that was cut up has no whole copy
-    // to look for, so its pieces are what answer the question.
-    bool alreadyDone = split
-        ? SegmentsExist(destinationDirectory, stem)
-        : File.Exists(converted) && new FileInfo(converted).Length > 0;
+    // is treated as absent and done again. A video that was cut up has to have both
+    // halves of its output: a run killed between the cutting and the whole copy being
+    // put away would otherwise look finished.
+    bool wholeDone = File.Exists(converted) && new FileInfo(converted).Length > 0;
+    bool alreadyDone = split ? wholeDone && SegmentsExist(partsDirectory, stem) : wholeDone;
 
     if (alreadyDone)
     {
@@ -418,17 +450,20 @@ static bool ConvertOne(string source, string input, string output, string mode,
         ? Media.EqualCuts(Media.Duration(source), SegmentSeconds(), FrameRate())
         : [];
 
+    string[] streams = StreamArgs(naming.Extension);
+
     bool ok = mode switch
     {
         "archive" => TwoPass(source, partial, ArchiveArgs(a.Int("cpu-used"), interlaced),
-                             ArchiveAudio(), passLogDirectory, relative, addBar),
-        "fast" => OnePass(source, partial, FastArgs(interlaced, channels), relative, addBar),
+                             ArchiveAudio(), streams, passLogDirectory, relative, addBar),
+        "fast" => OnePass(source, partial, FastArgs(interlaced, channels), streams,
+                          relative, addBar),
         "quality" => TwoPass(source, partial,
                              QualityArgs(a.Int("crf"), a.Int("cpu-used"), interlaced),
-                             QualityAudio(channels), passLogDirectory, relative, addBar),
+                             QualityAudio(channels), streams, passLogDirectory, relative, addBar),
         _ => TwoPass(source, partial,
                      WhatsAppArgs(WhatsAppBitrate(source, a, relative), interlaced, cuts),
-                     WhatsAppAudio(), passLogDirectory, relative, addBar),
+                     WhatsAppAudio(), streams, passLogDirectory, relative, addBar),
     };
 
     if (!ok)
@@ -438,24 +473,20 @@ static bool ConvertOne(string source, string input, string output, string mode,
         return false;
     }
 
-    if (split)
+    // Cut first, from the partial, and only then let the whole copy take its real
+    // name. That order is what makes the pair safe to interrupt: the finished name
+    // appears last, so a run killed part way through never leaves something that
+    // looks done.
+    if (split && !Segment(partial, source, partsDirectory, stem, cuts))
     {
-        // Cut straight from the partial and throw it away afterwards. Keeping the
-        // whole file as well was what put every long video in the folder twice.
-        if (!Segment(partial, source, destinationDirectory, stem, cuts))
-        {
-            Ui.Line($"[bold red]Converted but could not cut up {Ui.Esc(relative)}[/]");
-            return false;
-        }
+        Ui.Line($"[bold red]Converted but could not cut up {Ui.Esc(relative)}[/]");
+        return false;
+    }
 
-        SafeDelete(partial);
-    }
-    else
-    {
-        // The encode succeeded, so the file earns its real name.
-        File.Move(partial, converted, overwrite: true);
-        Fs.CopyTimestamp(source, converted);
-    }
+    // The encode succeeded, so the file earns its real name -- in Whole if it was
+    // short enough to post as it is, in Unsplit if its pieces are next door.
+    File.Move(partial, converted, overwrite: true);
+    Fs.CopyTimestamp(source, converted);
 
     Ui.Line($"[green]{Ui.Esc(relative)}[/]");
     return true;
@@ -762,13 +793,42 @@ static int WhatsAppBitrate(string source, ArgVals a, string relative)
     return capped;
 }
 
+/// Which streams to carry across, for a container that can hold them all.
+///
+/// Without this ffmpeg selects by itself: one video, one audio, one subtitle, and the
+/// rest are gone. Measured on a file with three subtitle tracks, archive mode kept one
+/// -- and said nothing. For the copy you keep instead of the original that is a silent
+/// loss, and quality mode's own description promises the opposite.
+///
+/// There is a sharper edge to the default too. ffmpeg picks audio by channel count, so
+/// a 5.1 director's commentary beats 2.0 main audio, and nothing reports it.
+///
+/// The video stream is named rather than taken wholesale: "-map 0" would also take a
+/// second video stream, and an AVCHD file off a camcorder carries its programme twice,
+/// which in a two-pass encode means two videos sharing one statistics file. Audio and
+/// subtitles are taken with "?" so a file without either is not an error.
+///
+/// -c:s copy because subtitles must not be re-encoded. Text to text would work, but a
+/// bitmap track -- PGS off a disc, VOB off a DVD -- can only ever be copied, and
+/// ffmpeg refuses the conversion outright: "Subtitle encoding currently only possible
+/// from text to text or bitmap to bitmap". Copying is right for both.
+///
+/// Empty for WhatsApp mode, which writes mp4 and cannot hold ASS or PGS at all. That
+/// mode sends one clip to a phone rather than keeping anything.
+static string[] StreamArgs(string extension) =>
+    extension == ".mkv"
+        ? ["-map", "0:v:0", "-map", "0:a?", "-map", "0:s?", "-ignore_unknown",
+           "-c:s", "copy"]
+        : [];
+
 /// A single-pass encode with one progress bar.
 static bool OnePass(string source, string destination, string[] encoder,
-                    string relative, Func<string, int, Action<double>> addBar)
+                    string[] streams, string relative,
+                    Func<string, int, Action<double>> addBar)
 {
     Action<double> bar = addBar($"[bold cyan]{Ui.Esc(Ui.FitDescription(relative + ":"))}[/]", 100);
 
-    List<string> arguments = ["-i", source, .. encoder, "-y", destination];
+    List<string> arguments = ["-i", source, .. encoder, .. streams, "-y", destination];
 
     return Media.ConvertWithProgress(source, destination, arguments, bar);
 }
@@ -784,7 +844,7 @@ static bool OnePass(string source, string destination, string[] encoder,
 /// encodes running at once cannot read each other's numbers and size a video against
 /// the wrong film.
 static bool TwoPass(string source, string destination, string[] encoder, string[] audio,
-                    string passLogDirectory, string relative,
+                    string[] streams, string passLogDirectory, string relative,
                     Func<string, int, Action<double>> addBar)
 {
     string passLog = Path.Combine(passLogDirectory, Fs.Slug(relative));
@@ -814,6 +874,7 @@ static bool TwoPass(string source, string destination, string[] encoder, string[
         "-i", source, .. encoder,
         "-pass", "2", "-passlogfile", passLog,
         .. audio,
+        .. streams,
         "-y", destination,
     ];
 
@@ -850,13 +911,27 @@ static bool Segment(string converted, string source, string directory, string st
 
         if (pieces.Length == 0) return false;
 
+        List<string> landedPieces = [];
+
         for (int i = 0; i < pieces.Length; i++)
         {
             string landed = Path.Combine(directory, Path.GetFileName(pieces[i]));
 
             File.Move(pieces[i], landed, overwrite: true);
             Fs.CopyTimestamp(source, landed, i);
+            landedPieces.Add(landed);
         }
+
+        // Gathered into a folder of their own by the program that exists for it,
+        // rather than by a second copy of the same idea living here. Quietly, because
+        // this runs underneath a live progress display that a chatty child would
+        // scribble over.
+        //
+        // Not fatal if it fails. The pieces are correct and in the right folder either
+        // way; only their tidiness is at stake, and SegmentsExist looks for them
+        // wherever they ended up.
+        if (Proc.Call("files-group-move", landedPieces, quiet: true) != 0)
+            Ui.Line($"[yellow]Could not group the pieces of {Ui.Esc(stem)}[/]");
 
         return true;
     }
@@ -871,9 +946,14 @@ static bool Segment(string converted, string source, string directory, string st
 /// Checked as well as the converted file, because the two are written in separate
 /// steps: a run killed between them leaves the full file finished and no pieces, and
 /// that should be finished off rather than reported as done.
+/// Searched rather than looked up, because the folder the pieces sit in is named by
+/// files-group-move from what their names have in common, and guessing that name here
+/// would be the duplication the call avoids. The piece names themselves are this
+/// program's own, so they are what to look for.
 static bool SegmentsExist(string directory, string stem)
     => Directory.Exists(directory)
-       && Directory.EnumerateFiles(directory, $"{stem}-*.mp4").Any();
+       && Directory.EnumerateFiles(directory, $"{stem}-*.mp4", SearchOption.AllDirectories)
+                   .Any();
 
 /// Remove a file if it is there, and say so rather than throwing if it will not go.
 static void SafeDelete(string path)
